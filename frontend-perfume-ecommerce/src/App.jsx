@@ -13,6 +13,7 @@ import ProductDetail from './pages/ProductDetail';
 import TestProduct from './pages/TestProduct';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
                 <Route path="/test" element={<TestProduct />} /> 
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/ordersuccess" element={<OrderSuccess />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="*" element={<h1>404 Not Found</h1>} />   
               </Routes>
             </main>
