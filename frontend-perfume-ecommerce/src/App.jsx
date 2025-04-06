@@ -3,12 +3,16 @@ import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
-import Cart from './components/Cart';
-import ProductList from './components/ProductList';
+import Cart from './pages/Cart';
+import ProductList from './pages/ProductList';
 import './App.css';
 import Navigation from './components/Navigation';
 import HomePage from './pages/HomePage';
 import Footer from './components/Footer';
+import ProductDetail from './pages/ProductDetail';
+import TestProduct from './pages/TestProduct';
+import Checkout from './pages/Checkout';
+import OrderSuccess from './pages/OrderSuccess';
 
 function App() {
   return (
@@ -22,8 +26,13 @@ function App() {
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/products" element={<ProductList />} />
+                <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/cart" element={<Cart />} />
+                <Route path="/test" element={<TestProduct />} /> 
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/ordersuccess" element={<OrderSuccess />} />
+                <Route path="*" element={<h1>404 Not Found</h1>} />   
               </Routes>
             </main>
             <Footer />
