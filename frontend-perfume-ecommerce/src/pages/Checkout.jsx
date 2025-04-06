@@ -6,7 +6,7 @@ const Checkout = () => {
   const { cart, calculateTotal } = useCart();
   const [paymentMethod, setPaymentMethod] = useState('vnpay');
   const [formData, setFormData] = useState({
-    name: '',
+    name: 'Pham Nguyen Quoc Huy',
     phone: '',
     email: '',
     address: '',
@@ -65,8 +65,8 @@ const Checkout = () => {
 
       <form onSubmit={handleSubmit}>
         <div className="flex flex-col lg:flex-row gap-8">
-          <div className="lg:w-2/3">
-            <div className="mb-8">
+          <div className="lg:w-2/3 flex gap-4">
+            <div className="mb-8 w-1/2 mx-2">
               <h2 className="text-xl font-bold mb-4">THÔNG TIN MUA HÀNG</h2>
               <div className="space-y-4">
                 <input
@@ -135,7 +135,7 @@ const Checkout = () => {
               </div>
             </div>
 
-            <div>
+            <div className='mx-2 w-1/2'>
               <h2 className="text-xl font-bold mb-4">PHƯƠNG THỨC THANH TOÁN</h2>
               <div className="space-y-4">
                 <label className="flex items-center p-3 border border-gray-300 rounded cursor-pointer">
@@ -171,6 +171,9 @@ const Checkout = () => {
                   <span>COD</span>
                 </label>
               </div>
+              <button className='mt-8'>
+                <p className='underline'>← Quay lại giỏ hàng</p>
+              </button>
             </div>
           </div>
 
