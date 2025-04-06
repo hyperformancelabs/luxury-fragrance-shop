@@ -5,11 +5,11 @@ const Profile = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [profileData, setProfileData] = useState({
     name: 'Phạm Nguyễn Quốc Huy',
-    phone: '079********28',
+    phone: '0796592839',
     email: '',
     password: '**********',
     address: '11 Nguyễn Đình Chiểu',
-    birthday: '01/01/1990',
+    birthday: 'sắp 21 rồi',
     gender: 'Nam'
   });
 
@@ -23,36 +23,27 @@ const Profile = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-black text-white p-4 shadow-md">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
+        <div className="max-w-6xl mx-24 flex justify-start items-center">
           <h1 className="text-sm font-medium">TRANG CHỦ / HỒ SƠ CÁ NHÂN</h1>
           <div className="flex items-center space-x-4">
-            <Bell size={18} className="cursor-pointer" />
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-                <User size={16} />
-              </div>
-              <span className="hidden md:inline">{profileData.name}</span>
-            </div>
+           
+           
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-grow py-6 px-4 md:px-8">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-6">
-          {/* Sidebar */}
-          <div className="w-full md:w-1/4">
+        <div className="max-w-6xl mx-20 flex flex-col md:flex-row gap-6">
+          <div className="w-full md:w-1/3">
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center space-x-4 mb-6">
                 <div className="relative">
                   <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                    <User size={32} />
+                  <img src="/avt.jpg" alt="" className='rounded-full' />
                   </div>
-                  <div className="absolute bottom-0 right-0 w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center border border-white cursor-pointer">
-                    <Camera size={12} />
-                  </div>
+                
+                  
                 </div>
                 <div>
                   <h2 className="font-bold">{profileData.name}</h2>
@@ -63,9 +54,7 @@ const Profile = () => {
               <nav className="space-y-1">
                 <SidebarItem icon={<User size={18} />} text="Tài khoản của tôi" active />
                 <SidebarItem icon={<ShoppingBag size={18} />} text="Đơn mua" />
-                <SidebarItem icon={<Heart size={18} />} text="Sản phẩm yêu thích" />
                 <SidebarItem icon={<Bell size={18} />} text="Thông báo" />
-                <SidebarItem icon={<Settings size={18} />} text="Cài đặt" />
                 <SidebarItem icon={<LogOut size={18} />} text="Đăng xuất" />
               </nav>
             </div>
@@ -88,6 +77,7 @@ const Profile = () => {
                       value={profileData.name} 
                       isEditMode={isEditMode}
                       onChange={(value) => handleInputChange('name', value)}
+                      
                     />
                     
                     <ProfileField 
@@ -176,7 +166,7 @@ const Profile = () => {
                   {/* Right Column - Avatar */}
                   <div className="md:col-span-1 flex flex-col items-center justify-start">
                     <div className="w-32 h-32 rounded-full bg-gray-200 mb-4 flex items-center justify-center">
-                      <User size={64} />
+                      <img src="/avt.jpg" alt="" className='rounded-full' />
                     </div>
                     <button className="text-blue-600 flex items-center space-x-1">
                       <Camera size={16} />
@@ -213,7 +203,6 @@ const Profile = () => {
               </div>
             </div>
             
-            {/* Recent Activities */}
             <div className="bg-white rounded-lg shadow mt-6">
               <div className="p-6 border-b">
                 <h2 className="text-xl font-bold">Hoạt động gần đây</h2>
@@ -239,48 +228,20 @@ const Profile = () => {
           </div>
         </div>
       </main>
-      
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white py-6 mt-8">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <h3 className="text-lg font-bold mb-4">Về chúng tôi</h3>
-              <p className="text-gray-300 text-sm">Cung cấp dịch vụ mua sắm trực tuyến hàng đầu Việt Nam với các sản phẩm chất lượng cao.</p>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold mb-4">Liên hệ</h3>
-              <p className="text-gray-300 text-sm">Email: support@example.com</p>
-              <p className="text-gray-300 text-sm">Hotline: 1900-1234</p>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold mb-4">Theo dõi chúng tôi</h3>
-              <div className="flex space-x-4">
-                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center cursor-pointer hover:bg-gray-600">F</div>
-                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center cursor-pointer hover:bg-gray-600">Y</div>
-                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center cursor-pointer hover:bg-gray-600">I</div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 pt-6 border-t border-gray-700 text-center">
-            <p className="text-gray-400 text-sm">© 2025 Tất cả các quyền được bảo lưu</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
 
-// Helper Components
+
 const SidebarItem = ({ icon, text, active = false }) => {
   return (
     <a 
       href="#" 
       className={`flex items-center space-x-3 p-3 rounded-lg transition duration-200 ${
-        active ? 'bg-gray-100 text-blue-600 font-medium' : 'hover:bg-gray-100'
+        active ? 'bg-black text-white font-medium' : 'hover:bg-gray-100'
       }`}
     >
-      <span className={active ? 'text-blue-600' : 'text-gray-500'}>{icon}</span>
+      <span className={active ? 'text-white' : 'text-gray-500'}>{icon}</span>
       <span>{text}</span>
     </a>
   );
@@ -297,10 +258,10 @@ const ProfileField = ({ label, value, type = 'text', isEditMode, onChange, place
             value={value} 
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
           />
         ) : (
-          <span>{value || placeholder}</span>
+          <span className='font-medium'>{value || placeholder}</span>
         )}
       </div>
     </div>
