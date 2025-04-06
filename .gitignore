@@ -40,10 +40,6 @@ replay_pid*
 # Local
 *.env.local
 
-# Image
-*.png
-*.jpg
-*.jpeg
 # Video
 *.mp4
 *.avi
