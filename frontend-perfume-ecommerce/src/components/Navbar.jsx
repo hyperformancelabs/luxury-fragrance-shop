@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { ChartBarIcon, Heart, HeartCrackIcon, PhoneCallIcon, ShoppingCartIcon, User } from 'lucide-react';
+
 
 const Navbar = () => {
   const { user, login } = useAuth();
@@ -196,29 +198,28 @@ const Navbar = () => {
         
           <div className="flex items-center space-x-8">
             <Link to="/support" className="flex flex-col items-center text-gray-700">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-              <span className="text-xs mt-1">Hỗ trợ</span>
+              <PhoneCallIcon className='w-6 h-6'/>
+              <span className="text-xs mt-1">Liên hệ</span>
             </Link>
 
             <div className="relative" ref={authIconRef}>
               {user ? (
                 <Link to="/profile" className="flex flex-col items-center text-gray-700">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {/* <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <span className="text-xs mt-1">{user.name}</span>
+                  </svg> */}
+                  <div className='w-12 h-12'>
+                    <img src="/avt.jpg" alt="" className='rounded-full'/>
+                  </div>
+                  {/* <span className="text-xs mt-1">{user.name}</span> */}
                 </Link>
               ) : (
                 <div 
                   className="flex flex-col items-center text-gray-700 cursor-pointer"
                   onClick={() => setShowAuthPopup(true)}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <span className="text-xs mt-1 text-center">Đăng nhập/<br />Đăng ký</span>
+                  <User className='w-6 h-6'/>
+                  <span className="text-xs mt-1 text-center">Tài khoản</span>
                 </div>
               )}
 
@@ -375,9 +376,7 @@ const Navbar = () => {
             </div>
 
             <Link to="/wishlist" className="flex flex-col items-center text-gray-700 relative">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
+              <Heart className='w-8 h-8'/>
               <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">0</span>
             </Link>
 
@@ -388,9 +387,7 @@ const Navbar = () => {
               ref={cartIconRef}
             >
               <Link to="/cart" className="flex flex-col items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+                <ShoppingCartIcon className='w-8 h-8'/>
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
                   {cart ? cart.length : 0}
                 </span>
