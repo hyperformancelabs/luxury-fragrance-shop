@@ -2,35 +2,44 @@
 set -e
 
 ENV_FILE=${1:-}
-WAIT_TIMEOUT=30
 
+# Auto-detect env file
 if [ -z "$ENV_FILE" ]; then
   if [ -f ".env.local" ]; then ENV_FILE=".env.local"
   elif [ -f ".env" ]; then ENV_FILE=".env"
   else echo "❌ No env file found!"; exit 1; fi
 fi
-echo "⚡ [fast-check.sh] Using env file: $ENV_FILE"
+
+echo "🔍 [fast-check.sh] Using env file: $ENV_FILE"
 export $(grep -v '^#' "$ENV_FILE" | xargs)
 
-REQUIRED_VARS=(DB_FOLDER MSSQL_PORT CONTAINER_NAME)
-for var in "${REQUIRED_VARS[@]}"; do [ -z "${!var}" ] && echo "❌ Missing variable: $var" && exit 1; done
+REQUIRED_VARS=(MSSQL_SA_PASSWORD CONTAINER_NAME)
+for var in "${REQUIRED_VARS[@]}"; do
+  [ -z "${!var}" ] && echo "❌ Missing variable: $var" && exit 1
+done
 
-if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
-  echo "✅ Container '$CONTAINER_NAME' is running."
-else
-  echo "❌ Container '$CONTAINER_NAME' is NOT running."
+# Kiểm tra container có tồn tại không
+if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
+  echo "❌ [fast-check.sh] Container '$CONTAINER_NAME' is not running!"
   exit 1
 fi
 
-echo "⏳ Checking TCP port $MSSQL_PORT..."
-for ((i=1;i<=WAIT_TIMEOUT;i++)); do
-  if nc -z localhost $MSSQL_PORT; then
-    echo "✅ TCP port $MSSQL_PORT is open."
-    exit 0
-  fi
-  echo "🔄 [$i/$WAIT_TIMEOUT] Retrying..."
-  sleep 1
-done
-
-echo "❌ TCP port $MSSQL_PORT is not open after $WAIT_TIMEOUT seconds."
-exit 1
+# Kiểm tra kết nối cơ sở dữ liệu
+echo "🔍 [fast-check.sh] Testing database connection..."
+if docker exec $CONTAINER_NAME /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -Q "SELECT @@VERSION" -h -1 > /dev/null; then
+  echo "✅ [fast-check.sh] Database is running properly!"
+  
+  # Hiển thị thông tin phiên bản
+  VERSION=$(docker exec $CONTAINER_NAME /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -Q "SELECT @@VERSION" -h -1)
+  echo "ℹ️ [fast-check.sh] Database server version:"
+  echo "$VERSION"
+  
+  # Hiển thị danh sách cơ sở dữ liệu
+  echo "ℹ️ [fast-check.sh] Available databases:"
+  docker exec $CONTAINER_NAME /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -Q "SELECT name FROM sys.databases WHERE database_id > 4 ORDER BY name" -h -1
+  
+  exit 0
+else
+  echo "❌ [fast-check.sh] Failed to connect to database!"
+  exit 1
+fi

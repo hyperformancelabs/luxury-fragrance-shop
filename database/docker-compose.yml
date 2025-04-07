@@ -1,11 +1,13 @@
 services:
   db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: ${CONTAINER_NAME}
     platform: linux/amd64
     restart: always
     environment:
-      ACCEPT_EULA: ${ACCEPT_EULA}
+      ACCEPT_EULA: Y
       SA_PASSWORD: ${MSSQL_SA_PASSWORD}
       MSSQL_PID: ${MSSQL_PID}
     ports:

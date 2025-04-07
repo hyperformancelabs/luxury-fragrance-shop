@@ -2,19 +2,18 @@
 set -e
 
 ENV_FILE=${1:-}
+
+# Auto-detect env file
 if [ -z "$ENV_FILE" ]; then
   if [ -f ".env.local" ]; then ENV_FILE=".env.local"
   elif [ -f ".env" ]; then ENV_FILE=".env"
   else echo "❌ No env file found!"; exit 1; fi
 fi
+
 echo "🚀 [start.sh] Using env file: $ENV_FILE"
-export $(grep -v '^#' "$ENV_FILE" | xargs)
 
-REQUIRED_VARS=(DB_FOLDER MSSQL_SA_PASSWORD MSSQL_PORT CONTAINER_NAME)
-for var in "${REQUIRED_VARS[@]}"; do [ -z "${!var}" ] && echo "❌ Missing variable: $var" && exit 1; done
+# Start database container
+echo "🚀 [start.sh] Starting database container..."
+docker-compose --env-file $ENV_FILE up -d --build
 
-cd "$DB_FOLDER"
-docker-compose up -d || { echo "❌ Failed to start docker-compose"; exit 1; }
-cd ..
-
-echo "✅ Database started!"
+echo "✅ [start.sh] Database started! You can check logs with: docker logs $(grep CONTAINER_NAME $ENV_FILE | cut -d'=' -f2)"

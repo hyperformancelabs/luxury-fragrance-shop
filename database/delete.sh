@@ -2,35 +2,46 @@
 set -e
 
 ENV_FILE=${1:-}
+
+# Auto-detect env file
 if [ -z "$ENV_FILE" ]; then
   if [ -f ".env.local" ]; then ENV_FILE=".env.local"
   elif [ -f ".env" ]; then ENV_FILE=".env"
   else echo "❌ No env file found!"; exit 1; fi
 fi
+
 echo "🗑️ [delete.sh] Using env file: $ENV_FILE"
 export $(grep -v '^#' "$ENV_FILE" | xargs)
 
-REQUIRED_VARS=(DB_FOLDER CONTAINER_NAME)
-for var in "${REQUIRED_VARS[@]}"; do [ -z "${!var}" ] && echo "❌ Missing variable: $var" && exit 1; done
+# Kiểm tra biến CONTAINER_NAME
+[ -z "$CONTAINER_NAME" ] && echo "❌ Missing variable: CONTAINER_NAME" && exit 1
 
-echo ""
+# Thông báo và xác nhận với người dùng
+echo "⚠️ [delete.sh] WARNING: This will completely remove the database container and all data!"
+echo "❗ [delete.sh] This action is irreversible and cannot be undone!"
+
 while true; do
-  read -p "❓ Confirm DELETE container '$CONTAINER_NAME' and volumes? (yes/no): " CONFIRM
-  case "$CONFIRM" in
-    yes) echo "✅ Deleting..."; break ;;
-    no) echo "❌ Aborted."; exit 0 ;;
-    *) echo "⚠️  Please type 'yes' or 'no' exactly." ;;
-  esac
+  read -p "Are you sure you want to continue? (yes/no): " confirmation
+  confirmation=$(echo "$confirmation" | tr '[:upper:]' '[:lower:]')  # Chuyển về chữ thường
+
+  if [[ "$confirmation" == "yes" || "$confirmation" == "no" ]]; then
+    break
+  else
+    echo "❌ Please type 'yes' or 'no'."
+  fi
 done
 
-if [ "$(docker ps -a -q -f name=$CONTAINER_NAME)" ]; then
-  docker rm -f $CONTAINER_NAME || true
+if [[ "$confirmation" == "yes" ]]; then
+  echo "🗑️ [delete.sh] Stopping and removing database..."
+  docker-compose --env-file "$ENV_FILE" down -v
+  
+  # Xóa image nếu có
+  if docker images | grep -q "$CONTAINER_NAME"; then
+    echo "🗑️ [delete.sh] Removing related Docker images..."
+    docker rmi $(docker images | grep "$CONTAINER_NAME" | awk '{print $3}')
+  fi
+  
+  echo "✅ [delete.sh] Database has been completely removed!"
 else
-  echo "ℹ️ No container '$CONTAINER_NAME' found."
+  echo "❌ [delete.sh] Deletion cancelled."
 fi
-
-cd "$DB_FOLDER"
-docker-compose down -v --remove-orphans || true
-cd ..
-
-echo "✅ Deleted database container and volumes!"

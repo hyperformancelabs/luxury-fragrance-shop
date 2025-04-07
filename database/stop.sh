@@ -2,18 +2,18 @@
 set -e
 
 ENV_FILE=${1:-}
+
+# Auto-detect env file
 if [ -z "$ENV_FILE" ]; then
   if [ -f ".env.local" ]; then ENV_FILE=".env.local"
   elif [ -f ".env" ]; then ENV_FILE=".env"
   else echo "❌ No env file found!"; exit 1; fi
 fi
+
 echo "🛑 [stop.sh] Using env file: $ENV_FILE"
-export $(grep -v '^#' "$ENV_FILE" | xargs)
 
-[ -z "$DB_FOLDER" ] && echo "❌ Missing variable: DB_FOLDER" && exit 1
+# Stop database container
+echo "🛑 [stop.sh] Stopping database container..."
+docker-compose --env-file $ENV_FILE down
 
-cd "$DB_FOLDER"
-docker-compose down || { echo "❌ Failed to stop docker-compose"; exit 1; }
-cd ..
-
-echo "✅ Database stopped!"
+echo "✅ [stop.sh] Database stopped!"

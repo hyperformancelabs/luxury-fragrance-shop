@@ -9,6 +9,7 @@ This directory contains scripts and configuration for managing the SQL Server da
 The database system uses:
 - **Microsoft SQL Server 2022** (latest version)
 - **Docker** container for isolation and portability
+- **Custom Dockerfile** with `sqlcmd` pre-installed
 - **Bash scripts** for easy management operations
 
 ## Prerequisites
@@ -34,6 +35,7 @@ Edit the new file to adjust:
 - `MSSQL_SA_PASSWORD`: Choose a strong password for the SA user
 - `MSSQL_PORT`: Change if port 1433 is already in use on your system
 - `CONTAINER_NAME`: Customize the container name if needed
+- `MSSQL_DATABASE`: Default database name to be created
 
 ### 2. Available Commands
 
@@ -46,6 +48,7 @@ The following scripts are available to manage your database container:
 | `./reset.sh` | Resets the database (data will be lost) | `./reset.sh [env_file]` |
 | `./delete.sh` | Completely removes container and volumes | `./delete.sh [env_file]` |
 | `./fast-check.sh` | Checks if the database is running and accessible | `./fast-check.sh [env_file]` |
+| `./create-db.sh` | Creates database if it doesn't exist | `./create-db.sh [env_file] [db_name]` |
 
 For all scripts, you can optionally specify a custom environment file path as the first argument. If not specified, the scripts will look for `.env.local` first, then `.env`.
 
@@ -57,13 +60,20 @@ Once the database is running, you can connect to it using:
 - **Port**: As configured in your `.env` file (default: 1433)
 - **Username**: `sa`
 - **Password**: As configured in your `.env` file
-- **Database**: By default, no database is created. You'll need to create one after connecting.
+- **Database**: Use the `MSSQL_DATABASE` value from your environment file or specify when running the `create-db.sh` script
 
-## Docker Compose Configuration
+## Docker Compose and Dockerfile Configuration
 
-The `docker-compose.yml` file defines:
-- SQL Server image version
-- Platform settings (linux/amd64)
+The project uses two main configuration files to set up the environment:
+
+### Dockerfile
+- Based on the official SQL Server 2022 image
+- Pre-installs `sqlcmd` and related tools
+- Configures PATH for easy `sqlcmd` usage
+- Automatically accepts Microsoft's EULA
+
+### docker-compose.yml
+- Builds container from Dockerfile
 - Environment variables configuration
 - Port mapping
 - Persistent volume for data storage
