@@ -1,144 +1,120 @@
 import React, { useState } from 'react';
 
-const QuickView = () => {
+const QuickView = ({ selectedProduct, handleClosePopup }) => {
   const [quantity, setQuantity] = useState(4);
   const [selectedSize, setSelectedSize] = useState('75ml');
-  
+
   const sizes = [
-    { value: '50ml', label: '50ml' },
-    { value: '75ml', label: '75ml' },
-    { value: '100ml', label: '100ml' },
-    { value: '120ml', label: '120ml' },
-    { value: '200ml', label: '200ml' }
+    { value: '50ml', label: '50ml', price: 350000 },
+    { value: '75ml', label: '75ml', price: 420000 },
+    { value: '100ml', label: '100ml', price: 520000 },
+    { value: '120ml', label: '120ml', price: 610000 },
+    { value: '200ml', label: '200ml', price: 700000 }
   ];
-  
+
+
   const handleIncrement = () => {
     setQuantity(quantity + 1);
   };
-  
+
   const handleDecrement = () => {
     if (quantity > 1) {
       setQuantity(quantity - 1);
     }
   };
-  
+
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
   };
-  
+
+  const formatPrice = (price) => price.toLocaleString('vi-VN') + ' VND';
+
+  const selectedSizeObj = sizes.find(size => size.value === selectedSize);
+
+  const priceDisplay = selectedSizeObj
+    ? formatPrice(selectedSizeObj.price)
+    : `${formatPrice(Math.min(...sizes.map(size => size.price)))} - ${formatPrice(Math.max(...sizes.map(size => size.price)))}`
+
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded w-full max-w-3xl relative">
-        <button className="absolute top-2 right-2 text-2xl font-bold">X</button>
-        
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="flex-shrink-0 w-full md:w-1/3">
-            <div className="mb-4">
-              <img 
-                src="/api/placeholder/300/300"
-                alt="Versace Bright Crystal" 
-                className="w-full" 
-              />
-            </div>
-            
-            <div className="flex gap-2">
-              <img src="/api/placeholder/60/60" alt="Thumbnail 1" className="w-16 h-16 border" />
-              <img src="/api/placeholder/60/60" alt="Thumbnail 2" className="w-16 h-16 border" />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white p-4 md:p-6 rounded w-full max-w-4xl relative flex flex-col md:flex-row">
+        <button
+          className="absolute top-0 right-2 text-red-600 text-2xl md:text-4xl font-bold"
+          onClick={handleClosePopup}
+        >
+          &times;
+        </button>
+
+        <div className="w-full md:w-1/2 mb-4 md:mb-0">
+          <div className="mb-4 flex justify-center items-center border">
+            <img
+              src={selectedProduct.img}
+              alt={selectedProduct.name}
+              className="w-32 h-32 md:w-64 md:h-64"
+            />
+          </div>
+
+          <div className="flex gap-2 justify-center">
+            <img src={selectedProduct.img} alt="Thumbnail 1" className="w-12 h-12 md:w-24 md:h-24 border" />
+            <img src={selectedProduct.img} alt="Thumbnail 2" className="w-12 h-12 md:w-24 md:h-24 border" />
+          </div>
+        </div>
+
+        <div className="p-2 md:p-4 w-full md:w-1/2 flex flex-col justify-start items-start">
+          <p className="text-start text-base md:text-xl font-bold mb-2 md:mb-4">{selectedProduct.name}</p>
+          <div className="flex flex-row justify-between items-start md:items-center w-full">
+            <p className="text-sm md:text-base">Thương hiệu: <span className="text-red-600 font-semibold">{selectedProduct.brand}</span></p>
+            <p className="text-sm md:text-base">Quốc gia: <span className="text-red-600 font-semibold">{selectedProduct.country}</span></p>
+          </div>
+          <p className="text-start text-red-600 font-bold my-2 text-xl md:text-2xl">{priceDisplay}</p>
+
+          <div className="mb-4 w-full">
+            <div className="flex flex-wrap gap-2 w-full justify-between">
+              {sizes.map((size) => (
+                <button
+                  key={size.value}
+                  className={`border px-4 py-1 text-xs md:text-sm rounded-md ${selectedSize === size.value
+                    ? 'bg-black text-white'
+                    : 'border-gray-300'
+                    }`}
+                  onClick={() => handleSizeSelect(size.value)}
+                >
+                  {size.label}
+                </button>
+              ))}
             </div>
           </div>
-          
-          <div className="flex-1">
-            <h1 className="text-xl font-bold mb-2">Nước Hoa Nữ Versace Bright Crystal EDT</h1>
-            
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center">
-                <div className="bg-red-600 text-white px-2 py-1">
-                  <span className="font-bold">5</span>★
-                </div>
-                <span className="text-gray-500 text-sm ml-2">(38 đánh giá)</span>
-              </div>
-              <div className="flex items-center">
-                <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>
-                <span className="text-green-500">CÒN HÀNG</span>
-              </div>
+
+          <div className="flex items-center gap-2 mb-4 w-full">
+            <p className="text-sm md:text-base">Số lượng: </p>
+            <div className="flex items-center gap-2">
+              <button
+                className="border font-bold border-gray-300 px-2 md:px-4 py-1 md:py-2 rounded-md"
+                onClick={handleDecrement}
+              >
+                -
+              </button>
+              <div className="font-bold text-base md:text-xl px-2 md:px-4 py-1">{quantity}</div>
+              <button
+                className="border font-bold border-gray-300 px-2 md:px-4 py-1 md:py-2 rounded-md"
+                onClick={handleIncrement}
+              >
+                +
+              </button>
             </div>
-            
-            <div className="flex gap-4 mb-4 text-sm">
-              <div>
-                <span>Mã sản phẩm: </span>
-                <span className="font-bold">#1234567890</span>
-              </div>
-              <div>
-                <span>Thương hiệu: </span>
-                <span className="font-bold text-red-600">VERSACE</span>
-              </div>
-              <div>
-                <span>Quốc gia: </span>
-                <span className="font-bold">Pháp</span>
-              </div>
-            </div>
-            
-            <div className="mb-4">
-              <div className="text-gray-600">150.000 VND - 2.400.000 VND</div>
-              <div className="text-xl font-bold text-red-600">2.400.000 VND</div>
-            </div>
-            
-            <div className="mb-4">
-              <div className="flex gap-2">
-                {sizes.map((size) => (
-                  <button
-                    key={size.value}
-                    className={`border px-6 py-2 ${
-                      selectedSize === size.value 
-                        ? size.value === '200ml' ? 'bg-black text-white' : 'border-black' 
-                        : 'border-gray-300'
-                    }`}
-                    onClick={() => handleSizeSelect(size.value)}
-                  >
-                    {size.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="mb-6">
-              <div className="flex items-center gap-2">
-                <span>Số lượng:</span>
-                <div className="flex">
-                  <button 
-                    className="border border-gray-300 px-3 py-1"
-                    onClick={handleDecrement}
-                  >
-                    -
-                  </button>
-                  <div className="border-t border-b border-gray-300 px-6 py-1">{quantity}</div>
-                  <button 
-                    className="border border-gray-300 px-3 py-1"
-                    onClick={handleIncrement}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex gap-2">
-              <button className="border border-gray-300 px-6 py-2 flex-1">Yêu thích</button>
-              <button className="border border-gray-300 px-6 py-2 flex-1">Thêm vào giỏ hàng</button>
-              <button className="border border-gray-300 px-6 py-2 flex-1">Mua ngay</button>
-            </div>
-            
-            <div className="mt-6 flex items-center">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <span className="text-lg">📞</span>
-                </div>
-                <div>
-                  <span>HOTLINE ĐẶT HÀNG:</span>
-                  <span className="text-red-600 font-bold ml-2">0123456790</span>
-                </div>
-              </div>
-            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 w-full justify-between">
+            <button className="bg-gray-200 text-black px-4 py-2 text-xs md:text-sm rounded-md hover:bg-gray-300 transition duration-300">
+              Yêu thích
+            </button>
+            <button className="bg-red-600 text-white px-4  py-2 text-xs md:text-sm rounded-md hover:bg-red-700 transition duration-300">
+              Thêm vào giỏ hàng
+            </button>
+            <button className="bg-black text-white px-4  py-2 text-xs md:text-sm rounded-md hover:bg-gray-800 transition duration-300">
+              Mua ngay
+            </button>
           </div>
         </div>
       </div>

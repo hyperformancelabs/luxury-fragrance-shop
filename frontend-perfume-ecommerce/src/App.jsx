@@ -29,6 +29,7 @@ function App() {
               <ChatBot />
               <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route path='/:category' element={<ProductList />} />
                 <Route path="/products" element={<ProductList />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/login" element={<Login />} />
@@ -41,7 +42,7 @@ function App() {
                 <Route path="*" element={<h1>404 Not Found</h1>} />   
               </Routes>
             </main> 
-             {/* <Footer /> */}
+             <Footer />
           </div>
         </CartProvider>
       </AuthProvider>

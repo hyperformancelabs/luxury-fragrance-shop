@@ -2,7 +2,7 @@ import React from 'react'
 
 const Brand = () => {
   return (
-    <div className="flex flex-col lg:flex-row my-10 px-4 lg:px-16 gap-6">
+    <div id='brand' className="flex flex-col lg:flex-row my-10 px-4 lg:px-16 gap-6">
       <div className="lg:w-1/2 w-full">
         <img src="brand/5.jpg" alt="Main brand" className="w-full h-auto rounded-md" />
       </div>

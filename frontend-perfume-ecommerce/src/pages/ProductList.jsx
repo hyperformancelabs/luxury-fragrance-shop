@@ -1,8 +1,32 @@
 import React, { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import QuickView from '../components/QuickView';
 
 const ProductList = () => {
+  const { category } = useParams();
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState('mới nhất');
+  const [sortBy, setSortBy] = useState('bán chạy');
+  const [showPopup, setShowPopup] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+
+
+
+  const handleQuickView = (product) => {
+    setSelectedProduct(product);
+    setShowPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    setSelectedProduct(null);
+    setQuantity(1);
+  };
+
+  const navigate = useNavigate();
+
+  const handleClickProduct = (id) => {
+    navigate(`/products/${id}`);
+  };
   
 
   const products = Array(15).fill().map((_, i) => ({
@@ -12,7 +36,7 @@ const ProductList = () => {
     capacity: '5ml - 30ml',
     originalPrice: 250000,
     salePrice: 2400000,
-    imageUrl: 'sp2.jpg',
+    imageUrl: '/sp2.jpg',
     rating: 4.5,
     reviewCount: 120
   }));
@@ -102,10 +126,10 @@ const ProductList = () => {
         <div className="container px-16 mx-8">
           <div className="flex items-center text-sm">
             <a href="/" className="hover:underline">TRANG CHỦ</a>
+            {/* <span className="mx-2">/</span>
+            <a href="/danh-muc" className="hover:underline">DANH MỤC</a> */}
             <span className="mx-2">/</span>
-            <a href="/danh-muc" className="hover:underline">DANH MỤC</a>
-            <span className="mx-2">/</span>
-            <span>NƯỚC HOA NAM</span>
+            <span>{category}</span>
           </div>
         </div>
       </header>
@@ -183,7 +207,7 @@ const ProductList = () => {
     
         <div className="flex-1">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold mb-4 text-center">NƯỚC HOA NAM</h1>
+            <h1 className="text-2xl font-bold mb-4 text-center">{category}</h1>
             
     
             <div className="flex mb-8 text-sm justify-center items-center">
@@ -204,7 +228,9 @@ const ProductList = () => {
       
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {products.map(product => (
-                <div key={product.id} className="bg-white rounded shadow overflow-hidden">
+                <div key={product.id} className="bg-white rounded shadow overflow-hidden hover:shadow-lg cursor-pointer"
+                onClick={() => handleClickProduct(product.id)}
+                >
                   <img src={product.imageUrl} alt={product.name} className="w-full h-48 object-cover" />
                   <div className="p-3">
                     {/* <h3 className="font-semibold text-center">{product.name}</h3> */}
@@ -217,7 +243,7 @@ const ProductList = () => {
                     </div>
                     <div className="mt-2 flex justify-between">
                       <button className="bg-red-600 text-white text-xs px-3 py-1 rounded">Yêu thích</button>
-                      <button className="bg-gray-800 text-white text-xs px-3 py-1 rounded">Xem thêm</button>
+                      <button className="bg-gray-800 text-white text-xs px-3 py-1 rounded" onClick={handleQuickView}>Xem thêm</button>
                     </div>
                   </div>
                 </div>
@@ -228,6 +254,12 @@ const ProductList = () => {
           </div>
         </div>
       </div>
+      {showPopup && selectedProduct && (
+        <QuickView
+          selectedProduct={selectedProduct}
+          handleClosePopup={handleClosePopup}
+        />
+      )}
     </div>
   );
 };
