@@ -6,7 +6,6 @@ const Footer = () => {
     <footer className="bg-black text-white pt-8 pb-4">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Customer Support Column */}
           <div>
             <h3 className="text-lg font-bold mb-4">HỖ TRỢ KHÁCH HÀNG</h3>
             <ul className="space-y-2">
@@ -18,7 +17,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* About APH Perfume Column */}
           <div>
             <h3 className="text-lg font-bold mb-4">VỀ APH PERFUME</h3>
             <ul className="space-y-2">
@@ -30,7 +28,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Social Media and Payment Column */}
           <div>
             <div className="mb-6">
               <h3 className="text-lg font-bold mb-4">THEO DÕI CHÚNG TÔI TẠI</h3>
@@ -72,15 +69,11 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Map Section */}
         <div className="mt-8">
           <img src="/api/placeholder/400/200" alt="Store Location Map" className="w-full h-auto rounded-md" />
         </div>
 
-        {/* Divider */}
         <hr className="my-8 border-gray-700" />
-
-        {/* Company Info */}
         <div className="text-center">
           <h2 className="text-xl font-bold mb-2">APH PERFUME - Đỉnh cao nước hoa chiết chính hãng</h2>
           <p className="mb-1">Địa chỉ: 11 Nguyễn Đình Chiểu - Phường Đa Kao - Quận 1 - TP. Hồ Chí Minh</p>

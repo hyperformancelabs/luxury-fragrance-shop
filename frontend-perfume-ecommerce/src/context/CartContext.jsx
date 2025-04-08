@@ -9,16 +9,14 @@ export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [guestId, setGuestId] = useState('');
 
-  // Khởi tạo giỏ hàng khi component mount
+
   useEffect(() => {
-    // Nếu người dùng đã đăng nhập
     if (user) {
       const userCart = localStorage.getItem(`cart_${user.id}`);
       if (userCart) {
         setCart(JSON.parse(userCart));
       }
     } else {
-      // Nếu là khách
       let storedGuestId = localStorage.getItem('guestId');
       if (!storedGuestId) {
         storedGuestId = uuidv4();
@@ -33,7 +31,7 @@ export const CartProvider = ({ children }) => {
     }
   }, [user]);
 
-  // Cập nhật giỏ hàng trong localStorage khi giỏ hàng thay đổi
+
   useEffect(() => {
     if (cart.length > 0) {
       if (user) {
@@ -44,32 +42,26 @@ export const CartProvider = ({ children }) => {
     }
   }, [cart, user, guestId]);
 
-  // Hàm thêm sản phẩm vào giỏ hàng
   const addToCart = (product) => {
     setCart(prevCart => {
-      // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa
       const existingItem = prevCart.find(item => item.id === product.id);
       
       if (existingItem) {
-        // Nếu đã có, tăng số lượng
         return prevCart.map(item => 
           item.id === product.id 
             ? { ...item, quantity: item.quantity + 1 } 
             : item
         );
       } else {
-        // Nếu chưa có, thêm mới với số lượng là 1
         return [...prevCart, { ...product, quantity: 1 }];
       }
     });
   };
 
-  // Hàm xóa sản phẩm khỏi giỏ hàng
   const removeFromCart = (productId) => {
     setCart(prevCart => prevCart.filter(item => item.id !== productId));
   };
 
-  // Hàm cập nhật số lượng sản phẩm
   const updateQuantity = (productId, quantity) => {
     setCart(prevCart => 
       prevCart.map(item => 
@@ -80,12 +72,11 @@ export const CartProvider = ({ children }) => {
     );
   };
 
-  // Hàm tính tổng tiền giỏ hàng
   const calculateTotal = () => {
     return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
-  // Hàm xóa toàn bộ giỏ hàng
+
   const clearCart = () => {
     setCart([]);
     if (user) {
@@ -95,7 +86,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Hàm chuyển giỏ hàng từ khách sang người dùng khi đăng nhập
+
   const mergeGuestCartWithUserCart = (userId) => {
     const guestCart = localStorage.getItem(`cart_guest_${guestId}`);
     if (guestCart) {

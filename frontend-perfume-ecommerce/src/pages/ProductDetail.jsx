@@ -5,7 +5,6 @@ const ProductDetail = () => {
   const [selectedSize, setSelectedSize] = useState('50ml');
   const [activeTab, setActiveTab] = useState('Hương');
   
-  // Product data
   const product = {
     id: 1,
     name: 'Nước Hoa Nữ Versace Bright Crystal EDT',
@@ -33,7 +32,7 @@ const ProductDetail = () => {
       }
   };
 
-  // Similar products data
+
   const similarProducts = [
     {
       id: 1,
@@ -93,7 +92,6 @@ const ProductDetail = () => {
     'BAN ĐÊM': 'bg-gray-600'
   };
 
-  // Product details tabs
   const tabContent = {
     'Hương': [
       'Hương đầu: Jừa, Hạt Yuzu, Đào, Thuốc lá',
@@ -119,7 +117,6 @@ const ProductDetail = () => {
     ]
   };
 
-  // Handle quantity change
   const decreaseQuantity = () => {
     if (quantity > 1) setQuantity(quantity - 1);
   };
@@ -204,7 +201,6 @@ const ProductDetail = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      {/* Header with breadcrumb */}
       <header className="bg-black text-white p-4">
         <div className="container mx-auto">
           <div className="flex items-center text-sm">
@@ -220,9 +216,7 @@ const ProductDetail = () => {
       </header>
       
       <div className="container mx-auto p-4">
-        {/* Product main section */}
         <div className="flex flex-col md:flex-row mb-8">
-          {/* Product images */}
           <div className="md:w-2/5 mb-4 md:mb-0">
             <div className="mb-4">
               <img src={product.images[0]} alt={product.name} className='w-full h-auto' />
@@ -236,11 +230,9 @@ const ProductDetail = () => {
             </div>
           </div>
           
-          {/* Product info */}
           <div className="md:w-3/5 md:pl-8">
             <h1 className="text-2xl font-medium mb-2">{product.name}</h1>
             
-            {/* Rating */}
             <div className="flex items-center mb-2">
               <div className="flex mr-2">
                 {Array(5).fill().map((_, i) => (
@@ -256,7 +248,6 @@ const ProductDetail = () => {
               </div>
             </div>
             
-            {/* Product details */}
             <div className="mb-4 flex text-sm">
               <div className="mr-4">
                 <span className="text-gray-500">Mã sản phẩm: </span>
@@ -272,7 +263,6 @@ const ProductDetail = () => {
               </div>
             </div>
             
-            {/* Price */}
             <div className="mb-4">
               <div className="flex items-center mb-1">
                 <span className="line-through text-gray-500 mr-2">{product.originalPrice.toLocaleString()} VND</span>
@@ -281,7 +271,6 @@ const ProductDetail = () => {
               <div className="text-red-600 font-bold">{product.finalPrice.toLocaleString()} VND</div>
             </div>
             
-            {/* Size selector */}
             <div className="mb-4">
               <div className="flex gap-2">
                 {product.sizes.map(size => (
@@ -296,7 +285,6 @@ const ProductDetail = () => {
               </div>
             </div>
             
-            {/* Quantity */}
             <div className="mb-4">
               <span className="text-sm mr-2">Số lượng:</span>
               <div className="inline-flex border border-gray-300">
@@ -315,8 +303,7 @@ const ProductDetail = () => {
                 </button>
               </div>
             </div>
-            
-            {/* Action buttons */}
+   
             <div className="mb-4 flex gap-2">
               <button className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded">
                 Thêm vào yêu thích
@@ -329,7 +316,6 @@ const ProductDetail = () => {
               </button>
             </div>
             
-            {/* Hotline */}
             <div className="flex items-center">
               <svg className="w-6 h-6 text-gray-800 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
@@ -349,7 +335,6 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Product details tabs */}
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4">CHI TIẾT SẢN PHẨM</h2>
           

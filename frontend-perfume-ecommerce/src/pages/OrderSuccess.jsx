@@ -12,11 +12,10 @@ const OrderSuccess = () => {
     items: []
   });
 
-  // Mock loading order details - in a real app, you would fetch this from an API
+
   useEffect(() => {
-    // Simulate API fetch with a timeout
     const timer = setTimeout(() => {
-      // This would be replaced with actual API data
+
       setOrderDetails(prev => ({
         ...prev,
         items: [
@@ -35,7 +34,6 @@ const OrderSuccess = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
-      {/* Success Header */}
       <div className="flex flex-col items-center justify-center mb-10 text-center">
         <CheckCircle className="text-green-500 h-16 w-16 mb-4" />
         <h1 className="text-3xl font-bold text-gray-800">Đặt hàng thành công!</h1>
@@ -44,14 +42,12 @@ const OrderSuccess = () => {
         </p>
       </div>
 
-      {/* Order Information Card */}
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">Thông tin đơn hàng</h2>
         </div>
         
         <div className="p-6">
-          {/* Order Details */}
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             <div>
               <p className="text-sm text-gray-500 mb-1">Mã đơn hàng</p>
@@ -77,7 +73,6 @@ const OrderSuccess = () => {
             </div>
           </div>
 
-          {/* Order Items */}
           <div className="border-t border-gray-200 pt-6 mb-6">
             <h3 className="text-lg font-semibold mb-4">Sản phẩm đã mua</h3>
             
@@ -100,7 +95,7 @@ const OrderSuccess = () => {
             )}
           </div>
 
-          {/* Total */}
+
           <div className="border-t border-gray-200 pt-4">
             <div className="flex justify-between items-center font-bold text-lg">
               <span>Tổng cộng</span>
@@ -110,7 +105,6 @@ const OrderSuccess = () => {
         </div>
       </div>
 
-      {/* Estimated Delivery */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">
         <div className="flex items-start">
           <div className="mr-4 text-blue-500">📦</div>
@@ -123,7 +117,7 @@ const OrderSuccess = () => {
         </div>
       </div>
 
-      {/* Action Buttons */}
+
       <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
         <Link 
           to="/account/orders" 

@@ -49,7 +49,7 @@ const Cart = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-      {/* Cart Navigation Steps */}
+
       <div className="flex items-center justify-center bg-gray-50 p-4 rounded mb-8">
         <div className="flex items-center font-bold">
           <span className="mr-1">🛒</span> Giỏ hàng
@@ -64,10 +64,10 @@ const Cart = () => {
         </div>
       </div>
 
-      {/* Cart Content */}
+
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="lg:w-2/3">
-          {/* Cart Items Table */}
+  
           <div className="border-b pb-4 hidden md:grid md:grid-cols-12 font-medium text-sm">
             <div className="md:col-span-6">Sản phẩm</div>
             <div className="md:col-span-3 text-center">Số lượng</div>
@@ -133,7 +133,7 @@ const Cart = () => {
           </div>
         </div>
 
-        {/* Order Summary */}
+
         <div className="lg:w-1/3 bg-gray-50 p-6 h-fit">
           <h2 className="text-lg font-bold pb-4 border-b border-gray-200">
             TÓM TẮT ĐƠN HÀNG
