@@ -70,7 +70,15 @@ const Footer = () => {
         </div>
 
         <div className="mt-8">
-          <img src="/api/placeholder/400/200" alt="Store Location Map" className="w-full h-auto rounded-md" />
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d244.9552993636717!2d106.7006798196022!3d10.789486284853194!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317528b545b5903b%3A0x2381a6fe3f690419!2zSOG7jWMgdmnhu4duIEPDtG5nIG5naOG7hyBCxrB1IGNow61uaCBWaeG7hW4gdGjDtG5nIEPGoSBz4bufIHThuqFpIFRQLiBI4buTIENow60gTWluaA!5e0!3m2!1svi!2s!4v1734085372744!5m2!1svi!2s"
+            width="100%"
+            height="300"
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy"
+            title="Store Location"
+          ></iframe>
         </div>
 
         <hr className="my-8 border-gray-700" />
