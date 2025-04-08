@@ -1,6 +1,3 @@
-USE [EnterpriseLFSDB];
-GO
-
 -- 1. Table Employee
 ALTER TABLE [Employee]
 ADD

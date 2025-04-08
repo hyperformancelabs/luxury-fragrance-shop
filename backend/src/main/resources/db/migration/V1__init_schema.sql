@@ -1,6 +1,3 @@
-USE [EnterpriseLFSDB];
-GO
-
 -- 1. Table Employee
 CREATE TABLE [Employee] (
     [employee_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
