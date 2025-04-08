@@ -37,7 +37,7 @@ Chỉnh sửa tệp mới để điều chỉnh:
 - `CONTAINER_NAME`: Tùy chỉnh tên container nếu cần
 - `MSSQL_DATABASE`: Tên cơ sở dữ liệu mặc định sẽ được tạo
 
-### 2. Các lệnh có sẵn
+### 2. Các lệnh quản lý cơ bản
 
 Các tập lệnh sau có sẵn để quản lý container cơ sở dữ liệu của bạn:
 
@@ -47,22 +47,69 @@ Các tập lệnh sau có sẵn để quản lý container cơ sở dữ liệu 
 | `./stop.sh` | Dừng container cơ sở dữ liệu | `./stop.sh [env_file]` |
 | `./reset.sh` | Đặt lại cơ sở dữ liệu (dữ liệu sẽ bị mất) | `./reset.sh [env_file]` |
 | `./delete.sh` | Xóa hoàn toàn container và volumes | `./delete.sh [env_file]` |
-| `./fast-check.sh` | Kiểm tra xem cơ sở dữ liệu có đang chạy và truy cập được không | `./fast-check.sh [env_file]` |
-| `./create-db.sh` | Tạo cơ sở dữ liệu nếu chưa tồn tại | `./create-db.sh [env_file] [db_name]` |
+| `./fast-check.sh` | Kiểm tra nhanh trạng thái DB, hiển thị danh sách databases và users | `./fast-check.sh [env_file]` |
+| `./restart.sh` | Khởi động lại container cơ sở dữ liệu | `./restart.sh [env_file]` |
+| `./dbctl.sh` | Công cụ quản lý database toàn diện (xem phần bên dưới) | `./dbctl.sh [options]` |
+| `./synconfigs.sh` | Đồng bộ hóa các biến môi trường giữa thư mục gốc và database | `./synconfigs.sh` |
 
 Đối với tất cả các tập lệnh, bạn có thể tùy chọn chỉ định đường dẫn tệp môi trường tùy chỉnh làm đối số đầu tiên. Nếu không được chỉ định, các tập lệnh sẽ tìm kiếm `.env.local` trước, sau đó là `.env`.
 
-### 3. Thông tin kết nối cơ sở dữ liệu
+### 3. Công cụ quản lý SQL Server (dbctl.sh)
+
+`dbctl.sh` là một công cụ toàn diện để quản lý cơ sở dữ liệu SQL Server:
+
+**Các tính năng chính:**
+- Tạo và xóa database
+- Tạo và xóa tài khoản người dùng
+- Quản lý quyền hạn người dùng
+- Thay đổi mật khẩu người dùng
+- Hiển thị thông tin hệ thống và cơ sở dữ liệu
+
+**Cách sử dụng:**
+
+1. **Chế độ tương tác:** Chạy không có tham số để mở menu tương tác
+   ```bash
+   ./dbctl.sh
+   ```
+
+2. **Chế độ lệnh trực tiếp:**
+   ```bash
+   ./dbctl.sh --create-db mydb
+   ./dbctl.sh --create-user username password
+   ./dbctl.sh --modify-user username mydb
+   ./dbctl.sh --show-info
+   ```
+
+3. **Tùy chọn file môi trường:**
+   ```bash
+   ./dbctl.sh --env .env.custom
+   ```
+
+Để xem tất cả các tùy chọn:
+```bash
+./dbctl.sh --help
+```
+
+### 4. Công cụ đồng bộ hóa cấu hình (synconfigs.sh)
+
+Script `synconfigs.sh` giúp đồng bộ hóa các biến môi trường giữa các file cấu hình khác nhau:
+
+- Đồng bộ từ file môi trường gốc (thư mục dự án) sang thư mục database
+- Hỗ trợ cả `.env`, `.env.example` và `.env.local`
+- Tự động phát hiện các biến chung và chỉ đồng bộ những biến này
+- Bảo toàn cấu trúc và định dạng của file đích
+
+### 5. Thông tin kết nối cơ sở dữ liệu
 
 Khi cơ sở dữ liệu đang chạy, bạn có thể kết nối với nó bằng:
 
 - **Máy chủ**: `localhost` hoặc `127.0.0.1`
 - **Cổng**: Như được cấu hình trong tệp `.env` của bạn (mặc định: 1433)
-- **Tên người dùng**: `sa`
-- **Mật khẩu**: Như được cấu hình trong tệp `.env` của bạn
-- **Cơ sở dữ liệu**: Sử dụng giá trị `MSSQL_DATABASE` từ file môi trường hoặc chỉ định khi chạy script `create-db.sh`
+- **Tên người dùng**: `sa` hoặc tài khoản bạn đã tạo
+- **Mật khẩu**: Như được cấu hình trong tệp môi trường
+- **Cơ sở dữ liệu**: Sử dụng giá trị `MSSQL_DATABASE` hoặc database bạn đã tạo với `dbctl.sh`
 
-## Cấu hình Docker Compose và Dockerfile
+## Cấu trúc Docker
 
 Dự án sử dụng hai file cấu hình chính để thiết lập môi trường:
 
@@ -95,5 +142,6 @@ Các vấn đề thường gặp và giải pháp:
 ## Lưu ý về bảo mật
 
 - Mật khẩu SA mặc định trong `.env.example` chỉ để minh họa. Luôn sử dụng mật khẩu mạnh, độc nhất trong sản xuất.
+- Sử dụng `dbctl.sh` để tạo người dùng có quyền hạn phù hợp thay vì sử dụng tài khoản SA cho ứng dụng.
 - Xem xét giới hạn quyền truy cập vào cổng cơ sở dữ liệu trong môi trường sản xuất.
 - Sao lưu dữ liệu của bạn thường xuyên nếu được sử dụng trong sản xuất.
