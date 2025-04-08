@@ -70,7 +70,6 @@ const Profile = () => {
               
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Left Column - Form Fields */}
                   <div className="md:col-span-2">
                     <ProfileField 
                       label="Tên" 
@@ -163,7 +162,7 @@ const Profile = () => {
                     </div>
                   </div>
                   
-                  {/* Right Column - Avatar */}
+
                   <div className="md:col-span-1 flex flex-col items-center justify-start">
                     <div className="w-32 h-32 rounded-full bg-gray-200 mb-4 flex items-center justify-center">
                       <img src="/avt.jpg" alt="" className='rounded-full' />
@@ -179,7 +178,6 @@ const Profile = () => {
                   </div>
                 </div>
                 
-                {/* Edit Button */}
                 <div className="mt-8 flex justify-center">
                   <button 
                     className={`flex items-center space-x-2 px-8 py-3 rounded font-medium ${

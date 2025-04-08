@@ -6,8 +6,6 @@ const TestProduct = () => {
   const { addToCart } = useCart();
   
   useEffect(() => {
-    // Giả lập dữ liệu sản phẩm
-    // Trong thực tế, bạn sẽ gọi API để lấy danh sách sản phẩm
     const dummyProducts = [
       { id: '1', name: 'Sản phẩm 1', price: 100000, description: 'Mô tả sản phẩm 1' },
       { id: '2', name: 'Sản phẩm 2', price: 200000, description: 'Mô tả sản phẩm 2' },

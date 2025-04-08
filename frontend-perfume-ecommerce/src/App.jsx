@@ -15,6 +15,7 @@ import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import Profile from './pages/Profile';
 import Wishlist from './pages/WishList';
+import ChatBot from './components/Chatbot';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Navbar />
             <Navigation />
             <main>
+              <ChatBot />
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/products" element={<ProductList />} />
@@ -38,8 +40,8 @@ function App() {
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="*" element={<h1>404 Not Found</h1>} />   
               </Routes>
-            </main>
-            <Footer />
+            </main> 
+             {/* <Footer /> */}
           </div>
         </CartProvider>
       </AuthProvider>

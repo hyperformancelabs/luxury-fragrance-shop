@@ -23,10 +23,8 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Đây là logic đăng nhập giả lập
-    // Trong thực tế, bạn sẽ gọi API đăng nhập ở đây
+
     if (formData.email && formData.password) {
-      // Giả lập thành công
       const userData = {
         id: '1',
         name: 'Người dùng',

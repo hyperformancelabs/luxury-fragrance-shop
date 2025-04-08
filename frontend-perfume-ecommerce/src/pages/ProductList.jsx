@@ -70,7 +70,6 @@ const ProductList = () => {
     }
   ];
 
-  // Rating options
   const ratingOptions = [
     { stars: 5, count: 1394 },
     { stars: 4, count: 90 },
@@ -99,7 +98,6 @@ const ProductList = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-gray-900 text-white p-4">
         <div className="container px-16 mx-8">
           <div className="flex items-center text-sm">

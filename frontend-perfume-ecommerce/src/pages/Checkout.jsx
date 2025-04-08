@@ -28,7 +28,7 @@ const Checkout = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Process checkout logic here
+
     console.log('Form data:', formData);
     console.log('Payment method:', paymentMethod);
     console.log('Order items:', cart);
@@ -48,7 +48,7 @@ const Checkout = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-      {/* Checkout Navigation Steps */}
+
       <div className="flex items-center justify-center bg-gray-50 p-4 rounded mb-8">
         <div className="flex items-center text-gray-500">
           <span className="mr-1">🛒</span> Giỏ hàng
@@ -177,7 +177,7 @@ const Checkout = () => {
             </div>
           </div>
 
-          {/* Order Summary */}
+   
           <div className="lg:w-1/3">
             <div className="border border-gray-200 p-6">
               <h2 className="text-xl font-bold mb-6 text-center">
