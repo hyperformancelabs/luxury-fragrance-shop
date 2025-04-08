@@ -37,7 +37,7 @@ Edit the new file to adjust:
 - `CONTAINER_NAME`: Customize the container name if needed
 - `MSSQL_DATABASE`: Default database name to be created
 
-### 2. Available Commands
+### 2. Basic Management Commands
 
 The following scripts are available to manage your database container:
 
@@ -47,22 +47,69 @@ The following scripts are available to manage your database container:
 | `./stop.sh` | Stops the database container | `./stop.sh [env_file]` |
 | `./reset.sh` | Resets the database (data will be lost) | `./reset.sh [env_file]` |
 | `./delete.sh` | Completely removes container and volumes | `./delete.sh [env_file]` |
-| `./fast-check.sh` | Checks if the database is running and accessible | `./fast-check.sh [env_file]` |
-| `./create-db.sh` | Creates database if it doesn't exist | `./create-db.sh [env_file] [db_name]` |
+| `./fast-check.sh` | Quick DB status check, displays databases and users | `./fast-check.sh [env_file]` |
+| `./restart.sh` | Restarts the database container | `./restart.sh [env_file]` |
+| `./dbctl.sh` | Comprehensive database management tool (see below) | `./dbctl.sh [options]` |
+| `./synconfigs.sh` | Synchronizes environment variables between root and database directory | `./synconfigs.sh` |
 
 For all scripts, you can optionally specify a custom environment file path as the first argument. If not specified, the scripts will look for `.env.local` first, then `.env`.
 
-### 3. Database Connection Information
+### 3. SQL Server Management Tool (dbctl.sh)
+
+`dbctl.sh` is a comprehensive tool for managing your SQL Server database:
+
+**Key features:**
+- Create and delete databases
+- Create and delete user accounts
+- Manage user permissions
+- Change user passwords
+- Display system and database information
+
+**Usage:**
+
+1. **Interactive mode:** Run without parameters to open the interactive menu
+   ```bash
+   ./dbctl.sh
+   ```
+
+2. **Direct command mode:**
+   ```bash
+   ./dbctl.sh --create-db mydb
+   ./dbctl.sh --create-user username password
+   ./dbctl.sh --modify-user username mydb
+   ./dbctl.sh --show-info
+   ```
+
+3. **Environment file option:**
+   ```bash
+   ./dbctl.sh --env .env.custom
+   ```
+
+To see all available options:
+```bash
+./dbctl.sh --help
+```
+
+### 4. Configuration Sync Tool (synconfigs.sh)
+
+The `synconfigs.sh` script helps synchronize environment variables between different configuration files:
+
+- Synchronizes from root environment files to database directory
+- Supports `.env`, `.env.example`, and `.env.local` files
+- Automatically detects common variables and only synchronizes these
+- Preserves structure and format of the destination file
+
+### 5. Database Connection Information
 
 Once the database is running, you can connect to it using:
 
 - **Server**: `localhost` or `127.0.0.1`
 - **Port**: As configured in your `.env` file (default: 1433)
-- **Username**: `sa`
-- **Password**: As configured in your `.env` file
-- **Database**: Use the `MSSQL_DATABASE` value from your environment file or specify when running the `create-db.sh` script
+- **Username**: `sa` or an account you've created
+- **Password**: As configured in your environment file
+- **Database**: Use the `MSSQL_DATABASE` value or a database you've created with `dbctl.sh`
 
-## Docker Compose and Dockerfile Configuration
+## Docker Configuration
 
 The project uses two main configuration files to set up the environment:
 
@@ -95,5 +142,6 @@ Common issues and solutions:
 ## Security Considerations
 
 - The default SA password in `.env.example` is for demonstration only. Always use a strong, unique password in production.
+- Use `dbctl.sh` to create users with appropriate permissions instead of using the SA account for applications.
 - Consider restricting access to the database port in production environments.
 - Backup your data regularly if used in production.

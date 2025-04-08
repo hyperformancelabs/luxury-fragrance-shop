@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: ${CONTAINER_NAME}
-    platform: linux/amd64
+    platform: ${PLATFORM}
     restart: always
     environment:
       ACCEPT_EULA: Y
