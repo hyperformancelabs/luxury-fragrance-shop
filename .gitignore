@@ -42,12 +42,4 @@ replay_pid*
 *.env.development
 *.env.production
 
-# Image
-*.png
-*.jpg
-*.jpeg
-# Video
-*.mp4
-*.avi
-# Audio
-*.mp3
+*node_modules
