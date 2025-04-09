@@ -1,46 +1,23 @@
-import { useCart } from '../context/CartContext';
-import { Link } from 'react-router-dom';
+import { Trash2 } from "lucide-react";
+import { useCart } from "../context/CartContext";
+import { Link } from "react-router-dom";
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, calculateTotal } = useCart();
 
-  const sampleProducts = [
-    {
-      id: 'versace-bright-crystal-1',
-      name: 'Nước hoa nữ Versace Bright Crystal EDT',
-      price: 5500000,
-      image: '/images/versace-bright-crystal.jpg',
-      quantity: 1
-    },
-    {
-      id: 'versace-bright-crystal-2',
-      name: 'Nước hoa nữ Versace Bright Crystal EDT',
-      price: 5500000,
-      image: '/images/versace-bright-crystal.jpg',
-      quantity: 1
-    },
-    {
-      id: 'versace-bright-crystal-3',
-      name: 'Nước hoa nữ Versace Bright Crystal EDT',
-      price: 5500000,
-      image: '/images/versace-bright-crystal.jpg',
-      quantity: 1
-    },
-    {
-      id: 'versace-bright-crystal-4',
-      name: 'Nước hoa nữ Versace Bright Crystal EDT',
-      price: 5500000,
-      image: '/images/versace-bright-crystal.jpg',
-      quantity: 1
-    }
-  ];
+ 
 
   if (cart.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <h2 className="text-2xl font-semibold mb-2">Giỏ hàng trống</h2>
-        <p className="text-gray-600 mb-6">Vui lòng thêm sản phẩm vào giỏ hàng</p>
-        <Link to="/products" className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition">
+        <p className="text-gray-600 mb-6">
+          Vui lòng thêm sản phẩm vào giỏ hàng
+        </p>
+        <Link
+          to="/products"
+          className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition"
+        >
           Tiếp tục mua sắm
         </Link>
       </div>
@@ -49,7 +26,6 @@ const Cart = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-
       <div className="flex items-center justify-center bg-gray-50 p-4 rounded mb-8">
         <div className="flex items-center font-bold">
           <span className="mr-1">🛒</span> Giỏ hàng
@@ -64,68 +40,96 @@ const Cart = () => {
         </div>
       </div>
 
-
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="lg:w-2/3">
-  
           <div className="border-b pb-4 hidden md:grid md:grid-cols-12 font-medium text-sm">
             <div className="md:col-span-6">Sản phẩm</div>
             <div className="md:col-span-3 text-center">Số lượng</div>
             <div className="md:col-span-3 text-right">Tổng</div>
           </div>
 
-          {cart.map(item => (
-            <div key={item.id} className="border-b py-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-              <div className="md:col-span-6 flex items-center">
-                <img 
-                  src={item.image || '/sp2.jpg'} 
-                  alt={item.name} 
-                  className="w-16 h-16 object-contain mr-4"
-                />
-                <div>
-                  <h3 className="text-sm font-normal">
-                    {item.name || "Nước hoa nữ Versace Bright Crystal EDT"}
-                  </h3>
-                </div>
-              </div>
-              
-              <div className="md:col-span-3 flex items-center justify-center">
-                <div className="flex border border-gray-300">
-                  <button 
-                    className="w-8 h-8 flex items-center justify-center bg-white border-r border-gray-300"
-                    onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                  >
-                    -
-                  </button>
-                  <input 
-                    type="text" 
-                    value={item.quantity} 
-                    readOnly 
-                    className="w-10 h-8 text-center bg-white"
-                  />
-                  <button 
-                    className="w-8 h-8 flex items-center justify-center bg-white border-l border-gray-300"
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              
-              <div className="md:col-span-3 flex justify-between items-center">
-                <span className="text-red-600 font-bold md:ml-auto">
-                  {(item.price || 5500000).toLocaleString()} VND
-                </span>
-                <button 
-                  className="p-2 text-gray-500"
-                  onClick={() => removeFromCart(item.id)}
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-          ))}
-          
+          {cart.map((item) => (
+  <div
+    key={item.id}
+    className="border-b py-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
+  >
+    <div className="md:col-span-6 flex items-center">
+      <img
+        src={item.image || "/sp2.jpg"}
+        alt={item.name}
+        className="w-16 h-16 object-contain mr-4"
+      />
+      <div>
+        <h3 className="text-sm font-normal">
+          {item.name || "Nước hoa nữ Versace Bright Crystal EDT"}
+        </h3>
+        {item.selectedSize && (
+          <p className="text-xs text-gray-500">Size: {item.selectedSize}</p>
+        )}
+      </div>
+    </div>
+
+    <div className="md:col-span-3 flex items-center justify-center">
+      <div className="flex border border-gray-300">
+        <button
+          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
+          onClick={() => updateQuantity(item.id, item.selectedSize, Math.max(1, item.quantity - 1))}
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M20 12H4"
+            ></path>
+          </svg>
+        </button>
+        <span className="flex items-center justify-center w-12 font-medium">
+          {item.quantity}
+        </span>
+        <button
+          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
+          onClick={() => updateQuantity(item.id, item.selectedSize, item.quantity + 1)}
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M12 4v16m8-8H4"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div className="md:col-span-3 flex justify-between items-center">
+      <span className="text-red-600 font-bold md:ml-auto">
+      {(item.quantity * item.price).toLocaleString("vi-VN")} VND
+
+      </span>
+      <button
+        className="p-2 text-gray-500"
+        onClick={() => removeFromCart(item.id, item.selectedSize)}
+      >
+        <Trash2 />
+      </button>
+    </div>
+  </div>
+))}
+
           <div className="mt-6">
             <Link to="/products" className="text-gray-600 hover:text-gray-800">
               ← Tiếp tục mua sắm
@@ -133,26 +137,30 @@ const Cart = () => {
           </div>
         </div>
 
-
         <div className="lg:w-1/3 bg-gray-50 p-6 h-fit">
           <h2 className="text-lg font-bold pb-4 border-b border-gray-200">
             TÓM TẮT ĐƠN HÀNG
           </h2>
-          
+
           <div className="mt-4 space-y-3">
-            {cart.map(item => (
+            {cart.map((item) => (
               <div key={item.id} className="flex justify-between text-sm">
-                <div>{item.name || "Nước hoa nữ Versace Bright Crystal EDT"}</div>
-                <div>{((item.price || 5500000) * item.quantity).toLocaleString()} VND</div>
+                <div>
+                  {item.name || "Nước hoa nữ Versace Bright Crystal EDT"}
+                </div>
+                <div>
+                  {((item.price || 5500000) * item.quantity).toLocaleString()}{" "}
+                  VND
+                </div>
               </div>
             ))}
           </div>
-          
+
           <div className="flex justify-between font-bold py-4 border-t border-gray-200 mt-4">
             <div>Tổng đơn hàng</div>
             <div>{calculateTotal().toLocaleString()} VND</div>
           </div>
-          
+
           <button className="w-full bg-blue-500 text-white py-3 rounded mt-4 font-bold hover:bg-blue-600 transition">
             Tiếp tục
           </button>
