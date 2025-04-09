@@ -160,7 +160,6 @@ const Cart = () => {
             <div>Tổng đơn hàng</div>
             <div>{calculateTotal().toLocaleString()} VND</div>
           </div>
-
           <button className="w-full bg-blue-500 text-white py-3 rounded mt-4 font-bold hover:bg-blue-600 transition">
             Tiếp tục
           </button>
