@@ -1,40 +1,43 @@
-import { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
-import { 
-  ChartBarIcon, 
-  Heart, 
-  HeartCrackIcon, 
-  PhoneCallIcon, 
-  ShoppingCartIcon, 
-  User, 
-  Menu, 
+import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+import {
+  ChartBarIcon,
+  Heart,
+  HeartCrackIcon,
+  PhoneCallIcon,
+  ShoppingCartIcon,
+  User,
+  Menu,
   X,
-  Search
-} from 'lucide-react';
+  Search,
+} from "lucide-react";
 
 const Navbar = () => {
   const { user, login } = useAuth();
   const { cart, mergeGuestCartWithUserCart } = useCart();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [showCartPopup, setShowCartPopup] = useState(false);
   const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
-  const [authMode, setAuthMode] = useState('login');
+  const [authMode, setAuthMode] = useState("login");
   const [loginData, setLoginData] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
   const [registerData, setRegisterData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
+  const {updateQuantity} = useCart();
+
+
   const cartPopupRef = useRef(null);
   const cartIconRef = useRef(null);
   const authPopupRef = useRef(null);
@@ -49,44 +52,44 @@ const Navbar = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    console.log('Tìm kiếm:', searchQuery);
+    console.log("Tìm kiếm:", searchQuery);
     setShowMobileSearch(false);
   };
 
   const calculateTotal = () => {
     if (!cart || cart.length === 0) return 0;
-    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
 
   const handleLoginChange = (e) => {
     setLoginData({
       ...loginData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleRegisterChange = (e) => {
     setRegisterData({
       ...registerData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
-    setError('');
-    
+    setError("");
+
     if (!loginData.email || !loginData.password) {
-      setError('Vui lòng nhập email và mật khẩu');
+      setError("Vui lòng nhập email và mật khẩu");
       return;
     }
-    
+
     const userData = {
-      id: '1',
-      name: 'Người dùng',
-      email: loginData.email
+      id: "1",
+      name: "Người dùng",
+      email: loginData.email,
     };
-    
+
     login(userData);
     mergeGuestCartWithUserCart(userData.id);
     setShowAuthPopup(false);
@@ -94,70 +97,70 @@ const Navbar = () => {
 
   const handleRegisterSubmit = (e) => {
     e.preventDefault();
-    setError('');
-    
+    setError("");
+
     if (!registerData.name || !registerData.email || !registerData.password) {
-      setError('Vui lòng điền đầy đủ thông tin');
+      setError("Vui lòng điền đầy đủ thông tin");
       return;
     }
-    
+
     if (registerData.password !== registerData.confirmPassword) {
-      setError('Mật khẩu không khớp');
+      setError("Mật khẩu không khớp");
       return;
     }
-    
+
     const userData = {
-      id: '2',
+      id: "2",
       name: registerData.name,
-      email: registerData.email
+      email: registerData.email,
     };
-    
+
     login(userData);
     mergeGuestCartWithUserCart(userData.id);
     setShowAuthPopup(false);
   };
 
   const toggleAuthMode = () => {
-    setAuthMode(authMode === 'login' ? 'register' : 'login');
-    setError('');
+    setAuthMode(authMode === "login" ? "register" : "login");
+    setError("");
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        showCartPopup && 
-        cartPopupRef.current && 
+        showCartPopup &&
+        cartPopupRef.current &&
         cartIconRef.current &&
-        !cartPopupRef.current.contains(event.target) && 
+        !cartPopupRef.current.contains(event.target) &&
         !cartIconRef.current.contains(event.target)
       ) {
         setShowCartPopup(false);
       }
-      
+
       if (
-        showAuthPopup && 
-        authPopupRef.current && 
+        showAuthPopup &&
+        authPopupRef.current &&
         authIconRef.current &&
-        !authPopupRef.current.contains(event.target) && 
+        !authPopupRef.current.contains(event.target) &&
         !authIconRef.current.contains(event.target)
       ) {
         setShowAuthPopup(false);
       }
 
       if (
-        showMobileMenu && 
-        mobileMenuRef.current && 
+        showMobileMenu &&
+        mobileMenuRef.current &&
         mobileButtonRef.current &&
-        !mobileMenuRef.current.contains(event.target) && 
+        !mobileMenuRef.current.contains(event.target) &&
         !mobileButtonRef.current.contains(event.target)
       ) {
         setShowMobileMenu(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showCartPopup, showAuthPopup, showMobileMenu]);
 
@@ -170,9 +173,9 @@ const Navbar = () => {
       }
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
@@ -193,18 +196,30 @@ const Navbar = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
             <div className="lg:hidden flex items-center" ref={mobileButtonRef}>
-              <button 
+              <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
                 className="text-gray-600 focus:outline-none"
               >
-                {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {showMobileMenu ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
               </button>
             </div>
 
             <div className="flex items-center">
-              <Link to="/" className="text-2xl sm:text-3xl md:text-4xl font-italic">
-                <span className="text-red-600 font-bold font-righteous italic">APH</span>
-                <span className="text-black italic font-righteous"> Perfume</span>
+              <Link
+                to="/"
+                className="text-2xl sm:text-3xl md:text-4xl font-italic"
+              >
+                <span className="text-red-600 font-bold font-righteous italic">
+                  APH
+                </span>
+                <span className="text-black italic font-righteous">
+                  {" "}
+                  Perfume
+                </span>
               </Link>
             </div>
 
@@ -217,19 +232,30 @@ const Navbar = () => {
                   onChange={handleSearchChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-300"
                 />
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-gray-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                 </button>
               </form>
             </div>
 
             <div className="lg:hidden flex items-center ml-2">
-              <button 
+              <button
                 onClick={() => setShowMobileSearch(!showMobileSearch)}
                 className="text-gray-600 focus:outline-none"
               >
@@ -238,44 +264,60 @@ const Navbar = () => {
             </div>
 
             <div className="flex items-center space-x-4 md:space-x-8">
-              <Link to="/support" className="hidden md:flex flex-col items-center text-gray-700">
+              <Link
+                to="/support"
+                className="hidden md:flex flex-col items-center text-gray-700"
+              >
                 <PhoneCallIcon className="w-5 h-5 md:w-6 md:h-6" />
                 <span className="text-xs mt-1">Liên hệ</span>
               </Link>
 
               <div className="relative" ref={authIconRef}>
                 {user ? (
-                  <Link to="/profile" className="flex flex-col items-center text-gray-700">
+                  <Link
+                    to="/profile"
+                    className="flex flex-col items-center text-gray-700"
+                  >
                     <div className="w-8 h-8 md:w-10 md:h-10">
                       <img src="/avt.jpg" alt="" className="rounded-full" />
                     </div>
                   </Link>
                 ) : (
-                  <div 
+                  <div
                     className="flex flex-col items-center text-gray-700 cursor-pointer"
                     onClick={() => setShowAuthPopup(true)}
                   >
                     <User className="w-5 h-5 md:w-6 md:h-6" />
-                    <span className="text-xs mt-1 text-center hidden sm:block">Tài khoản</span>
+                    <span className="text-xs mt-1 text-center hidden sm:block">
+                      Tài khoản
+                    </span>
                   </div>
                 )}
 
                 {showAuthPopup && !user && (
-                  <div 
+                  <div
                     className="absolute right-0 top-full mt-2 bg-white border border-gray-200 shadow-lg rounded-md z-50 w-80"
                     ref={authPopupRef}
                   >
                     <div className="p-5">
                       <div className="flex justify-between mb-4">
-                        <button 
-                          className={`px-3 py-1 font-medium ${authMode === 'login' ? 'text-red-600 border-b-2 border-red-600' : 'text-gray-500'}`}
-                          onClick={() => setAuthMode('login')}
+                        <button
+                          className={`px-3 py-1 font-medium ${
+                            authMode === "login"
+                              ? "text-red-600 border-b-2 border-red-600"
+                              : "text-gray-500"
+                          }`}
+                          onClick={() => setAuthMode("login")}
                         >
                           Đăng nhập
                         </button>
-                        <button 
-                          className={`px-3 py-1 font-medium ${authMode === 'register' ? 'text-red-600 border-b-2 border-red-600' : 'text-gray-500'}`}
-                          onClick={() => setAuthMode('register')}
+                        <button
+                          className={`px-3 py-1 font-medium ${
+                            authMode === "register"
+                              ? "text-red-600 border-b-2 border-red-600"
+                              : "text-gray-500"
+                          }`}
+                          onClick={() => setAuthMode("register")}
                         >
                           Đăng ký
                         </button>
@@ -287,10 +329,13 @@ const Navbar = () => {
                         </div>
                       )}
 
-                      {authMode === 'login' && (
+                      {authMode === "login" && (
                         <form onSubmit={handleLoginSubmit}>
                           <div className="mb-3">
-                            <label htmlFor="email" className="block text-gray-700 text-sm font-medium mb-1">
+                            <label
+                              htmlFor="email"
+                              className="block text-gray-700 text-sm font-medium mb-1"
+                            >
                               Email
                             </label>
                             <input
@@ -304,7 +349,10 @@ const Navbar = () => {
                             />
                           </div>
                           <div className="mb-4">
-                            <label htmlFor="password" className="block text-gray-700 text-sm font-medium mb-1">
+                            <label
+                              htmlFor="password"
+                              className="block text-gray-700 text-sm font-medium mb-1"
+                            >
                               Mật khẩu
                             </label>
                             <input
@@ -319,10 +367,24 @@ const Navbar = () => {
                           </div>
                           <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center">
-                              <input type="checkbox" id="remember" className="mr-2" />
-                              <label htmlFor="remember" className="text-sm text-gray-600">Ghi nhớ</label>
+                              <input
+                                type="checkbox"
+                                id="remember"
+                                className="mr-2"
+                              />
+                              <label
+                                htmlFor="remember"
+                                className="text-sm text-gray-600"
+                              >
+                                Ghi nhớ
+                              </label>
                             </div>
-                            <a href="#" className="text-sm text-red-600 hover:text-red-700">Quên mật khẩu?</a>
+                            <a
+                              href="#"
+                              className="text-sm text-red-600 hover:text-red-700"
+                            >
+                              Quên mật khẩu?
+                            </a>
                           </div>
                           <button
                             type="submit"
@@ -333,10 +395,13 @@ const Navbar = () => {
                         </form>
                       )}
 
-                      {authMode === 'register' && (
+                      {authMode === "register" && (
                         <form onSubmit={handleRegisterSubmit}>
                           <div className="mb-3">
-                            <label htmlFor="name" className="block text-gray-700 text-sm font-medium mb-1">
+                            <label
+                              htmlFor="name"
+                              className="block text-gray-700 text-sm font-medium mb-1"
+                            >
                               Họ và tên
                             </label>
                             <input
@@ -350,7 +415,10 @@ const Navbar = () => {
                             />
                           </div>
                           <div className="mb-3">
-                            <label htmlFor="register-email" className="block text-gray-700 text-sm font-medium mb-1">
+                            <label
+                              htmlFor="register-email"
+                              className="block text-gray-700 text-sm font-medium mb-1"
+                            >
                               Email
                             </label>
                             <input
@@ -364,7 +432,10 @@ const Navbar = () => {
                             />
                           </div>
                           <div className="mb-3">
-                            <label htmlFor="register-password" className="block text-gray-700 text-sm font-medium mb-1">
+                            <label
+                              htmlFor="register-password"
+                              className="block text-gray-700 text-sm font-medium mb-1"
+                            >
                               Mật khẩu
                             </label>
                             <input
@@ -378,7 +449,10 @@ const Navbar = () => {
                             />
                           </div>
                           <div className="mb-4">
-                            <label htmlFor="confirm-password" className="block text-gray-700 text-sm font-medium mb-1">
+                            <label
+                              htmlFor="confirm-password"
+                              className="block text-gray-700 text-sm font-medium mb-1"
+                            >
                               Xác nhận mật khẩu
                             </label>
                             <input
@@ -401,10 +475,26 @@ const Navbar = () => {
                       )}
 
                       <div className="mt-4 text-center text-sm text-gray-600">
-                        {authMode === 'login' ? (
-                          <p>Chưa có tài khoản? <button onClick={toggleAuthMode} className="text-red-600 hover:text-red-700">Đăng ký ngay</button></p>
+                        {authMode === "login" ? (
+                          <p>
+                            Chưa có tài khoản?{" "}
+                            <button
+                              onClick={toggleAuthMode}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              Đăng ký ngay
+                            </button>
+                          </p>
                         ) : (
-                          <p>Đã có tài khoản? <button onClick={toggleAuthMode} className="text-red-600 hover:text-red-700">Đăng nhập</button></p>
+                          <p>
+                            Đã có tài khoản?{" "}
+                            <button
+                              onClick={toggleAuthMode}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              Đăng nhập
+                            </button>
+                          </p>
                         )}
                       </div>
                     </div>
@@ -412,13 +502,18 @@ const Navbar = () => {
                 )}
               </div>
 
-              <Link to="/wishlist" className="flex flex-col items-center text-gray-700 relative">
+              <Link
+                to="/wishlist"
+                className="flex flex-col items-center text-gray-700 relative"
+              >
                 <Heart className="w-5 h-5 md:w-6 md:h-6" />
-                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">0</span>
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                  0
+                </span>
                 <span className="text-xs mt-1 hidden sm:block">Yêu thích</span>
               </Link>
 
-              <div 
+              <div
                 className="flex flex-col items-center text-gray-700 relative"
                 onMouseEnter={() => setShowCartPopup(true)}
                 onMouseLeave={() => setShowCartPopup(false)}
@@ -431,23 +526,25 @@ const Navbar = () => {
                   </span>
                   <span className="text-xs mt-1 hidden sm:block">Giỏ hàng</span>
                 </Link>
-                
+
                 {showCartPopup && (
-                  <div 
-                    className="absolute right-0 top-full bg-white border border-gray-200 shadow-lg z-50 w-80 rounded-md" 
+                  <div
+                    className="absolute right-0 top-full bg-white border border-gray-200 shadow-lg z-50 w-80 rounded-md"
                     ref={cartPopupRef}
                   >
                     <div className="p-4">
-                      <h3 className="font-medium mb-2 border-b pb-2">Giỏ hàng của bạn</h3>
-                      
+                      <h3 className="font-medium mb-2 border-b pb-2">
+                        Giỏ hàng của bạn
+                      </h3>
+
                       <div className="max-h-60 overflow-y-auto">
-                        {cart && cart.length > 0 ? (
+                        {/* {cart && cart.length > 0 ? (
                           cart.map((item, index) => (
                             <div key={index} className="flex items-center py-2 border-b">
                               <div className="w-16 h-16 bg-gray-100 rounded mr-3 flex-shrink-0">
                                 {item.image && (
                                   <img 
-                                    src='/sp2.jpg'
+                                    src="/sp2.jpg"
                                     alt={item.name} 
                                     className="w-full h-full object-cover rounded"
                                   />
@@ -471,27 +568,123 @@ const Navbar = () => {
                           ))
                         ) : (
                           <p className="text-center text-gray-500 py-4">Giỏ hàng trống</p>
+                        )} */}
+
+                        {cart && cart.length > 0 ? (
+                          cart.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center py-2 border-b"
+                            >
+                              <div className="w-16 h-16 bg-gray-100 rounded mr-3 flex-shrink-0">
+                                {item.image ? (
+                                  <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className="w-full h-full object-cover rounded"
+                                  />
+                                ) : (
+                                  <img
+                                    src="/sp2.jpg"
+                                    alt={item.name}
+                                    className="w-full h-full object-cover rounded"
+                                  />
+                                )}
+                              </div>
+
+                              <div className="flex flex-col w-full">
+                                <div className="flex-grow">
+                                  <p className="text-sm font-medium">
+                                    {item.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {item.selectedSize &&
+                                      `Dung tích: ${item.selectedSize}`}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {item.quantity} x{" "}
+                                    {item.price?.toLocaleString("vi-VN")}₫
+                                  </p>
+                                </div>
+                                <div className="flex w-full mt-1 justify-between">
+                                  <div className="flex">
+                                  <button
+                    className="px-2 bg-gray-100 hover:bg-gray-200 transition-colors"
+                    onClick={() =>
+                      updateQuantity(item.id, item.selectedSize, Math.max(1, item.quantity - 1))
+                    }
+                  >
+                    <svg
+                      className="w-2 h-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M20 12H4"
+                      ></path>
+                    </svg>
+                  </button>
+                  <span className="flex items-center justify-center w-8 font-medium">
+                    {item.quantity}
+                  </span>
+                  <button
+                    className="px-2 bg-gray-100 hover:bg-gray-200 transition-colors"
+                    onClick={() => updateQuantity(item.id, item.selectedSize, item.quantity + 1)}
+                  >
+                    <svg
+                      className="w-2 h-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 4v16m8-8H4"
+                      ></path>
+                    </svg>
+                  </button>
+                                  </div>
+                                  <div>
+                                  <p>{(item.quantity * item.price).toLocaleString("vi-VN")}đ</p>
+
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-center text-gray-500 py-4">
+                            Giỏ hàng trống
+                          </p>
                         )}
                       </div>
-                      
+
                       {cart && cart.length > 0 && (
                         <div className="mt-3 border-t pt-2">
                           <div className="flex justify-between items-center mb-3">
                             <span className="font-semibold">Tổng cộng:</span>
                             <span className="font-semibold text-red-600">
-                              {calculateTotal().toLocaleString('vi-VN')}₫
+                              {calculateTotal().toLocaleString("vi-VN")}₫
                             </span>
                           </div>
-                          
+
                           <div className="flex flex-col space-y-2">
-                            <Link 
-                              to="/cart" 
+                            <Link
+                              to="/cart"
                               className="w-full bg-gray-200 text-gray-800 py-2 rounded text-center text-sm hover:bg-gray-300 transition duration-200"
                             >
                               Xem giỏ hàng
                             </Link>
-                            <Link 
-                              to="/checkout" 
+                            <Link
+                              to="/checkout"
                               className="w-full bg-red-600 text-white py-2 rounded text-center text-sm hover:bg-red-700 transition duration-200"
                             >
                               Thanh toán
@@ -516,12 +709,23 @@ const Navbar = () => {
                   onChange={handleSearchChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-300"
                 />
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-gray-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                 </button>
               </form>
@@ -529,19 +733,21 @@ const Navbar = () => {
           )}
 
           {showMobileMenu && (
-            <div 
-              className="fixed inset-0 z-50 lg:hidden"
-              ref={mobileMenuRef}
-            >
+            <div className="fixed inset-0 z-50 lg:hidden" ref={mobileMenuRef}>
               <div className="fixed inset-0 bg-black bg-opacity-50"></div>
               <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-xl z-50 overflow-y-auto">
                 <div className="p-5">
                   <div className="flex justify-between items-center mb-6">
                     <Link to="/" className="text-2xl font-italic">
-                      <span className="text-red-600 font-bold font-righteous italic">APH</span>
-                      <span className="text-black italic font-righteous"> Perfume</span>
+                      <span className="text-red-600 font-bold font-righteous italic">
+                        APH
+                      </span>
+                      <span className="text-black italic font-righteous">
+                        {" "}
+                        Perfume
+                      </span>
                     </Link>
-                    <button 
+                    <button
                       onClick={() => setShowMobileMenu(false)}
                       className="text-gray-500"
                     >
@@ -551,35 +757,76 @@ const Navbar = () => {
 
                   <div className="space-y-4">
                     <div className="border-b pb-2">
-                      <Link to="/" className="block py-2 text-gray-800 hover:text-red-600">Trang chủ</Link>
+                      <Link
+                        to="/"
+                        className="block py-2 text-gray-800 hover:text-red-600"
+                      >
+                        Trang chủ
+                      </Link>
                     </div>
                     <div className="border-b pb-2">
-                      <Link to="/" className="block py-2 text-gray-800 hover:text-red-600">Danh mục</Link>
+                      <Link
+                        to="/"
+                        className="block py-2 text-gray-800 hover:text-red-600"
+                      >
+                        Danh mục
+                      </Link>
                     </div>
                     <div className="border-b pb-2">
-                      <Link to="/products" className="block py-2 text-gray-800 hover:text-red-600">Sản phẩm</Link>
+                      <Link
+                        to="/products"
+                        className="block py-2 text-gray-800 hover:text-red-600"
+                      >
+                        Sản phẩm
+                      </Link>
                     </div>
                     <div className="border-b pb-2">
-                      <Link to="/brands" className="block py-2 text-gray-800 hover:text-red-600">Thương hiệu</Link>
+                      <Link
+                        to="/brands"
+                        className="block py-2 text-gray-800 hover:text-red-600"
+                      >
+                        Thương hiệu
+                      </Link>
                     </div>
                     <div className="border-b pb-2">
-                      <Link to="/about" className="block py-2 text-gray-800 hover:text-red-600">Về chúng tôi</Link>
+                      <Link
+                        to="/about"
+                        className="block py-2 text-gray-800 hover:text-red-600"
+                      >
+                        Về chúng tôi
+                      </Link>
                     </div>
                     <div className="border-b pb-2">
-                      <Link to="/support" className="block py-2 text-gray-800 hover:text-red-600">Liên hệ</Link>
+                      <Link
+                        to="/support"
+                        className="block py-2 text-gray-800 hover:text-red-600"
+                      >
+                        Liên hệ
+                      </Link>
                     </div>
                     <div className="border-b pb-2">
-                      <Link to="/cart" className="block py-2 text-gray-800 hover:text-red-600">Giỏ hàng</Link>
+                      <Link
+                        to="/cart"
+                        className="block py-2 text-gray-800 hover:text-red-600"
+                      >
+                        Giỏ hàng
+                      </Link>
                     </div>
                     <div className="border-b pb-2">
-                      <Link to="/wishlist" className="block py-2 text-gray-800 hover:text-red-600">Danh sách yêu thích</Link>
+                      <Link
+                        to="/wishlist"
+                        className="block py-2 text-gray-800 hover:text-red-600"
+                      >
+                        Danh sách yêu thích
+                      </Link>
                     </div>
                     <div className="mt-4 pt-4 border-t">
                       <div className="text-xs sm:text-sm">
                         Hotline: 0862852822
                       </div>
                       <div className="text-xs sm:text-sm mt-2">
-                        11 Nguyễn Đình Chiểu, Phường Đakao, Quận 1, TP Hồ Chí Minh
+                        11 Nguyễn Đình Chiểu, Phường Đakao, Quận 1, TP Hồ Chí
+                        Minh
                       </div>
                     </div>
                   </div>

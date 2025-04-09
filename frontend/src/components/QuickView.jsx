@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
-import { useCart } from '../context/CartContext';
+import React, { useState } from "react";
+import { useCart } from "../context/CartContext";
+import { Toaster, toast } from "sonner";
 
 const QuickView = ({ selectedProduct, handleClosePopup }) => {
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState('');
-    const { addToCart } = useCart();
+  const [selectedSize, setSelectedSize] = useState("");
+  const [error, setError] = useState("");
+  const { addToCart } = useCart();
 
   const sizes = [
-    { value: '50ml', label: '50ml', price: 350000 },
-    { value: '75ml', label: '75ml', price: 420000 },
-    { value: '100ml', label: '100ml', price: 520000 },
-    { value: '120ml', label: '120ml', price: 610000 },
-    { value: '200ml', label: '200ml', price: 700000 }
+    { value: "50ml", label: "50ml", price: 350000 },
+    { value: "75ml", label: "75ml", price: 420000 },
+    { value: "100ml", label: "100ml", price: 520000 },
+    { value: "120ml", label: "120ml", price: 610000 },
+    { value: "200ml", label: "200ml", price: 700000 },
   ];
-
 
   const handleIncrement = () => {
     setQuantity(quantity + 1);
@@ -27,16 +28,39 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
 
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
+    setError(""); 
   };
 
-  const formatPrice = (price) => price.toLocaleString('vi-VN') + ' VND';
+  const formatPrice = (price) => price.toLocaleString("vi-VN") + " VND";
 
-  const selectedSizeObj = sizes.find(size => size.value === selectedSize);
+  const selectedSizeObj = sizes.find((size) => size.value === selectedSize);
 
   const priceDisplay = selectedSizeObj
     ? formatPrice(selectedSizeObj.price)
-    : `${formatPrice(Math.min(...sizes.map(size => size.price)))} - ${formatPrice(Math.max(...sizes.map(size => size.price)))}`
+    : `${formatPrice(
+        Math.min(...sizes.map((size) => size.price))
+      )} - ${formatPrice(Math.max(...sizes.map((size) => size.price)))}`;
 
+  const handleAddToCart = () => {
+    if (!selectedSize) {
+      toast.error("Vui lòng chọn dung tích trước khi thêm vào giỏ hàng");
+      return;
+    }
+
+    addToCart({
+      id: selectedProduct.id,
+      name: selectedProduct.name,
+      price: selectedSizeObj.price,
+      quantity: quantity,
+      image: selectedProduct.img,
+      selectedSize: selectedSize,
+      brand: selectedProduct.brand,
+      country: selectedProduct.country,
+    });
+
+    toast.success("Sản phẩm đã được thêm vào giỏ hàng!");
+    handleClosePopup();
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -58,28 +82,54 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
           </div>
 
           <div className="flex gap-2 justify-center">
-            <img src={selectedProduct.img} alt="Thumbnail 1" className="w-12 h-12 md:w-24 md:h-24 border" />
-            <img src={selectedProduct.img} alt="Thumbnail 2" className="w-12 h-12 md:w-24 md:h-24 border" />
+            <img
+              src={selectedProduct.img}
+              alt="Thumbnail 1"
+              className="w-12 h-12 md:w-24 md:h-24 border"
+            />
+            <img
+              src={selectedProduct.img}
+              alt="Thumbnail 2"
+              className="w-12 h-12 md:w-24 md:h-24 border"
+            />
           </div>
         </div>
 
         <div className="p-2 md:p-4 w-full md:w-1/2 flex flex-col justify-start items-start">
-          <p className="text-start text-base md:text-xl font-bold mb-2 md:mb-4">{selectedProduct.name}</p>
+          <p className="text-start text-base md:text-xl font-bold mb-2 md:mb-4">
+            {selectedProduct.name}
+          </p>
           <div className="flex flex-row justify-between items-start md:items-center w-full">
-            <p className="text-sm md:text-base">Thương hiệu: <span className="text-red-600 font-semibold">{selectedProduct.brand}</span></p>
-            <p className="text-sm md:text-base">Quốc gia: <span className="text-red-600 font-semibold">{selectedProduct.country}</span></p>
+            <p className="text-sm md:text-base">
+              Thương hiệu:{" "}
+              <span className="text-red-600 font-semibold">
+                {selectedProduct.brand}
+              </span>
+            </p>
+            <p className="text-sm md:text-base">
+              Quốc gia:{" "}
+              <span className="text-red-600 font-semibold">
+                {selectedProduct.country}
+              </span>
+            </p>
           </div>
-          <p className="text-start text-red-600 font-bold my-2 text-xl md:text-2xl">{priceDisplay}</p>
+          <p className="text-start text-red-600 font-bold my-2 text-xl md:text-2xl">
+            {priceDisplay}
+          </p>
 
-          <div className="mb-4 w-full">
+          {error && <p className="text-red-600 text-sm w-full mb-2">{error}</p>}
+
+          <div className="mb-2 w-full">
+            <p className="text-sm md:text-base font-medium mb-2">Dung tích:</p>
             <div className="flex flex-wrap gap-2 w-full justify-between">
               {sizes.map((size) => (
                 <button
                   key={size.value}
-                  className={`border px-4 py-1 text-xs md:text-sm rounded-md ${selectedSize === size.value
-                    ? 'bg-black text-white'
-                    : 'border-gray-300'
-                    }`}
+                  className={`border px-4 py-1 text-xs md:text-sm rounded-md ${
+                    selectedSize === size.value
+                      ? "bg-black text-white"
+                      : "border-gray-300"
+                  }`}
                   onClick={() => handleSizeSelect(size.value)}
                 >
                   {size.label}
@@ -88,7 +138,7 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mb-4 w-full">
+          {/* <div className="flex items-center gap-2 mb-4 w-full">
             <p className="text-sm md:text-base">Số lượng: </p>
             <div className="flex items-center gap-2">
               <button
@@ -105,17 +155,65 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
                 +
               </button>
             </div>
+          </div> */}
+          <div className="my-2 flex gap-4 items-center">
+            <label className="block text-base font-medium">Số lượng:</label>
+            <div className="inline-flex rounded-md border border-gray-300 overflow-hidden">
+              <button
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
+                onClick={handleDecrement}
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M20 12H4"
+                  ></path>
+                </svg>
+              </button>
+              <span className="flex items-center justify-center w-12 font-medium">
+                {quantity}
+              </span>
+              <button
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
+                onClick={handleIncrement}
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 4v16m8-8H4"
+                  ></path>
+                </svg>
+              </button>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 w-full justify-between">
+          <div className="flex flex-wrap gap-2 w-full my-2 justify-between">
             <button className="bg-gray-200 text-black px-4 py-2 text-xs md:text-sm rounded-md hover:bg-gray-300 transition duration-300">
               Yêu thích
             </button>
-            <button className="bg-red-600 text-white px-4  py-2 text-xs md:text-sm rounded-md hover:bg-red-700 transition duration-300"               onClick={() => addToCart(selectedProduct)}
+            <button
+              className="bg-red-600 text-white px-4 py-2 text-xs md:text-sm rounded-md hover:bg-red-700 transition duration-300"
+              onClick={handleAddToCart}
             >
               Thêm vào giỏ hàng
             </button>
-            <button className="bg-black text-white px-4  py-2 text-xs md:text-sm rounded-md hover:bg-gray-800 transition duration-300">
+            <button className="bg-black text-white px-4 py-2 text-xs md:text-sm rounded-md hover:bg-gray-800 transition duration-300">
               Mua ngay
             </button>
           </div>

@@ -44,35 +44,45 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product) => {
     setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product.id);
+      const existingItemIndex = prevCart.findIndex(
+        item => item.id === product.id && item.selectedSize === product.selectedSize
+      );
       
-      if (existingItem) {
-        return prevCart.map(item => 
-          item.id === product.id 
-            ? { ...item, quantity: item.quantity + 1 } 
-            : item
-        );
+      if (existingItemIndex >= 0) {
+        const updatedCart = [...prevCart];
+        updatedCart[existingItemIndex].quantity += product.quantity;
+        console.log('Thêm sản phẩm thành công')
 
+        return updatedCart;
       } else {
-        return [...prevCart, { ...product, quantity: 1 }];
+        return [...prevCart, product];
       }
     });
-    console.log('Đã thêm sản phẩm vào giỏ')
-
+    
   };
 
   const removeFromCart = (productId) => {
     setCart(prevCart => prevCart.filter(item => item.id !== productId));
   };
 
-  const updateQuantity = (productId, quantity) => {
-    setCart(prevCart => 
-      prevCart.map(item => 
-        item.id === productId 
-          ? { ...item, quantity: quantity } 
-          : item
-      )
-    );
+  const updateQuantity = (id, size, newQuantity) => {
+    console.log('Updating quantity:', id, size, newQuantity);
+    
+    if (newQuantity <= 0) {
+      // Remove the item if quantity is zero or less
+      setCart(prevCart => prevCart.filter(item => !(item.id === id && item.selectedSize === size)));
+      console.log('Item removed from cart');
+    } else {
+      // Update the item quantity
+      setCart(prevCart => 
+        prevCart.map(item => 
+          (item.id === id && item.selectedSize === size) 
+            ? { ...item, quantity: newQuantity } 
+            : item
+        )
+      );
+      console.log('Item quantity updated to:', newQuantity);
+    }
   };
 
   const calculateTotal = () => {

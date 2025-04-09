@@ -16,6 +16,7 @@ import OrderSuccess from './pages/OrderSuccess';
 import Profile from './pages/Profile';
 import Wishlist from './pages/WishList';
 import ChatBot from './components/Chatbot';
+import { Toaster } from 'sonner';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <div>
+            <Toaster richColors position='top-right' />
             <Navbar />
             <Navigation />
             <main>
@@ -34,15 +36,15 @@ function App() {
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/cart" element={<Cart />} />
-                <Route path="/test" element={<TestProduct />} /> 
+                <Route path="/test" element={<TestProduct />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/ordersuccess" element={<OrderSuccess />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/wishlist" element={<Wishlist />} />
-                <Route path="*" element={<h1>404 Not Found</h1>} />   
+                <Route path="*" element={<h1>404 Not Found</h1>} />
               </Routes>
-            </main> 
-             <Footer />
+            </main>
+            <Footer />
           </div>
         </CartProvider>
       </AuthProvider>
