@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useCart } from '../context/CartContext';
 
 const QuickView = ({ selectedProduct, handleClosePopup }) => {
-  const [quantity, setQuantity] = useState(4);
-  const [selectedSize, setSelectedSize] = useState('75ml');
+  const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState('');
+    const { addToCart } = useCart();
 
   const sizes = [
     { value: '50ml', label: '50ml', price: 350000 },
@@ -109,7 +111,8 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
             <button className="bg-gray-200 text-black px-4 py-2 text-xs md:text-sm rounded-md hover:bg-gray-300 transition duration-300">
               Yêu thích
             </button>
-            <button className="bg-red-600 text-white px-4  py-2 text-xs md:text-sm rounded-md hover:bg-red-700 transition duration-300">
+            <button className="bg-red-600 text-white px-4  py-2 text-xs md:text-sm rounded-md hover:bg-red-700 transition duration-300"               onClick={() => addToCart(selectedProduct)}
+            >
               Thêm vào giỏ hàng
             </button>
             <button className="bg-black text-white px-4  py-2 text-xs md:text-sm rounded-md hover:bg-gray-800 transition duration-300">

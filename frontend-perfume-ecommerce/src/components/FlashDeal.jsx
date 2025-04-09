@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import QuickView from "./QuickView";
+import axios from 'axios';
 
 const FlashDeal = () => {
   const [selectedSize, setSelectedSize] = useState('75ml');
@@ -11,6 +12,8 @@ const FlashDeal = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [startIndex, setStartIndex] = useState(0);
+    const [selectedSizes, setSelectedSizes] = useState({});
+
 
   const sizes = [
     { value: '50ml', label: '50ml' },
@@ -20,51 +23,15 @@ const FlashDeal = () => {
     { value: '200ml', label: '200ml' }
   ];
 
-  const products = [
-    {
-      name: "Versace Eros Flame Eau De Toilette",
-      price: "1.200.000 - 1.500.000 VND",
-      brand: "VERSACE",
-      img: "sp2.jpg",
-      country: "Pháp"
-    },
-    {
-      name: "Versace Eros Eau De Toilette",
-      price: "1.000.000 - 1.200.000 VND",
-      brand: "VERSACE",
-      img: "sp2.jpg",
-      country: "Pháp"
-    },
-    {
-      name: "Versace Bright Crystal",
-      price: "1.100.000 - 1.400.000 VND",
-      brand: "VERSACE",
-      img: "sp2.jpg",
-      country: "Pháp"
-    },
-    {
-      name: "Versace Pour Homme",
-      price: "1.300.000 - 1.600.000 VND",
-      brand: "VERSACE",
-      img: "sp2.jpg",
-      country: "Pháp"
-    },
-    {
-      name: "Versace Crystal Noir",
-      price: "1.400.000 - 1.700.000 VND",
-      brand: "VERSACE",
-      img: "sp2.jpg",
-      country: "Pháp"
-    },
-    {
-      name: "Versace Dylan Blue",
-      price: "1.500.000 - 1.800.000 VND",
-      brand: "VERSACE",
-      img: "sp2.jpg",
-      country: "Pháp"
-    },
-  ];
+  const [product, setProduct] = useState([])
 
+  useEffect(() => {
+    axios
+    .get('https://apiperfume.vercel.app/product.json')
+    .then((res) => setProduct(res.data))
+    .catch((err) => console.log('Error Fetching Data'))
+  }, [])
+  // console.log(product)
   const handleQuickView = (product) => {
     setSelectedProduct(product);
     setShowPopup(true);
@@ -76,20 +43,6 @@ const FlashDeal = () => {
     setQuantity(1);
   };
 
-  const handleSizeSelect = (size) => {
-    setSelectedSize(size);
-  };
-
-  const incrementQuantity = () => {
-    setQuantity(prev => prev + 1);
-  };
-
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(prev => prev - 1);
-    }
-  };
-
   const [timeLeft, setTimeLeft] = useState({
     hours: 5,
     minutes: 30,
@@ -97,7 +50,7 @@ const FlashDeal = () => {
   });
 
   const handleNextProducts = () => {
-    if (startIndex + getProductsPerView() < products.length) {
+    if (startIndex + getProductsPerView() < product.length) {
       setStartIndex(startIndex + getProductsPerView());
     } else {
       setStartIndex(0);
@@ -108,7 +61,7 @@ const FlashDeal = () => {
     if (startIndex - getProductsPerView() >= 0) {
       setStartIndex(startIndex - getProductsPerView());
     } else {
-      setStartIndex(Math.max(0, products.length - getProductsPerView()));
+      setStartIndex(Math.max(0, product.length - getProductsPerView()));
     }
   };
 
@@ -132,6 +85,11 @@ const FlashDeal = () => {
   const formatTime = (time) => {
     return time < 10 ? `0${time}` : time;
   };
+
+  const formatSecondPrice = (price) => price.toLocaleString('vi-VN') + ' VND';
+  const formatFirstPrice = (price) => price.toLocaleString('vi-VN');
+
+
 
   return (
     <div  id="flash-deal" className="flex flex-col mx-4 md:m-12 relative">
@@ -187,24 +145,30 @@ const FlashDeal = () => {
 
       <div className="p-4 md:p-8 border-2 rounded-lg mt-8">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-4">
-          {products.map((product, index) => (
+          {product.map((product, index) => (
             <div
               key={index}
               className="flex flex-col items-center border-2 border-gray-300 rounded-lg p-2 md:p-4"
             >
               <img
-                src={product.img}
+                src="/sp2.jpg"
                 alt={product.name}
                 className="h-20 md:h-40 w-auto"
               />
               <div className="flex flex-col items-center mt-2 md:mt-4 w-full h-full">
                 <h3 className="font-bold text-xs md:text-base">{product.brand}</h3>
-                <div className="h-8 md:h-12 flex items-center justify-center">
+                <div className="h-8  flex items-center justify-center">
                   <p className="font-medium text-xs md:text-sm text-center">{product.name}</p>
                 </div>
-                <div className="font-extrabold text-xs text-red-600 mb-2">
+                {/* <div className="font-extrabold text-xs text-red-600 mb-2">
                   {product.price}
-                </div>
+                </div> */}
+                <p className="my-2 text-xs text-red-700 font-bold">
+  {selectedSizes[product.id] 
+    ? formatSecondPrice(product.volumes.find(volume => volume.volume === selectedVolumes[product.id]).price)
+    : `${formatFirstPrice(Math.min(...product.volumes.map(volume => volume.price)))} - ${formatSecondPrice(Math.max(...product.volumes.map(volume => volume.price)))}`}
+</p>
+
                 <div className="flex justify-center gap-4 w-full mt-auto">
                   <button className="p-1 md:p-2 text-white text-xs rounded-md bg-red-600">
                     Yêu thích
