@@ -2,146 +2,171 @@
 
 **Tiếng Việt**  |  **[English](README_en.md)**
 
-Thư mục này chứa các tập lệnh và cấu hình để quản lý cơ sở dữ liệu SQL Server được sử dụng trong dự án Luxury Fragrance Shop. Cơ sở dữ liệu chạy trong container Docker để dễ dàng triển khai và đảm bảo môi trường phát triển đồng nhất.
+## 📋 Tổng quan
 
-## Tổng quan
+Thư mục này chứa các tập lệnh và cấu hình để quản lý cơ sở dữ liệu Microsoft SQL Server cho dự án Luxury Fragrance Shop. Cơ sở dữ liệu được đóng gói trong container Docker để đảm bảo môi trường phát triển đồng nhất và dễ dàng triển khai.
 
-Hệ thống cơ sở dữ liệu sử dụng:
+### 🔧 Công nghệ sử dụng
+
 - **Microsoft SQL Server 2022** (phiên bản mới nhất)
-- **Docker** container để cô lập và tăng tính di động
-- **Dockerfile** tùy chỉnh với `sqlcmd` đã được cài đặt sẵn
-- **Bash scripts** để dễ dàng thực hiện các thao tác quản lý
+- **Docker** và **Docker Compose** để quản lý container
+- **Bash scripts** cho việc quản trị dễ dàng
+- **sqlcmd** được tích hợp sẵn trong container
 
-## Yêu cầu
+## 🚀 Bắt đầu sử dụng
 
-Trước khi thiết lập cơ sở dữ liệu, hãy đảm bảo bạn có:
+### Yêu cầu hệ thống
 
-1. [Docker](https://www.docker.com/get-started) đã được cài đặt và đang chạy
-2. [Docker Compose](https://docs.docker.com/compose/install/) đã được cài đặt
-3. Kiến thức cơ bản về các lệnh shell (Bash)
-4. Hệ thống với đủ tài nguyên để chạy SQL Server (tối thiểu 2GB RAM)
+- [Docker](https://www.docker.com/get-started) (phiên bản 20.10.0 trở lên)
+- [Docker Compose](https://docs.docker.com/compose/install/) (phiên bản 2.0.0 trở lên)
+- Hệ điều hành: Linux, macOS hoặc Windows với WSL
+- Tối thiểu 2GB RAM cho SQL Server
 
-## Hướng dẫn thiết lập
+### Thiết lập môi trường
 
-### 1. Cấu hình môi trường
+1. Sao chép tệp môi trường mẫu:
+   ```bash
+   cp .env.example .env.local
+   ```
 
-Sao chép tệp môi trường mẫu để tạo cấu hình của bạn:
+2. Chỉnh sửa các thông số cấu hình:
+   ```bash
+   # Mở file để chỉnh sửa
+   nano .env.local
+   ```
 
-```bash
-cp .env.example .env.local  # hoặc .env nếu bạn thích
-```
+   Các thông số quan trọng:
+   - `MSSQL_SA_PASSWORD`: Mật khẩu tài khoản SA (ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số, ký tự đặc biệt)
+   - `MSSQL_PORT`: Cổng để truy cập SQL Server (mặc định: 1433)
+   - `CONTAINER_NAME`: Tên container Docker
+   - `MSSQL_DATABASE`: Tên cơ sở dữ liệu mặc định
+   - `PLATFORM`: Nền tảng Docker (linux/amd64 hoặc linux/arm64)
+   - `MSSQL_PID`: Phiên bản SQL Server (Developer, Express, Standard, Enterprise, hoặc Evaluation)
 
-Chỉnh sửa tệp mới để điều chỉnh:
-- `MSSQL_SA_PASSWORD`: Chọn mật khẩu mạnh cho người dùng SA
-- `MSSQL_PORT`: Thay đổi nếu cổng 1433 đã được sử dụng trên hệ thống của bạn
-- `CONTAINER_NAME`: Tùy chỉnh tên container nếu cần
-- `MSSQL_DATABASE`: Tên cơ sở dữ liệu mặc định sẽ được tạo
+## 🛠️ Quản lý cơ sở dữ liệu
 
-### 2. Các lệnh quản lý cơ bản
+### Các lệnh cơ bản
 
-Các tập lệnh sau có sẵn để quản lý container cơ sở dữ liệu của bạn:
-
-| Tập lệnh | Mô tả | Cách sử dụng |
-|--------|-------------|-------|
+| Script | Chức năng | Cách sử dụng |
+|--------|-----------|--------------|
 | `./start.sh` | Khởi động container cơ sở dữ liệu | `./start.sh [env_file]` |
 | `./stop.sh` | Dừng container cơ sở dữ liệu | `./stop.sh [env_file]` |
-| `./reset.sh` | Đặt lại cơ sở dữ liệu (dữ liệu sẽ bị mất) | `./reset.sh [env_file]` |
+| `./restart.sh` | Khởi động lại container | `./restart.sh [env_file]` |
+| `./reset.sh` | Đặt lại cơ sở dữ liệu (xóa dữ liệu) | `./reset.sh [env_file]` |
 | `./delete.sh` | Xóa hoàn toàn container và volumes | `./delete.sh [env_file]` |
-| `./fast-check.sh` | Kiểm tra nhanh trạng thái DB, hiển thị danh sách databases và users | `./fast-check.sh [env_file]` |
-| `./restart.sh` | Khởi động lại container cơ sở dữ liệu | `./restart.sh [env_file]` |
-| `./dbctl.sh` | Công cụ quản lý database toàn diện (xem phần bên dưới) | `./dbctl.sh [options]` |
-| `./synconfigs.sh` | Đồng bộ hóa các biến môi trường giữa thư mục gốc và database | `./synconfigs.sh` |
+| `./fast-setup.sh` | Thiết lập nhanh một database và user mới | `./fast-setup.sh [env_file]` |
+| `./fast-check.sh` | Kiểm tra nhanh trạng thái database | `./fast-check.sh [env_file]` |
+| `./synconfigs.sh` | Đồng bộ biến môi trường giữa thư mục gốc và database | `./synconfigs.sh` |
 
-Đối với tất cả các tập lệnh, bạn có thể tùy chọn chỉ định đường dẫn tệp môi trường tùy chỉnh làm đối số đầu tiên. Nếu không được chỉ định, các tập lệnh sẽ tìm kiếm `.env.local` trước, sau đó là `.env`.
+Đối với mọi script, bạn có thể tùy chọn chỉ định đường dẫn tới file môi trường làm tham số đầu tiên. Nếu không chỉ định, script sẽ tự động tìm kiếm `.env.local` trước, sau đó là `.env`.
 
-### 3. Công cụ quản lý SQL Server (dbctl.sh)
+### Công cụ quản lý SQL Server (dbctl.sh)
 
-`dbctl.sh` là một công cụ toàn diện để quản lý cơ sở dữ liệu SQL Server:
+Script `dbctl.sh` cung cấp giao diện toàn diện để quản lý cơ sở dữ liệu:
 
-**Các tính năng chính:**
+#### Chức năng chính:
 - Tạo và xóa database
-- Tạo và xóa tài khoản người dùng
+- Tạo, sửa, và xóa tài khoản người dùng
 - Quản lý quyền hạn người dùng
 - Thay đổi mật khẩu người dùng
-- Hiển thị thông tin hệ thống và cơ sở dữ liệu
+- Hiển thị thông tin hệ thống và database
 
-**Cách sử dụng:**
+#### Cách sử dụng:
 
-1. **Chế độ tương tác:** Chạy không có tham số để mở menu tương tác
+1. **Chế độ tương tác:**
    ```bash
    ./dbctl.sh
    ```
 
 2. **Chế độ lệnh trực tiếp:**
    ```bash
-   ./dbctl.sh --create-db mydb
-   ./dbctl.sh --create-user username password
-   ./dbctl.sh --modify-user username mydb
+   ./dbctl.sh --create-db
+   ./dbctl.sh --create-user-login
+   ./dbctl.sh --create-user-db
    ./dbctl.sh --show-info
    ```
 
-3. **Tùy chọn file môi trường:**
+3. **Chỉ định file môi trường:**
    ```bash
    ./dbctl.sh --env .env.custom
    ```
 
-Để xem tất cả các tùy chọn:
+4. **Xem trợ giúp:**
+   ```bash
+   ./dbctl.sh --help
+   ```
+
+### Công cụ đồng bộ hóa cấu hình (synconfigs.sh)
+
+Script `synconfigs.sh` giúp đồng bộ các biến môi trường giữa các file cấu hình trong dự án:
+
+- Đồng bộ từ file môi trường ở thư mục gốc dự án đến thư mục database
+- Hỗ trợ các file `.env`, `.env.example`, và `.env.local`
+- Chỉ đồng bộ các biến chung giữa hai file
+
+## 🔌 Kết nối đến cơ sở dữ liệu
+
+Sau khi khởi động, bạn có thể kết nối đến SQL Server bằng cách sử dụng:
+
+### Thông tin kết nối
+
+- **Máy chủ**: localhost hoặc 127.0.0.1
+- **Cổng**: Giá trị của `MSSQL_PORT` (mặc định: 1433)
+- **Tài khoản**: sa hoặc tài khoản đã tạo qua `dbctl.sh`
+- **Mật khẩu**: Giá trị của `MSSQL_SA_PASSWORD` hoặc mật khẩu đã đặt
+- **Database**: Giá trị của `MSSQL_DATABASE` hoặc database đã tạo
+
+### Ví dụ kết nối bằng sqlcmd
+
 ```bash
-./dbctl.sh --help
+sqlcmd -S localhost,1433 -U sa -P <mật_khẩu> -d <tên_database>
 ```
 
-### 4. Công cụ đồng bộ hóa cấu hình (synconfigs.sh)
+### Kết nối từ ứng dụng
 
-Script `synconfigs.sh` giúp đồng bộ hóa các biến môi trường giữa các file cấu hình khác nhau:
+Chuỗi kết nối mẫu:
+```
+Server=localhost,1433;Database=<tên_database>;User Id=<tài_khoản>;Password=<mật_khẩu>;TrustServerCertificate=True;
+```
 
-- Đồng bộ từ file môi trường gốc (thư mục dự án) sang thư mục database
-- Hỗ trợ cả `.env`, `.env.example` và `.env.local`
-- Tự động phát hiện các biến chung và chỉ đồng bộ những biến này
-- Bảo toàn cấu trúc và định dạng của file đích
-
-### 5. Thông tin kết nối cơ sở dữ liệu
-
-Khi cơ sở dữ liệu đang chạy, bạn có thể kết nối với nó bằng:
-
-- **Máy chủ**: `localhost` hoặc `127.0.0.1`
-- **Cổng**: Như được cấu hình trong tệp `.env` của bạn (mặc định: 1433)
-- **Tên người dùng**: `sa` hoặc tài khoản bạn đã tạo
-- **Mật khẩu**: Như được cấu hình trong tệp môi trường
-- **Cơ sở dữ liệu**: Sử dụng giá trị `MSSQL_DATABASE` hoặc database bạn đã tạo với `dbctl.sh`
-
-## Cấu trúc Docker
-
-Dự án sử dụng hai file cấu hình chính để thiết lập môi trường:
+## 🏗️ Cấu trúc Docker
 
 ### Dockerfile
-- Dựa trên hình ảnh chính thức SQL Server 2022
-- Cài đặt sẵn `sqlcmd` và các công cụ liên quan
-- Cấu hình PATH để có thể sử dụng `sqlcmd` dễ dàng
-- Tự động chấp nhận giấy phép EULA của Microsoft
+- Sử dụng image SQL Server 2022 chính thức từ Microsoft
+- Cài đặt sẵn công cụ `sqlcmd` và các tiện ích cần thiết
+- Cấu hình PATH để sử dụng `sqlcmd` dễ dàng
+- Tự động chấp nhận EULA của Microsoft
 
 ### docker-compose.yml
-- Xây dựng container từ Dockerfile
-- Cấu hình biến môi trường
-- Ánh xạ cổng
-- Volume lưu trữ liên tục
-- Tham số kiểm tra sức khỏe
+- Xây dựng container từ Dockerfile tùy chỉnh
+- Cấu hình biến môi trường từ file .env
+- Ánh xạ cổng để truy cập từ máy host
+- Thiết lập volume cho lưu trữ dữ liệu bền vững
+- Cấu hình health check để đảm bảo dịch vụ hoạt động đúng
 
-## Lưu trữ dữ liệu
+## 🔒 Bảo mật và dữ liệu
 
-Các tệp cơ sở dữ liệu được lưu trữ trong một volume Docker có tên `db_data`. Điều này đảm bảo rằng dữ liệu của bạn vẫn tồn tại giữa các lần khởi động lại container trừ khi bạn sử dụng rõ ràng `reset.sh` hoặc `delete.sh`.
+### Lưu trữ dữ liệu
+Dữ liệu được lưu trữ trong Docker volume `db_data` để đảm bảo tính bền vững giữa các lần khởi động lại container.
 
-## Xử lý sự cố
+### Khuyến nghị bảo mật
+- Thay đổi mật khẩu SA mặc định bằng mật khẩu mạnh
+- Tạo tài khoản riêng cho ứng dụng thay vì sử dụng tài khoản SA
+- Hạn chế quyền truy cập cổng database trong môi trường sản xuất
+- Sao lưu dữ liệu thường xuyên
 
-Các vấn đề thường gặp và giải pháp:
+## 🔍 Xử lý sự cố
 
-1. **Cổng đã được sử dụng**: Thay đổi `MSSQL_PORT` trong tệp môi trường của bạn.
-2. **Container không khởi động**: Kiểm tra nhật ký Docker với `docker logs <container_name>`.
-3. **Kết nối bị từ chối**: Chạy `./fast-check.sh` để xác minh cơ sở dữ liệu đang chạy đúng.
-4. **Quyền bị từ chối trên các tập lệnh**: Chạy `chmod +x *.sh` để làm cho các tập lệnh có thể thực thi.
+| Vấn đề | Giải pháp |
+|--------|-----------|
+| Cổng đã được sử dụng | Thay đổi `MSSQL_PORT` trong file môi trường |
+| Container không khởi động | Kiểm tra logs: `docker logs <tên_container>` |
+| Lỗi kết nối từ ứng dụng | Chạy `./fast-check.sh` để kiểm tra database đang hoạt động |
+| "Permission denied" khi chạy script | Chạy `chmod +x *.sh` để cấp quyền thực thi |
+| Không đủ bộ nhớ | Đảm bảo có ít nhất 2GB RAM trống cho SQL Server |
 
-## Lưu ý về bảo mật
+## 📚 Tài liệu tham khảo
 
-- Mật khẩu SA mặc định trong `.env.example` chỉ để minh họa. Luôn sử dụng mật khẩu mạnh, độc nhất trong sản xuất.
-- Sử dụng `dbctl.sh` để tạo người dùng có quyền hạn phù hợp thay vì sử dụng tài khoản SA cho ứng dụng.
-- Xem xét giới hạn quyền truy cập vào cổng cơ sở dữ liệu trong môi trường sản xuất.
-- Sao lưu dữ liệu của bạn thường xuyên nếu được sử dụng trong sản xuất.
+- [Tài liệu chính thức của SQL Server](https://docs.microsoft.com/sql/)
+- [Tài liệu Docker cho SQL Server](https://docs.microsoft.com/sql/linux/sql-server-linux-docker-container-deployment)
+- [Cách sử dụng sqlcmd](https://docs.microsoft.com/sql/tools/sqlcmd-utility)
