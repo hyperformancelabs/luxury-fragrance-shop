@@ -179,6 +179,9 @@ const Navbar = () => {
     };
   }, []);
 
+
+  const formatPrice = (price) => price.toLocaleString('vi-VN') + ' VND';
+
   return (
     <>
       <div className="w-full bg-black text-white py-1 hidden sm:block">
@@ -653,7 +656,7 @@ const Navbar = () => {
                   </button>
                                   </div>
                                   <div>
-                                  <p>{(item.quantity * item.price).toLocaleString("vi-VN")}đ</p>
+                                  <p>{formatPrice((item.quantity * item.price))}</p>
 
                                   </div>
                                 </div>
@@ -672,7 +675,7 @@ const Navbar = () => {
                           <div className="flex justify-between items-center mb-3">
                             <span className="font-semibold">Tổng cộng:</span>
                             <span className="font-semibold text-red-600">
-                              {calculateTotal().toLocaleString("vi-VN")}₫
+                              {formatPrice(calculateTotal())}
                             </span>
                           </div>
 

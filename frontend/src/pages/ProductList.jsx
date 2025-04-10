@@ -233,7 +233,7 @@ const ProductList = () => {
                 >
                   <img src={product.imageUrl} alt={product.name} className="w-full h-48 object-cover" />
                   <div className="p-3">
-                    {/* <h3 className="font-semibold text-center">{product.name}</h3> */}
+                    <h3 className="font-semibold text-center">{product.name}</h3>
                     <p className="text-sm text-center">{product.description}</p>
                     <p className="text-xs text-center text-gray-500">{product.capacity}</p>
                     <div className="flex justify-center">
@@ -243,7 +243,7 @@ const ProductList = () => {
                     </div>
                     <div className="mt-2 flex justify-between">
                       <button className="bg-red-600 text-white text-xs px-3 py-1 rounded">Yêu thích</button>
-                      <button className="bg-gray-800 text-white text-xs px-3 py-1 rounded" onClick={handleQuickView}>Xem thêm</button>
+                      <button className="bg-gray-800 text-white text-xs px-3 py-1 rounded" onClick={handleQuickView}>Xem nhanh</button>
                     </div>
                   </div>
                 </div>

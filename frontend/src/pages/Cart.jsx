@@ -1,9 +1,11 @@
 import { Trash2 } from "lucide-react";
 import { useCart } from "../context/CartContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, calculateTotal } = useCart();
+  
+  const formatPrice = (price) => price.toLocaleString('vi-VN') + ' VND';
 
  
 
@@ -60,12 +62,13 @@ const Cart = () => {
         className="w-16 h-16 object-contain mr-4"
       />
       <div>
-        <h3 className="text-sm font-normal">
-          {item.name || "Nước hoa nữ Versace Bright Crystal EDT"}
+        <h3 className="text-base font-medium">
+          {item.name}
         </h3>
-        {item.selectedSize && (
-          <p className="text-xs text-gray-500">Size: {item.selectedSize}</p>
+        <div className="flex gap-4">{item.selectedSize && (
+          <p className="text-sm text-gray-500">Dung tích: {item.selectedSize}</p>
         )}
+        <p className="text-sm text-gray-500">Brand: {item.brand}</p></div>
       </div>
     </div>
 
@@ -117,7 +120,7 @@ const Cart = () => {
 
     <div className="md:col-span-3 flex justify-between items-center">
       <span className="text-red-600 font-bold md:ml-auto">
-      {(item.quantity * item.price).toLocaleString("vi-VN")} VND
+      {formatPrice(item.quantity * item.price)}
 
       </span>
       <button
@@ -146,11 +149,11 @@ const Cart = () => {
             {cart.map((item) => (
               <div key={item.id} className="flex justify-between text-sm">
                 <div>
-                  {item.name || "Nước hoa nữ Versace Bright Crystal EDT"}
+                  {item.name} ({item.selectedSize})
                 </div>
                 <div>
-                  {((item.price || 5500000) * item.quantity).toLocaleString()}{" "}
-                  VND
+                  {formatPrice((item.price) * item.quantity)}
+                  
                 </div>
               </div>
             ))}
@@ -158,11 +161,16 @@ const Cart = () => {
 
           <div className="flex justify-between font-bold py-4 border-t border-gray-200 mt-4">
             <div>Tổng đơn hàng</div>
-            <div>{calculateTotal().toLocaleString()} VND</div>
+            <div>{formatPrice(calculateTotal())}</div>
           </div>
-          <button className="w-full bg-blue-500 text-white py-3 rounded mt-4 font-bold hover:bg-blue-600 transition">
-            Tiếp tục
-          </button>
+
+
+<Link to="/checkout">
+  <button className="w-full bg-blue-500 text-white py-3 rounded mt-4 font-bold hover:bg-blue-600 transition">
+    Tiếp tục
+  </button>
+</Link>
+
         </div>
       </div>
     </div>

@@ -17,6 +17,9 @@ import Profile from './pages/Profile';
 import Wishlist from './pages/WishList';
 import ChatBot from './components/Chatbot';
 import { Toaster } from 'sonner';
+import MbBankPage from './pages/payment/MbBankPage';
+import PaymentReturn from './pages/payment/PaymentReturn';
+import VnPayPage from './pages/payment/VnPayPage';
 
 function App() {
   return (
@@ -42,6 +45,10 @@ function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="*" element={<h1>404 Not Found</h1>} />
+                <Route path="/vnpay-payment" element={<VnPayPage />} />
+<Route path="/mbbank-payment" element={<MbBankPage />} />
+<Route path="/payment-return" element={<PaymentReturn />} />
+
               </Routes>
             </main>
             <Footer />

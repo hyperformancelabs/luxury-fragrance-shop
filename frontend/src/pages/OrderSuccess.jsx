@@ -1,36 +1,60 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 const OrderSuccess = () => {
   const [searchParams] = useSearchParams();
   const [orderDetails, setOrderDetails] = useState({
     orderId: searchParams.get('orderId') || 'ORD' + Math.floor(100000 + Math.random() * 900000),
-    customerName: searchParams.get('name') || '',
-    totalAmount: searchParams.get('total') || '0',
+    customer: {
+      name: '',
+      phone: '',
+      email: '',
+      address: '',
+      city: '',
+      district: '',
+      ward: ''
+    },
+    
+    totalAmount: 0,
+    customerInfor: [],
     paymentMethod: searchParams.get('paymentMethod') || 'vnpay',
     items: []
   });
-
+  const [isLoading, setIsLoading] = useState(true);
+  const { clearCart } = useCart();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
 
-      setOrderDetails(prev => ({
-        ...prev,
-        items: [
-          { name: 'Nước hoa nữ Versace Bright Crystal EDT', price: 5500000, quantity: 1 },
-          { name: 'Nước hoa nam Dior Sauvage EDP', price: 3200000, quantity: 1 }
-        ]
-      }));
-    }, 500);
+    const customerData = JSON.parse(localStorage.getItem('checkoutCustomer')) || {};
+    const cartData = JSON.parse(localStorage.getItem('checkoutCart')) || [];
+    console.log(cartData)
+    console.log(customerData)
     
-    return () => clearTimeout(timer);
+    const total = cartData.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    
+    setOrderDetails({
+      ...orderDetails,
+      customer: customerData,
+      totalAmount: total,
+      customerInfor: customerData,
+      items: cartData
+    });
+    
+    setIsLoading(false);
+    
+    // clearCart();
+    setTimeout(() => {
+      // localStorage.removeItem('checkoutCart');
+      // localStorage.removeItem('checkoutCustomer');
+      // localStorage.removeItem('paymentMethod');
+      // localStorage.removeItem('checkoutTotal');
+    }, 2000);
   }, []);
 
-  const formatCurrency = (amount) => {
-    return parseInt(amount).toLocaleString() + ' VND';
-  };
+  const formatPrice = (price) => price.toLocaleString('vi-VN') + ' VND';
+
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -38,7 +62,7 @@ const OrderSuccess = () => {
         <CheckCircle className="text-green-500 h-16 w-16 mb-4" />
         <h1 className="text-3xl font-bold text-gray-800">Đặt hàng thành công!</h1>
         <p className="text-gray-600 mt-2">
-          Cảm ơn bạn đã mua hàng. Chúng tôi đã nhận được đơn hàng của bạn.
+          Cảm ơn {orderDetails.customer.name} đã mua hàng. Chúng tôi đã nhận được đơn hàng của bạn.
         </p>
       </div>
 
@@ -46,7 +70,7 @@ const OrderSuccess = () => {
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">Thông tin đơn hàng</h2>
         </div>
-        
+
         <div className="p-6">
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             <div>
@@ -75,48 +99,61 @@ const OrderSuccess = () => {
 
           <div className="border-t border-gray-200 pt-6 mb-6">
             <h3 className="text-lg font-semibold mb-4">Sản phẩm đã mua</h3>
-            
-            {orderDetails.items.length > 0 ? (
+            {isLoading ? (
+              <p className="text-gray-500">Đang tải thông tin sản phẩm...</p>
+            ) : orderDetails.items.length > 0 ? (
               <div className="space-y-4">
                 {orderDetails.items.map((item, index) => (
-                  <div key={index} className="flex justify-between pb-2">
+                  <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
                     <div className="flex-grow">
                       <span className="font-medium">{item.name}</span>
+                      {item.selectedSize && (
+                        <span className="text-gray-500 ml-2">({item.selectedSize})</span>
+                      )}
                       <span className="text-gray-500 ml-2">x{item.quantity}</span>
                     </div>
-                    <div>
-                      {formatCurrency(item.price)}
+                    <div className="font-medium">
+                      {formatPrice(item.price * item.quantity)}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500">Đang tải thông tin sản phẩm...</p>
+              <p className="text-gray-500">Không có thông tin sản phẩm</p>
             )}
           </div>
-
 
           <div className="border-t border-gray-200 pt-4">
             <div className="flex justify-between items-center font-bold text-lg">
               <span>Tổng cộng</span>
-              <span>{formatCurrency(orderDetails.items.reduce((sum, item) => sum + item.price * item.quantity, 0))}</span>
+              <span> {formatPrice(JSON.parse(localStorage.getItem('checkoutTotal')))} </span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">
-        <div className="flex items-start">
-          <div className="mr-4 text-blue-500">📦</div>
-          <div>
-            <h3 className="font-semibold text-blue-800">Thông tin vận chuyển</h3>
-            <p className="text-blue-700 mt-1">
-              Đơn hàng của bạn dự kiến sẽ được giao trong vòng 3-5 ngày làm việc.
-            </p>
-          </div>
-        </div>
+  <div className="flex items-start">
+    <div className="mr-4 text-green-500 text-2xl">📦</div>
+    <div>
+      <h3 className="font-semibold text-green-800 text-lg mb-2">Thông tin vận chuyển</h3>
+      
+      <div className="text-sm text-gray-800 space-y-1">
+        <p><span className="font-medium">Họ tên:</span> {orderDetails.customer?.name}</p>
+        <p><span className="font-medium">Số điện thoại:</span> {orderDetails.customer?.phone}</p>
+        <p><span className="font-medium">Email:</span> {orderDetails.customer?.email}</p>
+        <p>
+          <span className="font-medium">Địa chỉ:</span>{" "}
+          {orderDetails.customer?.address}, {orderDetails.customer?.ward}, {orderDetails.customer?.district}, {orderDetails.customer?.city}
+        </p>
       </div>
 
+      <p className="text-green-700 mt-4">
+        Đơn hàng của bạn dự kiến sẽ được giao trong vòng 3-5 ngày làm việc.
+      </p>
+    </div>
+  </div>
+</div>
 
       <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
         <Link 
@@ -126,8 +163,8 @@ const OrderSuccess = () => {
           Xem đơn hàng của tôi
         </Link>
         <Link 
-          to="/products" 
-          className="bg-blue-500 text-white px-6 py-3 rounded text-center font-medium hover:bg-blue-600 transition"
+          to="/" 
+          className="bg-red-500 text-white px-6 py-3 rounded text-center font-medium hover:bg-red-600 transition"
         >
           Tiếp tục mua sắm
         </Link>
