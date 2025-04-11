@@ -23,7 +23,7 @@ import VnPayPage from "./pages/payment/VnPayPage";
 
 function App() {
   return (
-    <Router>
+    <Router> 
       <AuthProvider>
         <CartProvider>
           <div>
