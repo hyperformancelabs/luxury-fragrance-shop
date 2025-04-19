@@ -1,18 +1,18 @@
 package com.hyperformancelabs.backend.controller;
 
-
 import com.hyperformancelabs.backend.exception.ApiResponse;
 import com.hyperformancelabs.backend.models.Customer;
-
 import com.hyperformancelabs.backend.payload.ApiResponseStatus;
 import com.hyperformancelabs.backend.service.CustomerService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/customers")
+@RequestMapping("/customers")
 public class CustomerController {
 
     @Autowired
@@ -44,5 +44,3 @@ public class CustomerController {
         );
     }
 }
-
-
