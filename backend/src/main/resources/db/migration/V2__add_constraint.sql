@@ -53,7 +53,6 @@ GO
 -- 7. Table MaterialTransaction
 ALTER TABLE [MaterialTransaction]
 ADD
-    CONSTRAINT [CK_MaterialTransaction_Quantity_Positive] CHECK ([quantity] > 0),
     CONSTRAINT [CK_MaterialTransaction_BeforeQuantity_NonNegative] CHECK ([before_quantity] IS NULL OR [before_quantity] >= 0),
     CONSTRAINT [CK_MaterialTransaction_AfterQuantity_NonNegative] CHECK ([after_quantity] IS NULL OR [after_quantity] >= 0),
     CONSTRAINT [CK_MaterialTransaction_CostPrice_NonNegative] CHECK ([cost_price] IS NULL OR [cost_price] >= 0),
@@ -64,7 +63,7 @@ GO
 ALTER TABLE [Brand]
 ADD
     CONSTRAINT [CK_Brand_BrandName_NotEmpty] CHECK (LEN(LTRIM(RTRIM([brand_name]))) > 0),
-    CONSTRAINT [CK_Brand_WebsiteUrl_Format] CHECK ([website_url] IS NULL OR [website_url] LIKE 'http://%' OR [website_url] LIKE 'https://%');
+    CONSTRAINT [CK_Brand_WebsiteUrl_Format] CHECK ([website_url] IS NULL OR [website_url] LIKE 'http://%' OR [website_url] LIKE '%');
 GO
 
 -- 9. Table Product
@@ -161,7 +160,6 @@ GO
 -- 20. Table Payment
 ALTER TABLE [Payment]
 ADD
-    CONSTRAINT [CK_Payment_Amount_Positive] CHECK ([amount] > 0),
     CONSTRAINT [CK_Payment_PaymentDate_Valid] CHECK ([payment_date] <= GETDATE()),
     CONSTRAINT [CK_Payment_Currency_NotEmpty] CHECK (LEN(LTRIM(RTRIM([currency]))) > 0);
 GO

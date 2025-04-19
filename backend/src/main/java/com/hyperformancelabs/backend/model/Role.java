@@ -1,6 +1,7 @@
 package com.hyperformancelabs.backend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,10 @@ import lombok.AllArgsConstructor;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Entity representing user roles in the system.
+ * Defines the various roles that employees can be assigned.
+ */
 @Entity
 @Table(name = "Role")
 @Data
@@ -21,6 +26,7 @@ public class Role {
     private Integer roleId;
     
     @Column(name = "role_name", length = 50, nullable = false, unique = true)
+    @NotBlank(message = "Role name is required")
     private String roleName;
     
     @Column(name = "role_description", columnDefinition = "NVARCHAR(MAX)")
@@ -37,4 +43,4 @@ public class Role {
     
     @OneToMany(mappedBy = "role")
     private Set<RolePermission> rolePermissions = new HashSet<>();
-} 
+}

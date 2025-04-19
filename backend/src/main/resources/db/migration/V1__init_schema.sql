@@ -3,11 +3,11 @@ CREATE TABLE [Employee] (
     [employee_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [username] VARCHAR(50) NOT NULL UNIQUE,
     [password] VARCHAR(255) NOT NULL,
-    [full_name] VARCHAR(100) NOT NULL,
+    [full_name] NVARCHAR(100) NOT NULL,
     [phone_number] VARCHAR(20) NOT NULL,
     [email] VARCHAR(100) NULL UNIQUE,
-    [address] VARCHAR(255) NOT NULL,
-    [status] VARCHAR(20) NOT NULL 
+    [address] NVARCHAR(255) NOT NULL,
+    [status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Employee_Status] DEFAULT 'active'
         CONSTRAINT [CK_Employee_Status] CHECK ([status] IN ('active','inactive','on_leave')),
     [start_date] DATE NOT NULL DEFAULT (GETDATE()),
@@ -20,10 +20,10 @@ GO
 -- 2. Table Role
 CREATE TABLE [Role] (
     [role_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
-    [role_name] VARCHAR(50) NOT NULL UNIQUE,
+    [role_name] NVARCHAR(50) NOT NULL UNIQUE,
     [role_description] NVARCHAR(MAX) NULL,
     [is_default] BIT NOT NULL DEFAULT 0,
-    [status] VARCHAR(20) NOT NULL 
+    [status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Role_Status] DEFAULT 'active'
         CONSTRAINT [CK_Role_Status] CHECK ([status] IN ('active','inactive'))
 );
@@ -34,7 +34,7 @@ CREATE TABLE [EmployeeRole] (
     [employee_role_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [employee_id] INT NOT NULL,
     [role_id] INT NOT NULL,
-    [status] VARCHAR(20) NOT NULL 
+    [status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_EmployeeRole_Status] DEFAULT 'active'
         CONSTRAINT [CK_EmployeeRole_Status] CHECK ([status] IN ('active','inactive')),
     CONSTRAINT [FK_EmployeeRole_Employee] FOREIGN KEY ([employee_id]) REFERENCES [Employee]([employee_id])
@@ -50,7 +50,7 @@ GO
 -- 4. Table Permission
 CREATE TABLE [Permission] (
     [permission_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
-    [permission_name] VARCHAR(50) NOT NULL UNIQUE,
+    [permission_name] NVARCHAR(50) NOT NULL UNIQUE,
     [permission_description] NVARCHAR(MAX) NULL
 );
 GO
@@ -60,8 +60,6 @@ CREATE TABLE [RolePermission] (
     [role_permission_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [role_id] INT NOT NULL,
     [permission_id] INT NOT NULL,
-    [permissions] NVARCHAR(MAX) NULL 
-        CONSTRAINT [CK_RolePermission_JSON] CHECK ([permissions] IS NULL OR ISJSON([permissions]) = 1),
     CONSTRAINT [FK_RolePermission_Role] FOREIGN KEY ([role_id]) REFERENCES [Role]([role_id])
         ON DELETE CASCADE
         ON UPDATE NO ACTION,
@@ -93,7 +91,7 @@ CREATE TABLE [MaterialTransaction] (
     [before_quantity] INT NULL,
     [quantity] INT NOT NULL,
     [after_quantity] INT NULL,
-    [transaction_type] VARCHAR(20) NOT NULL 
+    [transaction_type] VARCHAR(20) NOT NULL
         CONSTRAINT [CK_MaterialTransaction_Type] CHECK ([transaction_type] IN ('import','export','adjust')),
     [reason] NVARCHAR(MAX) NULL,
     [note] NVARCHAR(MAX) NULL,
@@ -110,9 +108,9 @@ GO
 -- 8. Table Brand
 CREATE TABLE [Brand] (
     [brand_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
-    [brand_name] VARCHAR(100) NOT NULL UNIQUE,
+    [brand_name] NVARCHAR(100) NOT NULL UNIQUE,
     [brand_description] NVARCHAR(MAX) NULL,
-    [country_of_origin] VARCHAR(50) NULL,
+    [country_of_origin] NVARCHAR(100) NULL,
     [logo_url] VARCHAR(255) NULL,
     [website_url] VARCHAR(255) NULL
 );
@@ -122,14 +120,14 @@ GO
 CREATE TABLE [Product] (
     [product_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [brand_id] INT NOT NULL,
-    [product_name] VARCHAR(100) NOT NULL,
+    [product_name] NVARCHAR(100) NOT NULL,
     [description] NVARCHAR(MAX) NULL,
     [volume] INT NOT NULL,
     [price] DECIMAL(10,2) NOT NULL,
     [discount_price] DECIMAL(10,2) NULL,
     [quantity_in_stock] INT NOT NULL DEFAULT 0,
     [reorder_level] INT NULL,
-    [image_url] VARCHAR(255) NULL,
+    [image_url] VARCHAR(500) NULL,
     CONSTRAINT [FK_Product_Brand] FOREIGN KEY ([brand_id]) REFERENCES [Brand]([brand_id])
         ON DELETE NO ACTION
         ON UPDATE NO ACTION,
@@ -142,8 +140,8 @@ CREATE TABLE [InventoryTransaction] (
     [inventory_transaction_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [product_id] INT NOT NULL,
     [performed_by] INT NOT NULL,
-    [transaction_type] VARCHAR(20) NOT NULL 
-        CONSTRAINT [CK_InventoryTransaction_Type] CHECK ([transaction_type] IN ('import','export','sell','combine')),
+    [transaction_type] VARCHAR(20) NOT NULL
+        CONSTRAINT [CK_InventoryTransaction_Type] CHECK ([transaction_type] IN ('import','export', 'adjust', 'sell','combine')),
     [transaction_date] DATETIME NOT NULL,
     [before_quantity] INT NULL,
     [quantity] INT NOT NULL,
@@ -164,9 +162,9 @@ GO
 CREATE TABLE [ProductDetail] (
     [product_detail_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [product_id] INT NOT NULL,
-    [detail_name] VARCHAR(50) NOT NULL 
+    [detail_name] VARCHAR(50) NOT NULL
         CONSTRAINT [CK_ProductDetail_Name] CHECK ([detail_name] IN ('tone_scent','style','top_note','middle_note','base_note','longevity','projection','season','time_of_day','suitable_age','suitable_gender')),
-    [detail_value] VARCHAR(255) NOT NULL,
+    [detail_value] NVARCHAR(255) NOT NULL,
     [note] NVARCHAR(MAX) NULL,
     CONSTRAINT [FK_ProductDetail_Product] FOREIGN KEY ([product_id]) REFERENCES [Product]([product_id])
         ON DELETE CASCADE
@@ -178,15 +176,15 @@ GO
 -- 12. Table Promotion
 CREATE TABLE [Promotion] (
     [promotion_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
-    [promotion_name] VARCHAR(100) NOT NULL,
+    [promotion_name] NVARCHAR(100) NOT NULL,
     [description] NVARCHAR(MAX) NULL,
     [start_date] DATE NOT NULL,
     [end_date] DATE NULL,
-    [discount_type] VARCHAR(20) NOT NULL 
+    [discount_type] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Promotion_DiscountType] DEFAULT 'percentage'
         CONSTRAINT [CK_Promotion_DiscountType] CHECK ([discount_type] IN ('percentage','fixed_amount','free_shipping')),
     [discount_value] DECIMAL(10,2) NULL,
-    [status] VARCHAR(20) NOT NULL 
+    [status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Promotion_Status] DEFAULT 'active'
         CONSTRAINT [CK_Promotion_Status] CHECK ([status] IN ('active','inactive','expired')),
     [usage_limit] INT NULL
@@ -198,12 +196,12 @@ CREATE TABLE [ProductPromotion] (
     [product_promotion_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [product_id] INT NOT NULL,
     [promotion_id] INT NOT NULL,
-    [condition_json] NVARCHAR(MAX) NULL 
+    [condition_json] NVARCHAR(MAX) NULL
         CONSTRAINT [CK_ProductPromotion_JSON] CHECK ([condition_json] IS NULL OR ISJSON([condition_json]) = 1),
     [max_discount_amount] DECIMAL(10,2) NULL,
     [start_date] DATE NOT NULL,
     [end_date] DATE NULL,
-    [status] VARCHAR(20) NOT NULL 
+    [status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_ProductPromotion_Status] DEFAULT 'active'
         CONSTRAINT [CK_ProductPromotion_Status] CHECK ([status] IN ('active','inactive','expired')),
     CONSTRAINT [FK_ProductPromotion_Product] FOREIGN KEY ([product_id]) REFERENCES [Product]([product_id])
@@ -219,19 +217,19 @@ GO
 -- 14. Table Customer
 CREATE TABLE [Customer] (
     [customer_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
-    [username] VARCHAR(50) NULL UNIQUE,
+    [username] VARCHAR(50) NULL,
     [password] VARCHAR(255) NULL,
-    [name] VARCHAR(100) NOT NULL,
+    [name] NVARCHAR(100) NOT NULL,
     [phone_number] VARCHAR(20) NULL UNIQUE,
     [email] VARCHAR(100) NULL UNIQUE,
-    [street] VARCHAR(255) NULL,
-    [ward] VARCHAR(50) NULL,
-    [district] VARCHAR(50) NULL,
-    [city] VARCHAR(50) NULL,
-    [shipping_note] VARCHAR(50) NULL,
+    [street] NVARCHAR(255) NULL,
+    [ward] NVARCHAR(50) NULL,
+    [district] NVARCHAR(50) NULL,
+    [city] NVARCHAR(50) NULL,
+    [shipping_note] NVARCHAR(50) NULL,
     [note] NVARCHAR(MAX) NULL,
     [rating] INT NOT NULL DEFAULT 10,
-    [status] VARCHAR(20) NOT NULL 
+    [status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Customer_Status] DEFAULT 'active'
         CONSTRAINT [CK_Customer_Status] CHECK ([status] IN ('active','inactive','banned')),
     [loyalty_points] INT NOT NULL DEFAULT 0,
@@ -244,7 +242,7 @@ GO
 CREATE TABLE [Cart] (
     [cart_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [customer_id] INT NULL,
-    [status] VARCHAR(20) NOT NULL 
+    [status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Cart_Status] DEFAULT 'active'
         CONSTRAINT [CK_Cart_Status] CHECK ([status] IN ('active','abandoned','converted')),
     [total_amount] DECIMAL(10,2) NULL,
@@ -263,7 +261,7 @@ CREATE TABLE [CartItem] (
     [product_id] INT NOT NULL,
     [quantity] INT NOT NULL,
     [unit_price] DECIMAL(10,2) NOT NULL,
-    [note] VARCHAR(255) NULL,
+    [note] NVARCHAR(255) NULL,
     [is_selected] BIT NOT NULL DEFAULT 1,
     CONSTRAINT [FK_CartItem_Cart] FOREIGN KEY ([cart_id]) REFERENCES [Cart]([cart_id])
         ON DELETE CASCADE
@@ -283,11 +281,11 @@ CREATE TABLE [Order] (
     [order_date] DATETIME NOT NULL DEFAULT (GETDATE()),
     [total_amount] DECIMAL(10,2) NULL,
     [shipping_fee] DECIMAL(10,2) NULL,
-    [order_status] VARCHAR(20) NOT NULL 
+    [order_status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Order_Status] DEFAULT 'pending'
         CONSTRAINT [CK_Order_Status] CHECK ([order_status] IN ('pending','processing','shipping','delivered','cancelled')),
-    [shipping_address] VARCHAR(255) NOT NULL,
-    [shipping_option] VARCHAR(50) NOT NULL,
+    [shipping_address] NVARCHAR(255) NOT NULL,
+    [shipping_option] NVARCHAR(50) NOT NULL,
     [note] NVARCHAR(MAX) NULL,
     [estimated_delivery_date] DATE NULL,
     CONSTRAINT [FK_Order_Customer] FOREIGN KEY ([customer_id]) REFERENCES [Customer]([customer_id]),
@@ -324,7 +322,7 @@ CREATE TABLE [Payment] (
     [order_id] INT NOT NULL,
     [payment_date] DATETIME NOT NULL,
     [amount] DECIMAL(10,2) NOT NULL,
-    [payment_status] VARCHAR(20) NOT NULL 
+    [payment_status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Payment_Status] DEFAULT 'pending'
         CONSTRAINT [CK_Payment_Status] CHECK ([payment_status] IN ('pending','completed','failed','refunded')),
     [transaction_id] VARCHAR(50) NULL,
@@ -340,7 +338,7 @@ CREATE TABLE [Shipment] (
     [order_id] INT NOT NULL,
     [shipping_provider] VARCHAR(50) NULL,
     [tracking_number] VARCHAR(50) NULL,
-    [shipment_status] VARCHAR(20) NOT NULL 
+    [shipment_status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Shipment_Status] DEFAULT 'pending'
         CONSTRAINT [CK_Shipment_Status] CHECK ([shipment_status] IN ('pending','in_transit','delivered','failed')),
     [shipping_cost] DECIMAL(10,2) NULL,
@@ -358,7 +356,7 @@ CREATE TABLE [OrderItem] (
     [product_id] INT NOT NULL,
     [quantity] INT NOT NULL,
     [unit_price] DECIMAL(10,2) NOT NULL,
-    [note] VARCHAR(255) NULL,
+    [note] NVARCHAR(255) NULL,
     CONSTRAINT [FK_OrderItem_Order] FOREIGN KEY ([order_id]) REFERENCES [Order]([order_id]),
     CONSTRAINT [FK_OrderItem_Product] FOREIGN KEY ([product_id]) REFERENCES [Product]([product_id]),
     CONSTRAINT [UQ_OrderItem] UNIQUE ([order_id], [product_id])
@@ -383,10 +381,10 @@ CREATE TABLE [Conversation] (
     [conversation_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [start_time] DATETIME NOT NULL DEFAULT (GETDATE()),
     [end_time] DATETIME NULL,
-    [status] VARCHAR(20) NOT NULL 
+    [status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Conversation_Status] DEFAULT 'active'
         CONSTRAINT [CK_Conversation_Status] CHECK ([status] IN ('active','done')),
-    [rating] VARCHAR(20) NULL 
+    [rating] VARCHAR(20) NULL
         CONSTRAINT [CK_Conversation_Rating] CHECK ([rating] IN ('bad','average','good') OR [rating] IS NULL),
     [channel] VARCHAR(50) NULL
 );
@@ -397,10 +395,10 @@ CREATE TABLE [ChatMessage] (
     [chat_message_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [conversation_id] INT NOT NULL,
     [sender_id] INT NULL,
-    [sender_type] VARCHAR(20) NOT NULL 
+    [sender_type] VARCHAR(20) NOT NULL
         CONSTRAINT [CK_ChatMessage_SenderType] CHECK ([sender_type] IN ('employee','customer','bot')),
     [receiver_id] INT NULL,
-    [receiver_type] VARCHAR(20) NOT NULL 
+    [receiver_type] VARCHAR(20) NOT NULL
         CONSTRAINT [CK_ChatMessage_ReceiverType] CHECK ([receiver_type] IN ('employee','customer','bot')),
     [content] NVARCHAR(MAX) NOT NULL,
     [timestamp] DATETIME NOT NULL DEFAULT (GETDATE()),

@@ -5,6 +5,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+/**
+ * Entity representing the many-to-many relationship between roles and permissions.
+ * Maps which permissions are assigned to specific roles.
+ */
 @Entity
 @Table(name = "RolePermission", uniqueConstraints = {
     @UniqueConstraint(name = "UQ_RolePermission", columnNames = {"role_id", "permission_id"})
@@ -26,7 +30,4 @@ public class RolePermission {
     @ManyToOne
     @JoinColumn(name = "permission_id", nullable = false)
     private Permission permission;
-    
-    @Column(name = "permissions", columnDefinition = "NVARCHAR(MAX)")
-    private String permissions;
-} 
+}
