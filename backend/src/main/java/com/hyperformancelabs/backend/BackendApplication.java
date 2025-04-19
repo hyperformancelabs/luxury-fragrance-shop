@@ -1,6 +1,6 @@
 package com.hyperformancelabs.backend;
 
-import com.hyperformancelabs.backend.utils.EnvLoader;
+import com.hyperformancelabs.backend.util.EnvLoader;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

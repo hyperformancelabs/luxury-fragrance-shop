@@ -1,4 +1,4 @@
-package com.hyperformancelabs.backend.utils;
+package com.hyperformancelabs.backend.util;
 
 import java.io.BufferedReader;
 import java.io.File;
