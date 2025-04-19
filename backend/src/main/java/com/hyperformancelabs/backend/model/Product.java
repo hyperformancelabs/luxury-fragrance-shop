@@ -1,4 +1,4 @@
-package com.hyperformancelabs.backend.models;
+package com.hyperformancelabs.backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -17,52 +17,52 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Product {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id")
     private Integer productId;
-    
+
     @ManyToOne
     @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
-    
+
     @Column(name = "product_name", length = 100, nullable = false)
     private String productName;
-    
+
     @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
-    
+
     @Column(name = "volume", nullable = false)
     private Integer volume;
-    
+
     @Column(name = "price", precision = 10, scale = 2, nullable = false)
     private BigDecimal price;
-    
+
     @Column(name = "discount_price", precision = 10, scale = 2)
     private BigDecimal discountPrice;
-    
+
     @Column(name = "quantity_in_stock", nullable = false)
     private Integer quantityInStock = 0;
-    
+
     @Column(name = "reorder_level")
     private Integer reorderLevel;
-    
+
     @Column(name = "image_url", length = 255)
     private String imageUrl;
-    
+
     @OneToMany(mappedBy = "product")
     private Set<ProductDetail> productDetails = new HashSet<>();
-    
+
     @OneToMany(mappedBy = "product")
     private Set<InventoryTransaction> inventoryTransactions = new HashSet<>();
-    
+
     @OneToMany(mappedBy = "product")
     private Set<ProductPromotion> productPromotions = new HashSet<>();
-    
+
     @OneToMany(mappedBy = "product")
     private Set<CartItem> cartItems = new HashSet<>();
-    
+
     @OneToMany(mappedBy = "product")
     private Set<OrderItem> orderItems = new HashSet<>();
-} 
+}

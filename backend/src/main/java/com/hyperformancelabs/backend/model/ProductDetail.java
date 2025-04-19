@@ -1,4 +1,4 @@
-package com.hyperformancelabs.backend.models;
+package com.hyperformancelabs.backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
