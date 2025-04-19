@@ -1,6 +1,7 @@
 package com.hyperformancelabs.backend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,10 @@ import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * Entity representing shipment information for orders.
+ * Tracks shipping details, status, and delivery dates.
+ */
 @Entity
 @Table(name = "Shipment")
 @Data
@@ -31,9 +36,12 @@ public class Shipment {
     private String trackingNumber;
     
     @Column(name = "shipment_status", length = 20, nullable = false)
+    @Pattern(regexp = "^(pending|in_transit|delivered|failed)$", 
+             message = "Shipment status must be pending, in_transit, delivered, or failed")
     private String shipmentStatus = "pending";
     
     @Column(name = "shipping_cost", precision = 10, scale = 2)
+    @DecimalMin(value = "0.0", inclusive = true, message = "Shipping cost must be non-negative")
     private BigDecimal shippingCost;
     
     @Column(name = "shipping_date")
@@ -44,4 +52,4 @@ public class Shipment {
     
     @Column(name = "delivery_date")
     private LocalDate deliveryDate;
-} 
+}
