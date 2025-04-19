@@ -15,66 +15,66 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Customer {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "customer_id")
     private Integer customerId;
-    
+
     @Column(name = "username", length = 50, unique = true)
     private String username;
-    
+
     @Column(name = "password", length = 255)
     private String password;
-    
+
     @Column(name = "name", length = 100, nullable = false)
     private String name;
-    
+
     @Column(name = "phone_number", length = 20, unique = true)
     private String phoneNumber;
-    
+
     @Column(name = "email", length = 100, unique = true)
     private String email;
-    
+
     @Column(name = "street", length = 255)
     private String street;
-    
+
     @Column(name = "ward", length = 50)
     private String ward;
-    
+
     @Column(name = "district", length = 50)
     private String district;
-    
+
     @Column(name = "city", length = 50)
     private String city;
-    
+
     @Column(name = "shipping_note", length = 50)
     private String shippingNote;
-    
+
     @Column(name = "note", columnDefinition = "NVARCHAR(MAX)")
     private String note;
-    
+
     @Column(name = "rating", nullable = false)
     private Integer rating = 10;
-    
+
     @Column(name = "status", length = 20, nullable = false)
     private String status = "active";
-    
+
     @Column(name = "loyalty_points", nullable = false)
     private Integer loyaltyPoints = 0;
-    
+
     @Column(name = "create_at", nullable = false)
     private LocalDateTime createAt = LocalDateTime.now();
-    
+
     @Column(name = "update_at")
     private LocalDateTime updateAt;
-    
+
     @OneToMany(mappedBy = "customer")
     private Set<com.hyperformancelabs.backend.models.Cart> carts = new HashSet<>();
-    
-    @OneToMany(mappedBy = "customer")
-    private Set<com.hyperformancelabs.backend.models.CustomerPaymentMethod> paymentMethods = new HashSet<>();
-    
+
+//    @OneToMany(mappedBy = "customer")
+//    private Set<com.hyperformancelabs.backend.models.CustomerPaymentMethod> paymentMethods = new HashSet<>();
+//
     @OneToMany(mappedBy = "customer")
     private Set<com.hyperformancelabs.backend.models.Order> orders = new HashSet<>();
 
@@ -221,14 +221,14 @@ public class Customer {
     public void setCarts(Set<com.hyperformancelabs.backend.models.Cart> carts) {
         this.carts = carts;
     }
-
-    public Set<com.hyperformancelabs.backend.models.CustomerPaymentMethod> getPaymentMethods() {
-        return paymentMethods;
-    }
-
-    public void setPaymentMethods(Set<com.hyperformancelabs.backend.models.CustomerPaymentMethod> paymentMethods) {
-        this.paymentMethods = paymentMethods;
-    }
+//
+//    public Set<com.hyperformancelabs.backend.models.CustomerPaymentMethod> getPaymentMethods() {
+//        return paymentMethods;
+//    }
+//
+//    public void setPaymentMethods(Set<com.hyperformancelabs.backend.models.CustomerPaymentMethod> paymentMethods) {
+//        this.paymentMethods = paymentMethods;
+//    }
 
     public Set<com.hyperformancelabs.backend.models.Order> getOrders() {
         return orders;
@@ -238,4 +238,4 @@ public class Customer {
         this.orders = orders;
     }
 
-} 
+}
