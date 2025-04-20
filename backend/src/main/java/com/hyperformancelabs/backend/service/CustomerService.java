@@ -13,4 +13,8 @@ public interface CustomerService {
     Customer register(RegisterRequest request);
 
     Customer login(LoginRequest request);
+
+    String loginAndGenerateToken(LoginRequest request);
+
+    Customer getCustomerByUsername(String username);
 }

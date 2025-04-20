@@ -7,8 +7,10 @@ import com.hyperformancelabs.backend.models.Customer;
 import com.hyperformancelabs.backend.payload.ApiResponseStatus;
 import com.hyperformancelabs.backend.service.CustomerService;
 
+import com.hyperformancelabs.backend.service.impl.CustomerServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,53 +47,20 @@ public class CustomerController {
                 )
         );
     }
+//    @GetMapping("/me")
+//    public ResponseEntity<ApiResponse<Customer>> getCustomerInfo() {
 
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<Customer>> registerCustomer(@RequestBody RegisterRequest request) {
-        try {
-            Customer newCustomer = customerService.register(request);
-            return ResponseEntity.ok(
-                    new ApiResponse<>(
-                            ApiResponseStatus.SUCCESS_CODE,
-                            ApiResponseStatus.SUCCESS_STATUS,
-                            "Đăng ký thành công",
-                            newCustomer
-                    )
-            );
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(
-                    new ApiResponse<>(
-                            ApiResponseStatus.BAD_REQUEST_CODE,
-                            ApiResponseStatus.ERROR_STATUS,
-                            e.getMessage(),
-                            null
-                    )
-            );
-        }
-    }
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse<Customer>> loginCustomer(@RequestBody LoginRequest request) {
-        try {
-            Customer customer = customerService.login(request);
-            return ResponseEntity.ok(
-                    new ApiResponse<>(
-                            ApiResponseStatus.SUCCESS_CODE,
-                            ApiResponseStatus.SUCCESS_STATUS,
-                            "Đăng nhập thành công",
-                            customer
-                    )
-            );
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(
-                    new ApiResponse<>(
-                            ApiResponseStatus.BAD_REQUEST_CODE,
-                            ApiResponseStatus.ERROR_STATUS,
-                            e.getMessage(),
-                            null
-                    )
-            );
-        }
-    }
-
-
+//        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+//
+//        Customer customer = customerService.getCustomerByUsername(username);
+//
+//        return ResponseEntity.ok(
+//                new ApiResponse<>(
+//                        ApiResponseStatus.SUCCESS_CODE,
+//                        ApiResponseStatus.SUCCESS_STATUS,
+//                        "Lấy thông tin thành công",
+//                        customer
+//                )
+//        );
+//    }
 }
