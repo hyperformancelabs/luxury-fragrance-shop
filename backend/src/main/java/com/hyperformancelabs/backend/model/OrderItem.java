@@ -1,12 +1,17 @@
 package com.hyperformancelabs.backend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 
+/**
+ * Entity representing an item within an order.
+ * Tracks product details, quantity, and pricing at time of order.
+ */
 @Entity
 @Table(name = "OrderItem", uniqueConstraints = {
     @UniqueConstraint(name = "UQ_OrderItem", columnNames = {"order_id", "product_id"})
@@ -30,11 +35,17 @@ public class OrderItem {
     private Product product;
     
     @Column(name = "quantity", nullable = false)
+    @Min(value = 1, message = "Quantity must be positive")
     private Integer quantity;
     
     @Column(name = "unit_price", precision = 10, scale = 2, nullable = false)
+    @DecimalMin(value = "0.0", inclusive = true, message = "Unit price must be non-negative")
     private BigDecimal unitPrice;
+    
+    @Column(name = "discount_amount", precision = 10, scale = 2)
+    @DecimalMin(value = "0.0", inclusive = true, message = "Discount amount must be non-negative")
+    private BigDecimal discountAmount;
     
     @Column(name = "note", length = 255)
     private String note;
-} 
+}

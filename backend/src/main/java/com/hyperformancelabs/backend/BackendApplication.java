@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class BackendApplication {
 
 	public static void main(String[] args) {
-		EnvLoader.loadEnv("../.env.local", "../.env");
+		EnvLoader.loadEnv(".env.local", ".env");
 
 		SpringApplication.run(BackendApplication.class, args);
 	}
