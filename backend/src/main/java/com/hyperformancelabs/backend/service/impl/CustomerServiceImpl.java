@@ -2,7 +2,9 @@ package com.hyperformancelabs.backend.service.impl;
 
 import com.hyperformancelabs.backend.dto.LoginRequest;
 import com.hyperformancelabs.backend.dto.RegisterRequest;
+import com.hyperformancelabs.backend.model.Cart;
 import com.hyperformancelabs.backend.model.Customer;
+import com.hyperformancelabs.backend.repository.CartRepository;
 import com.hyperformancelabs.backend.repository.CustomerRepository;
 import com.hyperformancelabs.backend.service.CustomerService;
 import com.hyperformancelabs.backend.util.JwtUtil;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,6 +24,9 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private CartRepository cartRepository;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -59,7 +65,16 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setRating(10);
         customer.setLoyaltyPoints(0);
 
-        return customerRepository.save(customer);
+        Customer savedCustomer = customerRepository.save(customer);
+
+        Cart cart = new Cart();
+        cart.setCustomer(savedCustomer);
+        cart.setStatus("active");
+        cart.setTotalAmount(BigDecimal.ZERO);
+        cartRepository.save(cart);
+        System.out.println("Tạo giỏ hàng thành công cho user "+ request.getUsername());
+
+        return savedCustomer;
     }
 
     @Override

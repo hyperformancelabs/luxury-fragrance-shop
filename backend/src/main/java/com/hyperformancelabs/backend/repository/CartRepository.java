@@ -1,4 +1,8 @@
 package com.hyperformancelabs.backend.repository;
 
-public class CartRepository {
+import com.hyperformancelabs.backend.model.Cart;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface CartRepository extends JpaRepository<Cart, Integer> {
+
 }
