@@ -20,7 +20,7 @@ public class EnvLoader {
         }
 
         try (BufferedReader reader = new BufferedReader(
-            new InputStreamReader(new FileInputStream(envFile), StandardCharsets.UTF_8)
+                new InputStreamReader(new FileInputStream(envFile), StandardCharsets.UTF_8)
         )) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -66,18 +66,18 @@ public class EnvLoader {
     private static File findEnvFile(String envLocalPath, String envDefaultPath) {
         // Possible locations to check
         String[] possiblePaths = {
-            // Current directory
-            envLocalPath,
-            envDefaultPath,
-            // Parent directory (project root)
-            ".." + File.separator + envLocalPath,
-            ".." + File.separator + envDefaultPath,
-            // Absolute paths from user directory
-            System.getProperty("user.dir") + File.separator + envLocalPath,
-            System.getProperty("user.dir") + File.separator + envDefaultPath,
-            // Parent of user directory
-            new File(System.getProperty("user.dir")).getParent() + File.separator + envLocalPath,
-            new File(System.getProperty("user.dir")).getParent() + File.separator + envDefaultPath
+                // Current directory
+                envLocalPath,
+                envDefaultPath,
+                // Parent directory (project root)
+                ".." + File.separator + envLocalPath,
+                ".." + File.separator + envDefaultPath,
+                // Absolute paths from user directory
+                System.getProperty("user.dir") + File.separator + envLocalPath,
+                System.getProperty("user.dir") + File.separator + envDefaultPath,
+                // Parent of user directory
+                new File(System.getProperty("user.dir")).getParent() + File.separator + envLocalPath,
+                new File(System.getProperty("user.dir")).getParent() + File.separator + envDefaultPath
         };
 
         // Try each path

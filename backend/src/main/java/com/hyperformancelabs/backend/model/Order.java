@@ -2,9 +2,9 @@ package com.hyperformancelabs.backend.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -12,70 +12,68 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Entity representing a customer order.
- * Stores order details, shipping information, and payment status.
- */
 @Entity
-@Table(name = "Order") // "Order" là từ khóa trong SQL, cần đặt trong dấu ngoặc vuông trong SQL Server
+@Table(name = "[Order]") // SQL reserved keyword, using square brackets to escape it
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id")
     private Integer orderId;
-    
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
-    
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id")
     private Employee employee;
-    
+
+    @NotNull(message = "Order date cannot be empty")
+    @PastOrPresent(message = "Order date cannot be in the future")
     @Column(name = "order_date", nullable = false)
-    @PastOrPresent(message = "Order date must be in the past or present")
-    private LocalDateTime orderDate = LocalDateTime.now();
-    
+    private LocalDateTime orderDate;
+
+    @DecimalMin(value = "0.0", inclusive = true, message = "Total amount cannot be negative")
     @Column(name = "total_amount", precision = 10, scale = 2)
-    @DecimalMin(value = "0.0", inclusive = true, message = "Total amount must be non-negative")
     private BigDecimal totalAmount;
-    
+
+    @DecimalMin(value = "0.0", inclusive = true, message = "Shipping fee cannot be negative")
     @Column(name = "shipping_fee", precision = 10, scale = 2)
-    @DecimalMin(value = "0.0", inclusive = true, message = "Shipping fee must be non-negative")
     private BigDecimal shippingFee;
-    
-    @Column(name = "order_status", length = 20, nullable = false)
-    @Pattern(regexp = "^(pending|processing|shipping|delivered|cancelled)$", 
-             message = "Order status must be one of pending, processing, shipping, delivered, or cancelled")
-    private String orderStatus = "pending";
-    
-    @Column(name = "shipping_address", length = 255, nullable = false)
-    @NotBlank(message = "Shipping address is required")
+
+    @NotBlank(message = "Order status cannot be empty")
+    @Pattern(regexp = "pending|processing|shipping|delivered|cancelled", message = "Invalid order status")
+    @Column(name = "order_status", nullable = false, length = 20)
+    private String orderStatus;
+
+    @NotBlank(message = "Shipping address cannot be empty")
+    @Column(name = "shipping_address", nullable = false, length = 255)
     private String shippingAddress;
-    
-    @Column(name = "shipping_option", length = 50, nullable = false)
-    @NotBlank(message = "Shipping option is required")
+
+    @NotBlank(message = "Shipping option cannot be empty")
+    @Column(name = "shipping_option", nullable = false, length = 50)
     private String shippingOption;
-    
+
     @Column(name = "note", columnDefinition = "NVARCHAR(MAX)")
     private String note;
-    
+
+    @Future(message = "Estimated delivery date must be in the future")
     @Column(name = "estimated_delivery_date")
     private LocalDate estimatedDeliveryDate;
-    
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<OrderItem> orderItems = new HashSet<>();
-    
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private Set<OrderPromotion> orderPromotions = new HashSet<>();
-    
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Payment> payments = new HashSet<>();
-    
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Shipment> shipments = new HashSet<>();
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<OrderPromotion> orderPromotions = new HashSet<>();
 }
