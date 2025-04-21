@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "Material")
+@Table(name = "[Material]")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

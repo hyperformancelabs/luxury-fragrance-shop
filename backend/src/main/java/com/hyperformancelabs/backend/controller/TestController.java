@@ -16,12 +16,4 @@ public class TestController {
         response.put("message", "Backend server is running!");
         return response;
     }
-
-    @GetMapping("/api/test")
-    public Map<String, String> test() {
-        Map<String, String> response = new HashMap<>();
-        response.put("status", "success");
-        response.put("message", "API test endpoint is working!");
-        return response;
-    }
 }

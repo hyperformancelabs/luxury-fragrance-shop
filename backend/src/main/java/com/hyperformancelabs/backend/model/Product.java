@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "Product", uniqueConstraints = {
+@Table(name = "[Product]", uniqueConstraints = {
     @UniqueConstraint(name = "UQ_Product", columnNames = {"product_name", "brand_id", "volume"})
 })
 @Data
