@@ -1,14 +1,10 @@
 package com.hyperformancelabs.backend.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-/**
- * Entity representing the many-to-many relationship between roles and permissions.
- * Maps which permissions are assigned to specific roles.
- */
 @Entity
 @Table(name = "RolePermission", uniqueConstraints = {
     @UniqueConstraint(name = "UQ_RolePermission", columnNames = {"role_id", "permission_id"})
@@ -17,17 +13,17 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RolePermission {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "role_permission_id")
     private Integer rolePermissionId;
-    
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
-    
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "permission_id", nullable = false)
     private Permission permission;
 }
