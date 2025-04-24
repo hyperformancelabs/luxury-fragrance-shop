@@ -3,7 +3,7 @@ package com.hyperformancelabs.backend.service.impl;
 import com.hyperformancelabs.backend.dto.request.LoginRequest;
 import com.hyperformancelabs.backend.dto.request.RegisterRequest;
 import com.hyperformancelabs.backend.model.Customer;
-import com.hyperformancelabs.backend.repository.impl.CustomerRepository;
+import com.hyperformancelabs.backend.repository.CustomerRepository;
 import com.hyperformancelabs.backend.service.CustomerService;
 import com.hyperformancelabs.backend.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;

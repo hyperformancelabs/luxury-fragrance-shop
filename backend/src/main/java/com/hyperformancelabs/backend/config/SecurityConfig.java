@@ -29,7 +29,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(
                                         "/api/v1/products/**",
-                                        "/api/v1/brands/**",
+                                        "/api/v1/carts/**",
                                         "/api/v1/categories/**"
                                 ).permitAll()
                         .anyRequest().authenticated()

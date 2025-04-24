@@ -1,12 +1,15 @@
 package com.hyperformancelabs.backend.controller;
 
+import com.hyperformancelabs.backend.dto.ProductDTO;
 import com.hyperformancelabs.backend.dto.TopSellingProductDTO;
 import com.hyperformancelabs.backend.model.Product;
 import com.hyperformancelabs.backend.payload.ApiResponse;
 import com.hyperformancelabs.backend.payload.ApiResponseStatus;
-import com.hyperformancelabs.backend.service.impl.ProductService;
+import com.hyperformancelabs.backend.service.impl.ProductServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,13 +22,13 @@ import java.util.Map;
 public class ProductController {
 
     @Autowired
-    private ProductService productService;
+    private ProductServiceImpl productService;
 
     // API lấy tất cả sản phẩm với phân trang
     @GetMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllProducts(@RequestParam(defaultValue = "0") int page) {
         try {
-            Page<Product> products = productService.getAllProducts(page);
+            Page<ProductDTO> products = productService.getAllProducts(page);
 
             Map<String, Object> data = new HashMap<>();
             data.put("items", products.getContent()); // list sản phẩm
@@ -55,11 +58,11 @@ public class ProductController {
 
     // API lấy sản phẩm theo brand với phân trang
     @GetMapping("/brand/{brandName}")
-    public ResponseEntity<ApiResponse<Page<Product>>> getProductsByBrand(
+    public ResponseEntity<ApiResponse<Page<ProductDTO>>> getProductsByBrand(
             @PathVariable String brandName,
             @RequestParam(defaultValue = "0") int page) {
         try {
-            Page<Product> products = productService.getProductsByBrand(brandName, page);
+            Page<ProductDTO> products = productService.getProductsByBrand(brandName, page);
             return ResponseEntity.ok(
                 new ApiResponse<>(
                     ApiResponseStatus.SUCCESS_CODE,
@@ -122,21 +125,38 @@ public class ProductController {
         }
     }
 
-    //    // API lấy sản phẩm theo category với phân trang
-//    @GetMapping("/category/{categoryName}")
-//    public ResponseEntity<Page<Product>> getProductsByCategory(
-//            @PathVariable String categoryName,
-//            @RequestParam(defaultValue = "0") int page) {
-//        Page<Product> products = productService.getProductsByCategory(categoryName, page);
-//        return ResponseEntity.ok(products);
-//    }
-//
-//    // API lấy sản phẩm theo season với phân trang
-//    @GetMapping("/season/{seasonName}")
-//    public ResponseEntity<Page<Product>> getProductsBySeason(
-//            @PathVariable String seasonName,
-//            @RequestParam(defaultValue = "0") int page) {
-//        Page<Product> products = productService.getProductsBySeason(seasonName, page);
-//        return ResponseEntity.ok(products);
-//    }
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> searchProductsByName(
+            @RequestParam("name") String productName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<ProductDTO> products = productService.findByProductNameContainingIgnoreCase(productName, pageable);
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("items", products.getContent());
+            data.put("currentPage", products.getNumber());
+            data.put("totalItems", products.getTotalElements());
+            data.put("totalPages", products.getTotalPages());
+
+            return ResponseEntity.ok(
+                    new ApiResponse<>(
+                            ApiResponseStatus.SUCCESS_CODE,
+                            ApiResponseStatus.SUCCESS_STATUS,
+                            ApiResponseStatus.GET_SUCCESS_MESSAGE,
+                            data
+                    )
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(
+                            ApiResponseStatus.BAD_REQUEST_CODE,
+                            ApiResponseStatus.ERROR_STATUS,
+                            e.getMessage(),
+                            null
+                    )
+            );
+        }
+    }
 }
