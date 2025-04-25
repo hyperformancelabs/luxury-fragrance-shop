@@ -1,17 +1,15 @@
 package com.hyperformancelabs.backend.controller;
 
+import com.hyperformancelabs.backend.dto.CustomerResponseDTO;
 import com.hyperformancelabs.backend.dto.LoginRequest;
 import com.hyperformancelabs.backend.dto.RegisterRequest;
 import com.hyperformancelabs.backend.payload.ApiResponse;
-import com.hyperformancelabs.backend.model.Customer;
 import com.hyperformancelabs.backend.payload.ApiResponseStatus;
 import com.hyperformancelabs.backend.service.CustomerService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -21,15 +19,15 @@ public class AuthController {
     private CustomerService customerService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<Customer>> registerCustomer(@RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<CustomerResponseDTO>> registerCustomer(@Valid @RequestBody RegisterRequest request) {
         try {
-            Customer newCustomer = customerService.register(request);
+            CustomerResponseDTO response = customerService.register(request);
             return ResponseEntity.ok(
                     new ApiResponse<>(
                             ApiResponseStatus.SUCCESS_CODE,
                             ApiResponseStatus.SUCCESS_STATUS,
                             "Đăng ký thành công",
-                            newCustomer
+                            response
                     )
             );
         } catch (RuntimeException e) {
@@ -45,7 +43,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<String>> loginCustomer(@RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<String>> loginCustomer(@Valid @RequestBody LoginRequest request) {
         try {
             String token = customerService.loginAndGenerateToken(request);
             return ResponseEntity.ok(
@@ -68,4 +66,3 @@ public class AuthController {
         }
     }
 }
-

@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -74,5 +75,6 @@ public class Product {
     private Set<CartItem> cartItems = new HashSet<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    @JsonIgnore
     private Set<OrderItem> orderItems = new HashSet<>();
 }

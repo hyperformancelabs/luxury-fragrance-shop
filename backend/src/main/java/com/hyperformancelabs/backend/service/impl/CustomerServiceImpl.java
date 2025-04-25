@@ -1,5 +1,8 @@
+// --- CustomerServiceImpl.java ---
 package com.hyperformancelabs.backend.service.impl;
 
+import com.hyperformancelabs.backend.dto.CustomerProfile;
+import com.hyperformancelabs.backend.dto.CustomerResponseDTO;
 import com.hyperformancelabs.backend.dto.LoginRequest;
 import com.hyperformancelabs.backend.dto.RegisterRequest;
 import com.hyperformancelabs.backend.model.Cart;
@@ -14,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
@@ -23,27 +25,16 @@ public class CustomerServiceImpl implements CustomerService {
     private CustomerRepository customerRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private CartRepository cartRepository;
 
     @Autowired
-    private CartRepository cartRepository;
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private JwtUtil jwtUtil;
 
     @Override
-    public List<Customer> getAllCustomers() {
-        return customerRepository.findAll();
-    }
-
-    @Override
-    public Customer getCustomerById(Integer id) {
-        return customerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Customer not found with ID: " + id));
-    }
-
-    @Override
-    public Customer register(RegisterRequest request) {
+    public CustomerResponseDTO register(RegisterRequest request) {
         if (customerRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username đã tồn tại");
         }
@@ -72,9 +63,14 @@ public class CustomerServiceImpl implements CustomerService {
         cart.setStatus("active");
         cart.setTotalAmount(BigDecimal.ZERO);
         cartRepository.save(cart);
-        System.out.println("Tạo giỏ hàng thành công cho user "+ request.getUsername());
 
-        return savedCustomer;
+        return new CustomerResponseDTO(
+                savedCustomer.getCustomerId(),
+                savedCustomer.getUsername(),
+                savedCustomer.getName(),
+                savedCustomer.getEmail(),
+                savedCustomer.getPhoneNumber()
+        );
     }
 
     @Override
@@ -92,7 +88,6 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public String loginAndGenerateToken(LoginRequest request) {
         Customer customer = login(request);
-        System.out.println("Generating token for username: " + customerRepository.findByUsername(request.getUsername()));
         return jwtUtil.generateToken(customer.getUsername());
     }
 
@@ -100,5 +95,40 @@ public class CustomerServiceImpl implements CustomerService {
     public Customer getCustomerByUsername(String username) {
         return customerRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public CustomerProfile getCustomerProfile(String username) {
+        Customer customer = getCustomerByUsername(username);
+        CustomerProfile dto = new CustomerProfile();
+
+        dto.setId(customer.getCustomerId());
+        dto.setUsername(customer.getUsername());
+        dto.setName(customer.getName());
+        dto.setPhoneNumber(customer.getPhoneNumber());
+        dto.setEmail(customer.getEmail());
+        dto.setStreet(customer.getStreet());
+        dto.setWard(customer.getWard());
+        dto.setDistrict(customer.getDistrict());
+        dto.setCity(customer.getCity());
+        dto.setShippingNote(customer.getShippingNote());
+        dto.setNote(customer.getNote());
+        dto.setRating(customer.getRating());
+        dto.setStatus(customer.getStatus());
+        dto.setLoyaltyPoints(customer.getLoyaltyPoints());
+        dto.setCreateAt(customer.getCreateAt());
+        dto.setUpdateAt(customer.getUpdateAt());
+
+        return dto;
+    }
+
+    public void changePassword(String username, String oldPassword, String newPassword) {
+        Customer customer = getCustomerByUsername(username);
+
+        if (!passwordEncoder.matches(oldPassword, customer.getPassword())) {
+            throw new RuntimeException("Mật khẩu cũ không chính xác");
+        }
+
+        customer.setPassword(passwordEncoder.encode(newPassword));
+        customerRepository.save(customer);
     }
 }

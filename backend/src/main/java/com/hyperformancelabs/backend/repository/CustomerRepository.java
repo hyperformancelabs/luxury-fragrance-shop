@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.repository;
 
+import com.hyperformancelabs.backend.model.Cart;
 import com.hyperformancelabs.backend.model.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
 
