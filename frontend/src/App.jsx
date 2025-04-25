@@ -1,37 +1,40 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { CartProvider } from './context/CartContext';
-import Navbar from './components/Navbar';
-import Login from './components/Login';
-import Cart from './pages/Cart';
-import ProductList from './pages/ProductList';
-import './App.css';
-import Navigation from './components/Navigation';
-import HomePage from './pages/HomePage';
-import Footer from './components/Footer';
-import ProductDetail from './pages/ProductDetail';
-import TestProduct from './pages/TestProduct';
-import Checkout from './pages/Checkout';
-import OrderSuccess from './pages/OrderSuccess';
-import Profile from './pages/Profile';
-import Wishlist from './pages/WishList';
-import ChatBot from './components/Chatbot';
-import { Toaster } from 'sonner';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext";
+import Navbar from "./components/Navbar";
+import Login from "./components/Login";
+import Cart from "./pages/Cart";
+import ProductList from "./pages/ProductList";
+import "./App.css";
+import Navigation from "./components/Navigation";
+import HomePage from "./pages/HomePage";
+import Footer from "./components/Footer";
+import ProductDetail from "./pages/ProductDetail";
+import TestProduct from "./pages/TestProduct";
+import Checkout from "./pages/Checkout";
+import OrderSuccess from "./pages/OrderSuccess";
+import Profile from "./pages/Profile";
+import Wishlist from "./pages/WishList";
+import ChatBot from "./components/Chatbot";
+import { Toaster } from "sonner";
+import MbBankPage from "./pages/payment/MbBankPage";
+import PaymentReturn from "./pages/payment/PaymentReturn";
+import VnPayPage from "./pages/payment/VnPayPage";
 
 function App() {
   return (
-    <Router>
+    <Router> 
       <AuthProvider>
         <CartProvider>
           <div>
-            <Toaster richColors position='top-right' />
+            <Toaster richColors position="top-right" />
             <Navbar />
             <Navigation />
             <main>
               <ChatBot />
               <Routes>
                 <Route path="/" element={<HomePage />} />
-                <Route path='/:category' element={<ProductList />} />
+                <Route path="/:category" element={<ProductList />} />
                 <Route path="/products" element={<ProductList />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/login" element={<Login />} />
@@ -42,6 +45,9 @@ function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="*" element={<h1>404 Not Found</h1>} />
+                <Route path="/vnpay-payment" element={<VnPayPage />} />
+                <Route path="/mbbank-payment" element={<MbBankPage />} />
+                <Route path="/payment-return" element={<PaymentReturn />} />
               </Routes>
             </main>
             <Footer />
