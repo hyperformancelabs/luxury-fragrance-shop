@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -10,7 +11,7 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "[CartItem]", uniqueConstraints = {
-    @UniqueConstraint(name = "UQ_CartItem", columnNames = {"cart_id", "product_id"})
+        @UniqueConstraint(name = "UQ_CartItem", columnNames = {"cart_id", "product_id"})
 })
 @Data
 @NoArgsConstructor
@@ -24,6 +25,7 @@ public class CartItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id", nullable = false)
+    @JsonIgnore
     private Cart cart;
 
     @ManyToOne(fetch = FetchType.LAZY)
