@@ -35,8 +35,7 @@ const Navbar = () => {
   });
   const [error, setError] = useState("");
 
-  const {updateQuantity} = useCart();
-
+  const { updateQuantity } = useCart();
 
   const cartPopupRef = useRef(null);
   const cartIconRef = useRef(null);
@@ -178,6 +177,8 @@ const Navbar = () => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  const formatPrice = (price) => price.toLocaleString("vi-VN") + " VND";
 
   return (
     <>
@@ -608,53 +609,64 @@ const Navbar = () => {
                                 </div>
                                 <div className="flex w-full mt-1 justify-between">
                                   <div className="flex">
-                                  <button
-                    className="px-2 bg-gray-100 hover:bg-gray-200 transition-colors"
-                    onClick={() =>
-                      updateQuantity(item.id, item.selectedSize, Math.max(1, item.quantity - 1))
-                    }
-                  >
-                    <svg
-                      className="w-2 h-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M20 12H4"
-                      ></path>
-                    </svg>
-                  </button>
-                  <span className="flex items-center justify-center w-8 font-medium">
-                    {item.quantity}
-                  </span>
-                  <button
-                    className="px-2 bg-gray-100 hover:bg-gray-200 transition-colors"
-                    onClick={() => updateQuantity(item.id, item.selectedSize, item.quantity + 1)}
-                  >
-                    <svg
-                      className="w-2 h-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 4v16m8-8H4"
-                      ></path>
-                    </svg>
-                  </button>
+                                    <button
+                                      className="px-2 bg-gray-100 hover:bg-gray-200 transition-colors"
+                                      onClick={() =>
+                                        updateQuantity(
+                                          item.id,
+                                          item.selectedSize,
+                                          Math.max(1, item.quantity - 1)
+                                        )
+                                      }
+                                    >
+                                      <svg
+                                        className="w-2 h-2"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth="2"
+                                          d="M20 12H4"
+                                        ></path>
+                                      </svg>
+                                    </button>
+                                    <span className="flex items-center justify-center w-8 font-medium">
+                                      {item.quantity}
+                                    </span>
+                                    <button
+                                      className="px-2 bg-gray-100 hover:bg-gray-200 transition-colors"
+                                      onClick={() =>
+                                        updateQuantity(
+                                          item.id,
+                                          item.selectedSize,
+                                          item.quantity + 1
+                                        )
+                                      }
+                                    >
+                                      <svg
+                                        className="w-2 h-2"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth="2"
+                                          d="M12 4v16m8-8H4"
+                                        ></path>
+                                      </svg>
+                                    </button>
                                   </div>
                                   <div>
-                                  <p>{(item.quantity * item.price).toLocaleString("vi-VN")}đ</p>
-
+                                    <p>
+                                      {formatPrice(item.quantity * item.price)}
+                                    </p>
                                   </div>
                                 </div>
                               </div>
@@ -672,7 +684,7 @@ const Navbar = () => {
                           <div className="flex justify-between items-center mb-3">
                             <span className="font-semibold">Tổng cộng:</span>
                             <span className="font-semibold text-red-600">
-                              {calculateTotal().toLocaleString("vi-VN")}₫
+                              {formatPrice(calculateTotal())}
                             </span>
                           </div>
 
