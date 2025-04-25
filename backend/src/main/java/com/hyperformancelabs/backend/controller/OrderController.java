@@ -20,10 +20,10 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
-    @PostMapping("/checkout")
+    @PostMapping("/create")
     public ResponseEntity<ApiResponse<String>> checkout(@RequestBody @Valid CreateOrderRequest request) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        orderService.checkout(username, request);
+        orderService.createOrder(username, request);
         return ResponseEntity.ok(
                 new ApiResponse<>(200, "success", "Đặt hàng thành công", null)
         );

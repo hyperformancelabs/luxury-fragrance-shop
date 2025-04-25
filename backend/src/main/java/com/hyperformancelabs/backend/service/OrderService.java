@@ -7,7 +7,7 @@ import com.hyperformancelabs.backend.dto.OrderSummary;
 import java.util.List;
 
 public interface OrderService {
-    void checkout(String username, CreateOrderRequest request);
+    void createOrder(String username, CreateOrderRequest request);
     List<OrderSummary> getOrdersForCustomer(String username);
     OrderDetailDTO getOrderDetail(Integer orderId, String username);
 

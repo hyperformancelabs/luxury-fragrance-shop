@@ -120,4 +120,19 @@ public class CartController {
         }
     }
 
+    @PostMapping("/merge-session")
+    public ResponseEntity<ApiResponse<String>> mergeCart(
+            @RequestParam String sessionId,
+            Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            cartService.mergeSessionCartToCustomer(sessionId, username);
+            return ResponseEntity.ok(new ApiResponse<>(200, "success", "Merge giỏ hàng thành công", null));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(500, "error", "Lỗi khi merge giỏ hàng: " + ex.getMessage(), null));
+        }
+    }
+
 }

@@ -39,7 +39,7 @@ public class OrderServiceImpl implements OrderService {
     private OrderRepository orderRepository;
 
     @Override
-    public void checkout(String username, CreateOrderRequest request) {
+    public void createOrder(String username, CreateOrderRequest request) {
         Customer customer = customerRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 

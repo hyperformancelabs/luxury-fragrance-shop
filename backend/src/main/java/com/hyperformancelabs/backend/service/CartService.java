@@ -24,5 +24,6 @@ public interface CartService {
     void clearCartBySession(String sessionId);
 
 //    Cart getOrCreateCartBySession(String sessionId);
+void mergeSessionCartToCustomer(String sessionId, String username);
 
 }

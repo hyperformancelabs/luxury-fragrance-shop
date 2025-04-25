@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -297,6 +298,55 @@ public class CartServiceImpl implements CartService {
         cartRepository.save(cart);
     }
 
+    @Override
+    @Transactional
+    public void mergeSessionCartToCustomer(String sessionId, String username) {
+        Customer customer = customerRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Optional<Cart> sessionCartOpt = cartRepository.findTopBySessionIdOrderByCartIdDesc(sessionId);
+        if (sessionCartOpt.isEmpty()) return;
+
+        Cart sessionCart = sessionCartOpt.get();
+        List<CartItem> sessionItems = cartItemRepository.findByCart(sessionCart);
+
+        // Tìm hoặc tạo giỏ hàng của Customer
+        Cart customerCart = cartRepository.findTopByCustomerAndStatusOrderByCartIdDesc(customer, "active")
+                .orElseGet(() -> {
+                    Cart newCart = new Cart();
+                    newCart.setCustomer(customer);
+                    newCart.setStatus("active");
+                    newCart.setTotalAmount(BigDecimal.ZERO);
+                    return cartRepository.save(newCart);
+                });
+
+        // Gộp từng sản phẩm
+        for (CartItem sessionItem : sessionItems) {
+            Product product = sessionItem.getProduct();
+            Optional<CartItem> existingItemOpt = cartItemRepository.findByCartAndProduct(customerCart, product);
+
+            if (existingItemOpt.isPresent()) {
+                CartItem existingItem = existingItemOpt.get();
+                existingItem.setQuantity(existingItem.getQuantity() + sessionItem.getQuantity());
+                cartItemRepository.save(existingItem);
+            } else {
+                CartItem newItem = new CartItem();
+                newItem.setCart(customerCart);
+                newItem.setProduct(product);
+                newItem.setQuantity(sessionItem.getQuantity());
+                newItem.setUnitPrice(sessionItem.getUnitPrice());
+                newItem.setIsSelected(sessionItem.getIsSelected());
+                cartItemRepository.save(newItem);
+            }
+        }
+
+        // Xoá giỏ theo sessionId (tuỳ chọn)
+        cartItemRepository.deleteAll(sessionItems);
+        cartRepository.delete(sessionCart);
+
+        // Cập nhật tổng tiền
+        updateCartTotal(customerCart);
+    }
 
 
 }
