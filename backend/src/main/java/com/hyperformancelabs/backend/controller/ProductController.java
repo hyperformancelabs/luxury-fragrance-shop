@@ -1,6 +1,7 @@
 package com.hyperformancelabs.backend.controller;
 
 import com.hyperformancelabs.backend.dto.ProductDTO;
+import com.hyperformancelabs.backend.dto.Random10Product;
 import com.hyperformancelabs.backend.dto.TopSellingProductDTO;
 import com.hyperformancelabs.backend.model.Product;
 import com.hyperformancelabs.backend.payload.ApiResponse;
@@ -158,5 +159,10 @@ public class ProductController {
                     )
             );
         }
+    }
+
+    @GetMapping("/random-10")
+    public List<Random10Product> getRandom10Products() {
+        return productService.getRandom10Product();
     }
 }

@@ -1,6 +1,7 @@
 package com.hyperformancelabs.backend.service.impl;
 
 import com.hyperformancelabs.backend.dto.ProductDTO;
+import com.hyperformancelabs.backend.dto.Random10Product;
 import com.hyperformancelabs.backend.dto.TopSellingProductDTO;
 import com.hyperformancelabs.backend.model.Product;
 import com.hyperformancelabs.backend.repository.ProductRepository;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -79,4 +81,28 @@ public class ProductServiceImpl implements ProductService {
         Page<Product> productPage = productRepository.findByProductNameContainingIgnoreCase(productName, pageable);
         return productPage.map(this::convertToDTO);
     }
+
+
+    @Override
+    public List<Random10Product> getRandom10Product() {
+        // Lấy toàn bộ danh sách sản phẩm từ database
+        List<Product> allProducts = productRepository.findAll();
+
+        // Shuffle để ngẫu nhiên thứ tự
+        Collections.shuffle(allProducts);
+
+        // Lấy 10 sản phẩm đầu tiên sau khi random
+        return allProducts.stream()
+                .limit(10)
+                .map(product -> new Random10Product(
+                        product.getProductId(),
+                        product.getProductName(),
+                        product.getBrand().getBrandName(),  // Giả sử Product có quan hệ với Brand
+                        product.getVolume(),
+                        product.getPrice(),
+                        product.getImageUrl()
+                ))
+                .collect(Collectors.toList());
+    }
+
 }
