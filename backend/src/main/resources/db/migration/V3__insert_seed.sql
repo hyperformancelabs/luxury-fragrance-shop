@@ -50244,7 +50244,32 @@ VALUES
 (8, 19, 1, 1718100.00, NULL, 1);
 
 
--- 17. Insert data into Order table
+-- 17. Insert data into Wishlist table
+INSERT INTO Wishlist (customer_id, product_variant_id, added_date)
+VALUES
+(1, 15, '2024-11-01 10:15:00'),
+(1, 128, '2025-01-20 09:00:00'),
+(1, 550, '2025-03-10 14:00:00'),
+(2, 7, '2024-12-15 11:05:30'),
+(2, 205, '2025-02-01 16:20:00'),
+(3, 99, '2025-03-05 08:30:15'),
+(3, 1024, '2025-04-01 10:00:00'),
+(4, 42, '2025-04-11 09:12:00'),
+(5, 2001, '2025-04-18 08:00:00'),
+(5, 150, '2025-04-20 11:30:00'),
+(5, 789, '2025-04-22 15:45:00'),
+(6, 5, '2024-06-01 14:00:00'),
+(6, 55, '2024-09-10 10:00:00'),
+(6, 555, '2025-01-15 13:00:00'),
+(6, 1555, '2025-04-01 17:00:00'),
+(6, 2555, '2025-04-25 09:30:00'),
+(8, 333, '2025-04-19 10:00:00'),
+(8, 666, '2025-04-21 14:20:00'),
+(9, 101, '2023-11-10 16:00:00'),
+(9, 202, '2023-12-25 11:00:00');
+
+
+-- 18. Insert data into Order table
 INSERT INTO [Order] (customer_id, employee_id, order_date, total_amount, shipping_fee, order_status, shipping_address, shipping_option, note, estimated_delivery_date)
 VALUES
 (1, 5, '2025-02-10 11:00:00', 2753100.00, 30000.00, 'delivered', N'123 Lê Lợi, Phường Bến Nghé, Quận 1, Hồ Chí Minh', 'GHTK', N'Giao giờ hành chính, tặng kèm vial', '2025-02-12'),
@@ -50258,7 +50283,7 @@ VALUES
 (2, 1, '2025-04-18 08:00:00', 2410170.00, 0.00, 'pending', N'45 Nguyễn Trãi, P. Phạm Ngũ Lão, Q.1, HCM', 'GHTK', N'Áp dụng Flash Sale 30% + Freeship HCM', '2025-04-21');
 
 
--- 18. Insert data into PaymentMethod table
+-- 19. Insert data into PaymentMethod table
 INSERT INTO PaymentMethod (method_name, description)
 VALUES
 ('COD', N'Thanh toán khi nhận hàng (Cash On Delivery)'),
@@ -50269,7 +50294,7 @@ VALUES
 -- ('Credit Card', N'Thanh toán qua thẻ tín dụng (Via Stripe/...)')
 
 
--- 19. Insert data into CustomerPaymentMethod table
+-- 20. Insert data into CustomerPaymentMethod table
 INSERT INTO CustomerPaymentMethod (customer_id, payment_method_id, provider, account_number, token, is_default)
 VALUES
 (1, 2, 'Vietcombank', '0071001234567', NULL, 1),
@@ -50278,7 +50303,7 @@ VALUES
 (6, 4, 'VNPay', NULL, 'vnpay_token_khach6_xyz', 0);
 
 
--- 20. Insert data into Payment table
+-- 21. Insert data into Payment table
 INSERT INTO Payment (order_id, payment_date, amount, payment_status, transaction_id, note, currency)
 VALUES
 -- Order 1: Completed, then refunded
@@ -50303,7 +50328,7 @@ VALUES
 (9, '2025-04-18 08:02:00', 2410170.00, 'pending', NULL, N'Order awaiting payment confirmation/COD', 'VND');
 
 
--- 21. Insert data into Shipment table
+-- 22. Insert data into Shipment table
 INSERT INTO Shipment ([order_id], shipping_provider, tracking_number, shipment_status, shipping_cost, shipping_date, estimated_delivery_date, delivery_date)
 VALUES
 (1, 'GHTK', 'GHTK11223344', 'delivered', 30000.00, '2025-02-10', '2025-02-12', '2025-02-11'),
@@ -50316,7 +50341,7 @@ VALUES
 (9, NULL, NULL, 'pending', 0.00, NULL, '2025-04-21', NULL);
 
 
--- 22. Insert data into OrderItem table
+-- 23. Insert data into OrderItem table
 INSERT INTO OrderItem ([order_id], product_id, quantity, unit_price, note)
 VALUES
 -- Order 1
@@ -50340,7 +50365,7 @@ VALUES
 (9, 4, 1, 2410170.00, N'Price reflects 30% Flash Sale');
 
 
--- 23. Insert data into OrderPromotion table
+-- 24. Insert data into OrderPromotion table
 INSERT INTO OrderPromotion (order_id, promotion_id, discount_amount, note)
 VALUES
 (2, 3, 0.00, N'Applied Freeship HCM'),
@@ -50349,7 +50374,7 @@ VALUES
 (9, 7, 1032930.00, N'Flash Sale 30% product discount recorded');
 
 
--- 24. Insert data into Conversation table
+-- 25. Insert data into Conversation table
 INSERT INTO Conversation (start_time, end_time, status, rating, channel)
 VALUES
 ('2025-04-15 09:00:00', '2025-04-15 09:15:00', 'done', 'good', 'Facebook'),
@@ -50359,7 +50384,7 @@ VALUES
 ('2025-04-18 11:00:00', NULL, 'active', NULL, 'Instagram');
 
 
--- 25. Insert data into ChatMessage table
+-- 26. Insert data into ChatMessage table
 INSERT INTO ChatMessage (conversation_id, sender_id, sender_type, receiver_id, receiver_type, content, timestamp)
 VALUES
 -- Conversation 1 (Facebook - done)
