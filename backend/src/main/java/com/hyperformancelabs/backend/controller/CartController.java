@@ -29,7 +29,7 @@ public class CartController {
     @PostMapping("/add-item")
     public ResponseEntity<ApiResponse<String>> addToCart(@RequestBody @Valid AddToCartRequest request) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        cartService.addProductToCart(username, request.getProductId(), request.getQuantity());
+        cartService.addProductToCart(username, request.getProductVariantId(), request.getQuantity());
         return ResponseEntity.ok(new ApiResponse<>(200, "success", "Thêm vào giỏ hàng thành công", null));
     }
 
@@ -44,17 +44,17 @@ public class CartController {
             @RequestBody @Valid UpdateCartItemQuantityRequest request
     ) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        cartService.updateCartItemQuantity(username, request.getProductId(), request.getQuantity());
+        cartService.updateCartItemQuantity(username, request.getProductVariantId(), request.getQuantity());
         return ResponseEntity.ok(
                 new ApiResponse<>(200, "success", "Cập nhật số lượng thành công", null)
         );
     }
 
-    @DeleteMapping("/remove-item/{productId}")
-    public ApiResponse removeItem(@PathVariable Integer productId, Authentication authentication) {
+    @DeleteMapping("/remove-item/{productVariantId}")
+    public ApiResponse removeItem(@PathVariable Integer productVariantId, Authentication authentication) {
         try {
             String username = authentication.getName(); // 👈 lấy username từ token
-            cartService.removeItemFromCart(username, productId);
+            cartService.removeItemFromCart(username, productVariantId);
             return new ApiResponse(200, "Xoá sản phẩm khỏi giỏ hàng thành công", null, null);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -79,7 +79,7 @@ public class CartController {
     public ResponseEntity<ApiResponse<String>> addToCartBySession(
             @RequestParam String sessionId,
             @RequestBody @Valid AddToCartRequest request) {
-        cartService.addProductToCartBySession(sessionId, request.getProductId(), request.getQuantity());
+        cartService.addProductToCartBySession(sessionId, request.getProductVariantId(), request.getQuantity());
         return ResponseEntity.ok(new ApiResponse<>(200, "success", "Thêm vào giỏ hàng (session) thành công", null));
     }
 
@@ -93,14 +93,14 @@ public class CartController {
     public ResponseEntity<ApiResponse<String>> updateQuantityBySession(
             @RequestParam String sessionId,
             @RequestBody @Valid UpdateCartItemQuantityRequest request) {
-        cartService.updateCartItemQuantityBySession(sessionId, request.getProductId(), request.getQuantity());
+        cartService.updateCartItemQuantityBySession(sessionId, request.getProductVariantId(), request.getQuantity());
         return ResponseEntity.ok(new ApiResponse<>(200, "success", "Cập nhật số lượng (session) thành công", null));
     }
 
-    @DeleteMapping("/session/remove-item/{productId}")
-    public ApiResponse removeItemBySession(@RequestParam String sessionId, @PathVariable Integer productId) {
+    @DeleteMapping("/session/remove-item/{productVariantId}")
+    public ApiResponse removeItemBySession(@RequestParam String sessionId, @PathVariable Integer productVariantId) {
         try {
-            cartService.removeItemFromCartBySession(sessionId, productId);
+            cartService.removeItemFromCartBySession(sessionId, productVariantId);
             return new ApiResponse(200, "Xoá sản phẩm (session) khỏi giỏ hàng thành công", null, null);
         } catch (Exception ex) {
             ex.printStackTrace();
