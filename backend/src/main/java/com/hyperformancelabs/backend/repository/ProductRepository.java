@@ -24,15 +24,16 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     Page<Product> findByProductNameContainingIgnoreCase(String productName, Pageable pageable);
 
     @Query(value = """
-    SELECT p.product_id, p.product_name, b.brand_name, p.volume, p.price, p.image_url, SUM(oi.quantity)
+    SELECT pv.product_variant_id, p.product_name, b.brand_name, pv.volume, pv.price, p.image_url, SUM(oi.quantity)
     FROM [OrderItem] oi
-    JOIN [Product] p ON p.product_id = oi.product_id
+    JOIN [ProductVariant] pv ON pv.product_variant_id = oi.product_variant_id
+    JOIN [Product] p ON p.product_id = pv.product_id
     JOIN [Brand] b ON b.brand_id = p.brand_id
     JOIN [Order] o ON o.order_id = oi.order_id
     LEFT JOIN [ProductDetail] pd ON p.product_id = pd.product_id AND pd.detail_name = 'suitable_gender'
     WHERE o.order_status = 'delivered'
       AND (:category IS NULL OR pd.detail_value = :category)
-    GROUP BY p.product_id, p.product_name, b.brand_name, p.volume, p.price, p.image_url
+    GROUP BY pv.product_variant_id, p.product_name, b.brand_name, pv.volume, pv.price, p.image_url
     ORDER BY SUM(oi.quantity) DESC
     """, nativeQuery = true)
     List<Object[]> findTop10TopSellingProducts(@Param("category") String category);

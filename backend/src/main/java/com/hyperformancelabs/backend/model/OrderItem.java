@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "[OrderItem]", uniqueConstraints = {
-    @UniqueConstraint(name = "UQ_OrderItem", columnNames = {"order_id", "product_id"})
+    @UniqueConstraint(name = "UQ_OrderItem", columnNames = {"order_id", "product_variant_id"})
 })
 @Data
 @NoArgsConstructor
@@ -27,8 +27,8 @@ public class OrderItem {
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @JoinColumn(name = "product_variant_id", nullable = false)
+    private ProductVariant productVariant;
 
     @NotNull(message = "Quantity cannot be empty")
     @Positive(message = "Quantity must be positive")

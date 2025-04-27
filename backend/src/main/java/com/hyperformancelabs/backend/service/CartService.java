@@ -7,19 +7,19 @@ import com.hyperformancelabs.backend.model.Cart;
 import java.util.List;
 
 public interface CartService {
-    void addProductToCart(String username, Integer productId, Integer quantity);
+    void addProductToCart(String username, Integer productVariantId, Integer quantity);
     List<CartItemDTO> getCartItemsForCustomer(String username);
-    void updateCartItemQuantity(String username, Integer productId, Integer quantity);
-    void removeItemFromCart(String username, Integer productId);
+    void updateCartItemQuantity(String username, Integer productVariantId, Integer quantity);
+    void removeItemFromCart(String username, Integer productVariantId);
     void clearCart(String username);
 
-    void addProductToCartBySession(String sessionId, Integer productId, Integer quantity);
+    void addProductToCartBySession(String sessionId, Integer productVariantId, Integer quantity);
 
     List<CartItemDTO> getCartItemsBySession(String sessionId);
 
-    void updateCartItemQuantityBySession(String sessionId, Integer productId, Integer quantity);
+    void updateCartItemQuantityBySession(String sessionId, Integer productVariantId, Integer quantity);
 
-    void removeItemFromCartBySession(String sessionId, Integer productId);
+    void removeItemFromCartBySession(String sessionId, Integer productVariantId);
 
     void clearCartBySession(String sessionId);
 

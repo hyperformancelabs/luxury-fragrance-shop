@@ -17,7 +17,8 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     @Query("""
     SELECT o FROM Order o
     LEFT JOIN FETCH o.orderItems oi
-    LEFT JOIN FETCH oi.product p
+    LEFT JOIN FETCH oi.productVariant pv
+    LEFT JOIN FETCH pv.product p
     LEFT JOIN FETCH p.brand
     WHERE o.orderId = :orderId
 """)

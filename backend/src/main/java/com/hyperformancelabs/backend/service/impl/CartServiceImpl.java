@@ -6,11 +6,11 @@ import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
 import com.hyperformancelabs.backend.model.Cart;
 import com.hyperformancelabs.backend.model.CartItem;
 import com.hyperformancelabs.backend.model.Customer;
-import com.hyperformancelabs.backend.model.Product;
+import com.hyperformancelabs.backend.model.ProductVariant;
 import com.hyperformancelabs.backend.repository.CartItemRepository;
 import com.hyperformancelabs.backend.repository.CartRepository;
 import com.hyperformancelabs.backend.repository.CustomerRepository;
-import com.hyperformancelabs.backend.repository.ProductRepository;
+import com.hyperformancelabs.backend.repository.ProductVariantRepository;
 import com.hyperformancelabs.backend.service.CartService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,10 +35,10 @@ public class CartServiceImpl implements CartService {
     private CartItemRepository cartItemRepository;
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductVariantRepository productVariantRepository;
 
     @Override
-    public void addProductToCart(String username, Integer productId, Integer quantity) {
+    public void addProductToCart(String username, Integer productVariantId, Integer quantity) {
         Customer customer = customerRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -52,11 +52,11 @@ public class CartServiceImpl implements CartService {
                     return cartRepository.save(newCart);
                 });
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+        ProductVariant productVariant = productVariantRepository.findById(productVariantId)
+                .orElseThrow(() -> new RuntimeException("Product variant not found"));
 
 
-        CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
+        CartItem cartItem = cartItemRepository.findByCartAndProductVariant(cart, productVariant)
                 .orElse(null);
 
         if (cartItem != null) {
@@ -64,9 +64,9 @@ public class CartServiceImpl implements CartService {
         } else {
             cartItem = new CartItem();
             cartItem.setCart(cart);
-            cartItem.setProduct(product);
+            cartItem.setProductVariant(productVariant);
             cartItem.setQuantity(quantity);
-            cartItem.setUnitPrice(product.getPrice());
+            cartItem.setUnitPrice(productVariant.getPrice());
             cartItem.setIsSelected(true);
         }
 
@@ -97,12 +97,12 @@ public class CartServiceImpl implements CartService {
 
         return cartItems.stream()
                 .map(item -> {
-                    Product product = item.getProduct();
+                    ProductVariant variant = item.getProductVariant();
                     return new CartItemDTO(
-                            product.getProductId(),
-                            product.getProductName(),
-                            product.getBrand().getBrandName(),
-                            product.getVolume(),
+                            variant.getProductVariantId(),
+                            variant.getProduct().getProductName(),
+                            variant.getProduct().getBrand().getBrandName(),
+                            variant.getVolume(),
                             item.getUnitPrice(),
                             item.getQuantity(),
                             item.getIsSelected()
@@ -112,7 +112,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public void updateCartItemQuantity(String username, Integer productId, Integer quantity) {
+    public void updateCartItemQuantity(String username, Integer productVariantId, Integer quantity) {
         Customer customer = customerRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -120,10 +120,10 @@ public class CartServiceImpl implements CartService {
                 .findTopByCustomerAndStatusOrderByCartIdDesc(customer, "active")
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+        ProductVariant productVariant = productVariantRepository.findById(productVariantId)
+                .orElseThrow(() -> new RuntimeException("Product variant not found"));
 
-        CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
+        CartItem cartItem = cartItemRepository.findByCartAndProductVariant(cart, productVariant)
                 .orElseThrow(() -> new RuntimeException("Item not found in cart"));
 
         cartItem.setQuantity(quantity);
@@ -139,17 +139,17 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public void removeItemFromCart(String username, Integer productId) {
+    public void removeItemFromCart(String username, Integer productVariantId) {
         Customer customer = customerRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Cart cart = cartRepository.findTopByCustomerAndStatusOrderByCartIdDesc(customer, "active")
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+        ProductVariant productVariant = productVariantRepository.findById(productVariantId)
+                .orElseThrow(() -> new RuntimeException("Product variant not found"));
 
-        CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
+        CartItem cartItem = cartItemRepository.findByCartAndProductVariant(cart, productVariant)
                 .orElseThrow(() -> new RuntimeException("Item not found"));
 
         cartItemRepository.delete(cartItem); // chỉ xóa trong DB
@@ -181,7 +181,7 @@ public class CartServiceImpl implements CartService {
 
 
     @Override
-    public void addProductToCartBySession(String sessionId, Integer productId, Integer quantity) {
+    public void addProductToCartBySession(String sessionId, Integer productVariantId, Integer quantity) {
         Cart cart = cartRepository.findTopBySessionIdOrderByCartIdDesc(sessionId)
                 .orElseGet(() -> {
                     Cart newCart = new Cart();
@@ -191,23 +191,25 @@ public class CartServiceImpl implements CartService {
                     return cartRepository.save(newCart);
                 });
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+        ProductVariant productVariant = productVariantRepository.findById(productVariantId)
+                .orElseThrow(() -> new RuntimeException("Product variant not found"));
 
-        CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product).orElse(null);
+        CartItem cartItem = cartItemRepository.findByCartAndProductVariant(cart, productVariant).orElse(null);
 
         if (cartItem != null) {
             cartItem.setQuantity(cartItem.getQuantity() + quantity);
         } else {
             cartItem = new CartItem();
             cartItem.setCart(cart);
-            cartItem.setProduct(product);
+            cartItem.setProductVariant(productVariant);
             cartItem.setQuantity(quantity);
-            cartItem.setUnitPrice(product.getPrice());
+            cartItem.setUnitPrice(productVariant.getPrice());
             cartItem.setIsSelected(true);
         }
 
         cartItemRepository.save(cartItem);
+
+        // Cập nhật tổng tiền giỏ hàng
         updateCartTotal(cart);
     }
 
@@ -219,12 +221,12 @@ public class CartServiceImpl implements CartService {
 
         return cartItemRepository.findByCart(cart).stream()
                 .map(item -> {
-                    Product product = item.getProduct();
+                    ProductVariant variant = item.getProductVariant();
                     return new CartItemDTO(
-                            product.getProductId(),
-                            product.getProductName(),
-                            product.getBrand().getBrandName(),
-                            product.getVolume(),
+                            variant.getProductVariantId(),
+                            variant.getProduct().getProductName(),
+                            variant.getProduct().getBrand().getBrandName(),
+                            variant.getVolume(),
                             item.getUnitPrice(),
                             item.getQuantity(),
                             item.getIsSelected()
@@ -234,14 +236,14 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public void updateCartItemQuantityBySession(String sessionId, Integer productId, Integer quantity) {
+    public void updateCartItemQuantityBySession(String sessionId, Integer productVariantId, Integer quantity) {
         Cart cart = cartRepository.findTopBySessionIdOrderByCartIdDesc(sessionId)
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+        ProductVariant productVariant = productVariantRepository.findById(productVariantId)
+                .orElseThrow(() -> new RuntimeException("Product variant not found"));
 
-        CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
+        CartItem cartItem = cartItemRepository.findByCartAndProductVariant(cart, productVariant)
                 .orElseThrow(() -> new RuntimeException("Item not found in cart"));
 
         cartItem.setQuantity(quantity);
@@ -250,14 +252,14 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public void removeItemFromCartBySession(String sessionId, Integer productId) {
+    public void removeItemFromCartBySession(String sessionId, Integer productVariantId) {
         Cart cart = cartRepository.findTopBySessionIdOrderByCartIdDesc(sessionId)
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+        ProductVariant productVariant = productVariantRepository.findById(productVariantId)
+                .orElseThrow(() -> new RuntimeException("Product variant not found"));
 
-        CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
+        CartItem cartItem = cartItemRepository.findByCartAndProductVariant(cart, productVariant)
                 .orElseThrow(() -> new RuntimeException("Item not found"));
 
         cartItemRepository.delete(cartItem);
@@ -322,8 +324,8 @@ public class CartServiceImpl implements CartService {
 
         // Gộp từng sản phẩm
         for (CartItem sessionItem : sessionItems) {
-            Product product = sessionItem.getProduct();
-            Optional<CartItem> existingItemOpt = cartItemRepository.findByCartAndProduct(customerCart, product);
+            ProductVariant productVariant = sessionItem.getProductVariant();
+            Optional<CartItem> existingItemOpt = cartItemRepository.findByCartAndProductVariant(customerCart, productVariant);
 
             if (existingItemOpt.isPresent()) {
                 CartItem existingItem = existingItemOpt.get();
@@ -332,7 +334,7 @@ public class CartServiceImpl implements CartService {
             } else {
                 CartItem newItem = new CartItem();
                 newItem.setCart(customerCart);
-                newItem.setProduct(product);
+                newItem.setProductVariant(productVariant);
                 newItem.setQuantity(sessionItem.getQuantity());
                 newItem.setUnitPrice(sessionItem.getUnitPrice());
                 newItem.setIsSelected(sessionItem.getIsSelected());

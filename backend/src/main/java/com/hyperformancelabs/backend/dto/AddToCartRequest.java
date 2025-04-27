@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddToCartRequest {
-    @NotNull(message = "productId không được để trống")
-    private Integer productId;
+    @NotNull(message = "productVariantId không được để trống")
+    private Integer productVariantId;
 
     @NotNull(message = "Số lượng không được để trống")
     @Min(value = 1, message = "Số lượng phải lớn hơn 0")
