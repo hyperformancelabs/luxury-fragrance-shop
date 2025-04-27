@@ -1,13 +1,29 @@
 package com.hyperformancelabs.backend.service;
 
+import com.hyperformancelabs.backend.dto.CartItemDTO;
+import com.hyperformancelabs.backend.dto.CartItemResponse;
 import com.hyperformancelabs.backend.model.Cart;
-import com.hyperformancelabs.backend.model.Customer;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface CartService {
-    List<Cart> getCartsByCustomer(Customer customer);
+    void addProductToCart(String username, Integer productId, Integer quantity);
+    List<CartItemDTO> getCartItemsForCustomer(String username);
+    void updateCartItemQuantity(String username, Integer productId, Integer quantity);
+    void removeItemFromCart(String username, Integer productId);
+    void clearCart(String username);
 
-    Optional<Cart> getCartBySessionId(String sessionId);
+    void addProductToCartBySession(String sessionId, Integer productId, Integer quantity);
+
+    List<CartItemDTO> getCartItemsBySession(String sessionId);
+
+    void updateCartItemQuantityBySession(String sessionId, Integer productId, Integer quantity);
+
+    void removeItemFromCartBySession(String sessionId, Integer productId);
+
+    void clearCartBySession(String sessionId);
+
+//    Cart getOrCreateCartBySession(String sessionId);
+void mergeSessionCartToCustomer(String sessionId, String username);
+
 }

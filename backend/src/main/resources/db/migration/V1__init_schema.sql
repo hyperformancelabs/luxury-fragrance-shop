@@ -122,23 +122,35 @@ CREATE TABLE [Product] (
     [brand_id] INT NOT NULL,
     [product_name] NVARCHAR(100) NOT NULL,
     [description] NVARCHAR(MAX) NULL,
+    [image_url] VARCHAR(500) NULL,
+    CONSTRAINT [FK_Product_Brand] FOREIGN KEY ([brand_id]) REFERENCES [Brand]([brand_id])
+        ON DELETE NO ACTION
+        ON UPDATE NO ACTION,
+    CONSTRAINT [UQ_Product_Name_Brand] UNIQUE ([product_name], [brand_id])
+);
+GO
+
+-- 10. Table ProductVariant
+CREATE TABLE [ProductVariant] (
+    [product_variant_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+    [product_id] INT NOT NULL,
     [volume] INT NOT NULL,
     [price] DECIMAL(10,2) NOT NULL,
     [discount_price] DECIMAL(10,2) NULL,
     [quantity_in_stock] INT NOT NULL DEFAULT 0,
     [reorder_level] INT NULL,
     [image_url] VARCHAR(500) NULL,
-    CONSTRAINT [FK_Product_Brand] FOREIGN KEY ([brand_id]) REFERENCES [Brand]([brand_id])
-        ON DELETE NO ACTION
+    CONSTRAINT [FK_ProductVariant_Product] FOREIGN KEY ([product_id]) REFERENCES [Product]([product_id])
+        ON DELETE CASCADE
         ON UPDATE NO ACTION,
-    CONSTRAINT [UQ_Product] UNIQUE ([product_name], [brand_id], [volume])
+    CONSTRAINT [UQ_ProductVariant] UNIQUE ([product_id], [volume])
 );
 GO
 
--- 10. Table InventoryTransaction
+-- 11. Table InventoryTransaction
 CREATE TABLE [InventoryTransaction] (
     [inventory_transaction_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
-    [product_id] INT NOT NULL,
+    [product_variant_id] INT NOT NULL,
     [performed_by] INT NOT NULL,
     [transaction_type] VARCHAR(20) NOT NULL
         CONSTRAINT [CK_InventoryTransaction_Type] CHECK ([transaction_type] IN ('import','export', 'adjust', 'sell','combine')),
@@ -149,7 +161,7 @@ CREATE TABLE [InventoryTransaction] (
     [reason] NVARCHAR(MAX) NULL,
     [note] NVARCHAR(MAX) NULL,
     [cost_price] DECIMAL(10,2) NULL,
-    CONSTRAINT [FK_InventoryTransaction_Product] FOREIGN KEY ([product_id]) REFERENCES [Product]([product_id])
+    CONSTRAINT [FK_InventoryTransaction_ProductVariant] FOREIGN KEY ([product_variant_id]) REFERENCES [ProductVariant]([product_variant_id])
         ON DELETE NO ACTION
         ON UPDATE NO ACTION,
     CONSTRAINT [FK_InventoryTransaction_Employee] FOREIGN KEY ([performed_by]) REFERENCES [Employee]([employee_id])
@@ -158,7 +170,7 @@ CREATE TABLE [InventoryTransaction] (
 );
 GO
 
--- 11. Table ProductDetail
+-- 12. Table ProductDetail
 CREATE TABLE [ProductDetail] (
     [product_detail_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [product_id] INT NOT NULL,
@@ -173,7 +185,7 @@ CREATE TABLE [ProductDetail] (
 );
 GO
 
--- 12. Table Promotion
+-- 13. Table Promotion
 CREATE TABLE [Promotion] (
     [promotion_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [promotion_name] NVARCHAR(100) NOT NULL,
@@ -191,7 +203,7 @@ CREATE TABLE [Promotion] (
 );
 GO
 
--- 13. Table ProductPromotion
+-- 14. Table ProductPromotion
 CREATE TABLE [ProductPromotion] (
     [product_promotion_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [product_id] INT NOT NULL,
@@ -214,7 +226,7 @@ CREATE TABLE [ProductPromotion] (
 );
 GO
 
--- 14. Table Customer
+-- 15. Table Customer
 CREATE TABLE [Customer] (
     [customer_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [username] VARCHAR(50) NULL,
@@ -238,7 +250,7 @@ CREATE TABLE [Customer] (
 );
 GO
 
--- 15. Table Cart
+-- 16. Table Cart
 CREATE TABLE [Cart] (
     [cart_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [customer_id] INT NULL,
@@ -254,11 +266,11 @@ CREATE TABLE [Cart] (
 );
 GO
 
--- 16. Table CartItem
+-- 17. Table CartItem
 CREATE TABLE [CartItem] (
     [cart_item_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [cart_id] INT NOT NULL,
-    [product_id] INT NOT NULL,
+    [product_variant_id] INT NOT NULL,
     [quantity] INT NOT NULL,
     [unit_price] DECIMAL(10,2) NOT NULL,
     [note] NVARCHAR(255) NULL,
@@ -266,14 +278,32 @@ CREATE TABLE [CartItem] (
     CONSTRAINT [FK_CartItem_Cart] FOREIGN KEY ([cart_id]) REFERENCES [Cart]([cart_id])
         ON DELETE CASCADE
         ON UPDATE NO ACTION,
-    CONSTRAINT [FK_CartItem_Product] FOREIGN KEY ([product_id]) REFERENCES [Product]([product_id])
+    CONSTRAINT [FK_CartItem_ProductVariant] FOREIGN KEY ([product_variant_id]) REFERENCES [ProductVariant]([product_variant_id])
         ON DELETE NO ACTION
         ON UPDATE NO ACTION,
-    CONSTRAINT [UQ_CartItem] UNIQUE ([cart_id], [product_id])
+    CONSTRAINT [UQ_CartItem] UNIQUE ([cart_id], [product_variant_id])
 );
 GO
 
--- 17. Table Order
+-- 18. Table Wishlist
+CREATE TABLE [Wishlist] (
+    [wishlist_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+    [customer_id] INT NOT NULL,
+    [product_variant_id] INT NOT NULL,
+    [added_date] DATETIME NOT NULL DEFAULT (GETDATE()), -- Ngày thêm vào wishlist
+
+    CONSTRAINT [FK_Wishlist_Customer] FOREIGN KEY ([customer_id]) REFERENCES [Customer]([customer_id])
+        ON DELETE CASCADE
+        ON UPDATE NO ACTION,
+    CONSTRAINT [FK_Wishlist_ProductVariant] FOREIGN KEY ([product_variant_id]) REFERENCES [ProductVariant]([product_variant_id])
+        ON DELETE CASCADE
+        ON UPDATE NO ACTION,
+    CONSTRAINT [UQ_Wishlist_Customer_ProductVariant] UNIQUE ([customer_id], [product_variant_id])
+);
+GO
+
+
+-- 19. Table Order
 CREATE TABLE [Order] (
     [order_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [customer_id] INT NOT NULL,
@@ -293,7 +323,7 @@ CREATE TABLE [Order] (
 );
 GO
 
--- 18. Table PaymentMethod
+-- 20. Table PaymentMethod
 CREATE TABLE [PaymentMethod] (
     [payment_method_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [method_name] VARCHAR(50) NOT NULL UNIQUE,
@@ -301,7 +331,7 @@ CREATE TABLE [PaymentMethod] (
 );
 GO
 
--- 19. Table CustomerPaymentMethod
+-- 21. Table CustomerPaymentMethod
 CREATE TABLE [CustomerPaymentMethod] (
     [customer_payment_method_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [customer_id] INT NOT NULL,
@@ -316,7 +346,7 @@ CREATE TABLE [CustomerPaymentMethod] (
 );
 GO
 
--- 20. Table Payment
+-- 22. Table Payment
 CREATE TABLE [Payment] (
     [payment_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [order_id] INT NOT NULL,
@@ -332,7 +362,7 @@ CREATE TABLE [Payment] (
 );
 GO
 
--- 21. Table Shipment
+-- 23. Table Shipment
 CREATE TABLE [Shipment] (
     [shipment_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [order_id] INT NOT NULL,
@@ -349,21 +379,21 @@ CREATE TABLE [Shipment] (
 );
 GO
 
--- 22. Table OrderItem
+-- 24. Table OrderItem
 CREATE TABLE [OrderItem] (
     [order_item_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [order_id] INT NOT NULL,
-    [product_id] INT NOT NULL,
+    [product_variant_id] INT NOT NULL,
     [quantity] INT NOT NULL,
     [unit_price] DECIMAL(10,2) NOT NULL,
     [note] NVARCHAR(255) NULL,
     CONSTRAINT [FK_OrderItem_Order] FOREIGN KEY ([order_id]) REFERENCES [Order]([order_id]),
-    CONSTRAINT [FK_OrderItem_Product] FOREIGN KEY ([product_id]) REFERENCES [Product]([product_id]),
-    CONSTRAINT [UQ_OrderItem] UNIQUE ([order_id], [product_id])
+    CONSTRAINT [FK_OrderItem_ProductVariant] FOREIGN KEY ([product_variant_id]) REFERENCES [ProductVariant]([product_variant_id]),
+    CONSTRAINT [UQ_OrderItem] UNIQUE ([order_id], [product_variant_id])
 );
 GO
 
--- 23. Table OrderPromotion
+-- 25. Table OrderPromotion
 CREATE TABLE [OrderPromotion] (
     [order_promotion_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [order_id] INT NOT NULL,
@@ -376,7 +406,7 @@ CREATE TABLE [OrderPromotion] (
 );
 GO
 
--- 24. Table Conversation
+-- 26. Table Conversation
 CREATE TABLE [Conversation] (
     [conversation_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [start_time] DATETIME NOT NULL DEFAULT (GETDATE()),
@@ -390,7 +420,7 @@ CREATE TABLE [Conversation] (
 );
 GO
 
--- 25. Table ChatMessage
+-- 27. Table ChatMessage
 CREATE TABLE [ChatMessage] (
     [chat_message_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [conversation_id] INT NOT NULL,

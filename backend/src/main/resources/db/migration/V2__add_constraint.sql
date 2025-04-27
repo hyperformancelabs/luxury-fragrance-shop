@@ -2,11 +2,11 @@
 ALTER TABLE [Employee]
 ADD
     CONSTRAINT [CK_Employee_Email_Format] CHECK (
-        [email] IS NULL 
+        [email] IS NULL
         OR ([email] LIKE '%_@__%.__%' AND CHARINDEX(' ', [email]) = 0)
     ),
     CONSTRAINT [CK_Employee_PhoneNumber_Format] CHECK (
-        LEN(LTRIM(RTRIM([phone_number]))) > 0 
+        LEN(LTRIM(RTRIM([phone_number]))) > 0
         AND [phone_number] NOT LIKE '%[^0-9 ()+-]%'
     ),
     CONSTRAINT [CK_Employee_FullName_NotEmpty] CHECK (
@@ -69,15 +69,20 @@ GO
 -- 9. Table Product
 ALTER TABLE [Product]
 ADD
-    CONSTRAINT [CK_Product_ProductName_NotEmpty] CHECK (LEN(LTRIM(RTRIM([product_name]))) > 0),
-    CONSTRAINT [CK_Product_Volume_Positive] CHECK ([volume] > 0),
-    CONSTRAINT [CK_Product_Price_NonNegative] CHECK ([price] >= 0),
-    CONSTRAINT [CK_Product_DiscountPrice_Valid] CHECK ([discount_price] IS NULL OR ([discount_price] >= 0 AND [discount_price] <= [price])),
-    CONSTRAINT [CK_Product_QuantityInStock_NonNegative] CHECK ([quantity_in_stock] >= 0),
-    CONSTRAINT [CK_Product_ReorderLevel_NonNegative] CHECK ([reorder_level] IS NULL OR [reorder_level] >= 0);
+    CONSTRAINT [CK_Product_ProductName_NotEmpty] CHECK (LEN(LTRIM(RTRIM([product_name]))) > 0);
 GO
 
--- 10. Table InventoryTransaction
+-- 10. Table ProductVariant
+ALTER TABLE [ProductVariant]
+ADD
+    CONSTRAINT [CK_ProductVariant_Volume_Positive] CHECK ([volume] > 0),
+    CONSTRAINT [CK_ProductVariant_Price_NonNegative] CHECK ([price] >= 0),
+    CONSTRAINT [CK_ProductVariant_DiscountPrice_Valid] CHECK ([discount_price] IS NULL OR ([discount_price] >= 0 AND [discount_price] <= [price])),
+    CONSTRAINT [CK_ProductVariant_QuantityInStock_NonNegative] CHECK ([quantity_in_stock] >= 0),
+    CONSTRAINT [CK_ProductVariant_ReorderLevel_NonNegative] CHECK ([reorder_level] IS NULL OR [reorder_level] >= 0);
+GO
+
+-- 11. Table InventoryTransaction
 ALTER TABLE [InventoryTransaction]
 ADD
     CONSTRAINT [CK_InventoryTransaction_Quantity_Positive] CHECK ([quantity] > 0),
@@ -87,13 +92,13 @@ ADD
     CONSTRAINT [CK_InventoryTransaction_Date_Valid] CHECK ([transaction_date] <= GETDATE());
 GO
 
--- 11. Table ProductDetail
+-- 12. Table ProductDetail
 ALTER TABLE [ProductDetail]
 ADD
     CONSTRAINT [CK_ProductDetail_DetailValue_NotEmpty] CHECK (LEN(LTRIM(RTRIM([detail_value]))) > 0);
 GO
 
--- 12. Table Promotion
+-- 13. Table Promotion
 ALTER TABLE [Promotion]
 ADD
     CONSTRAINT [CK_Promotion_PromotionName_NotEmpty] CHECK (LEN(LTRIM(RTRIM([promotion_name]))) > 0),
@@ -105,14 +110,14 @@ ADD
     CONSTRAINT [CK_Promotion_UsageLimit_NonNegative] CHECK ([usage_limit] IS NULL OR [usage_limit] >= 0);
 GO
 
--- 13. Table ProductPromotion
+-- 14. Table ProductPromotion
 ALTER TABLE [ProductPromotion]
 ADD
     CONSTRAINT [CK_ProductPromotion_EndDate_Valid] CHECK ([end_date] IS NULL OR [end_date] >= [start_date]),
     CONSTRAINT [CK_ProductPromotion_MaxDiscountAmount_NonNegative] CHECK ([max_discount_amount] IS NULL OR [max_discount_amount] >= 0);
 GO
 
--- 14. Table Customer
+-- 15. Table Customer
 ALTER TABLE [Customer]
 ADD
     CONSTRAINT [CK_Customer_Name_NotEmpty] CHECK (LEN(LTRIM(RTRIM([name]))) > 0),
@@ -123,20 +128,26 @@ ADD
     CONSTRAINT [CK_Customer_UpdateAt_Valid] CHECK ([update_at] IS NULL OR [update_at] >= [create_at]);
 GO
 
--- 15. Table Cart
+-- 16. Table Cart
 ALTER TABLE [Cart]
 ADD
     CONSTRAINT [CK_Cart_TotalAmount_NonNegative] CHECK ([total_amount] IS NULL OR [total_amount] >= 0);
 GO
 
--- 16. Table CartItem
+-- 17. Table CartItem
 ALTER TABLE [CartItem]
 ADD
     CONSTRAINT [CK_CartItem_Quantity_Positive] CHECK ([quantity] > 0),
     CONSTRAINT [CK_CartItem_UnitPrice_NonNegative] CHECK ([unit_price] >= 0);
 GO
 
--- 17. Table Order
+-- 18. Table Wishlist
+ALTER TABLE [Wishlist]
+ADD
+    CONSTRAINT [CK_Wishlist_AddedDate_Valid] CHECK ([added_date] <= GETDATE());
+GO
+
+-- 19. Table Order
 ALTER TABLE [Order]
 ADD
     CONSTRAINT [CK_Order_TotalAmount_NonNegative] CHECK ([total_amount] IS NULL OR [total_amount] >= 0),
@@ -147,24 +158,24 @@ ADD
     CONSTRAINT [CK_Order_EstDeliveryDate_Valid] CHECK ([estimated_delivery_date] IS NULL OR [estimated_delivery_date] >= CAST([order_date] AS DATE));
 GO
 
--- 18. Table PaymentMethod
+-- 20. Table PaymentMethod
 ALTER TABLE [PaymentMethod]
 ADD
     CONSTRAINT [CK_PaymentMethod_MethodName_NotEmpty] CHECK (LEN(LTRIM(RTRIM([method_name]))) > 0);
 GO
 
--- 19. Table CustomerPaymentMethod
+-- 21. Table CustomerPaymentMethod
 CREATE UNIQUE INDEX [UQ_CustomerPaymentMethod_IsDefault_True] ON [CustomerPaymentMethod]([customer_id], [is_default]) WHERE [is_default] = 1;
 GO
 
--- 20. Table Payment
+-- 22. Table Payment
 ALTER TABLE [Payment]
 ADD
     CONSTRAINT [CK_Payment_PaymentDate_Valid] CHECK ([payment_date] <= GETDATE()),
     CONSTRAINT [CK_Payment_Currency_NotEmpty] CHECK (LEN(LTRIM(RTRIM([currency]))) > 0);
 GO
 
--- 21. Table Shipment
+-- 23. Table Shipment
 ALTER TABLE [Shipment]
 ADD
     CONSTRAINT [CK_Shipment_ShippingCost_NonNegative] CHECK ([shipping_cost] IS NULL OR [shipping_cost] >= 0),
@@ -173,20 +184,20 @@ ADD
     CONSTRAINT [CK_Shipment_DeliveryDate_Valid] CHECK ([delivery_date] IS NULL OR [shipping_date] IS NULL OR [delivery_date] >= [shipping_date]);
 GO
 
--- 22. Table OrderItem
+-- 24. Table OrderItem
 ALTER TABLE [OrderItem]
 ADD
     CONSTRAINT [CK_OrderItem_Quantity_Positive] CHECK ([quantity] > 0),
     CONSTRAINT [CK_OrderItem_UnitPrice_NonNegative] CHECK ([unit_price] >= 0);
 GO
 
--- 23. Table OrderPromotion
+-- 25. Table OrderPromotion
 ALTER TABLE [OrderPromotion]
 ADD
     CONSTRAINT [CK_OrderPromotion_DiscountAmount_NonNegative] CHECK ([discount_amount] IS NULL OR [discount_amount] >= 0);
 GO
 
--- 24. Table Conversation
+-- 26. Table Conversation
 ALTER TABLE [Conversation]
 ADD
     CONSTRAINT [CK_Conversation_EndTime_Valid] CHECK ([end_time] IS NULL OR [end_time] >= [start_time]),
@@ -194,7 +205,7 @@ ADD
     CONSTRAINT [CK_Conversation_RatingStatus_Logic] CHECK ([rating] IS NULL OR [status] = 'done');
 GO
 
--- 25. Table ChatMessage
+-- 27. Table ChatMessage
 ALTER TABLE [ChatMessage]
 ADD
     CONSTRAINT [CK_ChatMessage_Content_NotEmpty] CHECK (LEN(LTRIM(RTRIM([content]))) > 0),
