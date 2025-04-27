@@ -139,7 +139,6 @@ CREATE TABLE [ProductVariant] (
     [discount_price] DECIMAL(10,2) NULL,
     [quantity_in_stock] INT NOT NULL DEFAULT 0,
     [reorder_level] INT NULL,
-    [image_url] VARCHAR(500) NULL,
     CONSTRAINT [FK_ProductVariant_Product] FOREIGN KEY ([product_id]) REFERENCES [Product]([product_id])
         ON DELETE CASCADE
         ON UPDATE NO ACTION,
