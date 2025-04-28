@@ -4,6 +4,7 @@ import com.hyperformancelabs.backend.dto.CreateOrderRequest;
 import com.hyperformancelabs.backend.dto.OrderDetailDTO;
 import com.hyperformancelabs.backend.dto.OrderSummary;
 import com.hyperformancelabs.backend.payload.ApiResponse;
+import com.hyperformancelabs.backend.payload.ApiResponseStatus;
 import com.hyperformancelabs.backend.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -22,30 +24,154 @@ public class OrderController {
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<String>> checkout(@RequestBody @Valid CreateOrderRequest request) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        orderService.createOrder(username, request);
-        return ResponseEntity.ok(
-                new ApiResponse<>(200, "success", "Đặt hàng thành công", null)
-        );
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            orderService.createOrder(username, request);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.CREATE_SUCCESS_MESSAGE, null)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        }
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<OrderSummary>>> getMyOrders() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        List<OrderSummary> orders = orderService.getOrdersForCustomer(username);
-        return ResponseEntity.ok(
-                new ApiResponse<>(200, "success", "Lấy danh sách đơn hàng thành công", orders)
-        );
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            List<OrderSummary> orders = orderService.getOrdersForCustomer(username);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.GET_SUCCESS_MESSAGE, orders)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        }
     }
 
     @GetMapping("/{orderId}")
     public ResponseEntity<ApiResponse<OrderDetailDTO>> getOrderDetail(@PathVariable Integer orderId) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        OrderDetailDTO orderDetail = orderService.getOrderDetail(orderId, username);
-        return ResponseEntity.ok(
-                new ApiResponse<>(200, "success", "Lấy chi tiết đơn hàng thành công", orderDetail)
-        );
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            OrderDetailDTO orderDetail = orderService.getOrderDetail(orderId, username);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.GET_SUCCESS_MESSAGE, orderDetail)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        }
     }
 
+    @GetMapping("/total-amount-of-delivered-orders-today")
+    public ResponseEntity<ApiResponse<String>> getTotalAmountOfDeliveredOrdersToday() {
+        try {
+            BigDecimal totalAmount = orderService.getTotalAmountOfDeliveredOrdersToday();
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.GET_SUCCESS_MESSAGE, totalAmount.toString())
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        }
+    }
 
+    @GetMapping("/total-amount-of-delivered-orders-week")
+    public ResponseEntity<ApiResponse<String>> getTotalAmountOfDeliveredOrdersWeek() {
+        try {
+            BigDecimal totalAmount = orderService.getTotalAmountOfDeliveredOrdersInCurrentWeek();
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.GET_SUCCESS_MESSAGE, totalAmount.toString())
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        }
+    }
+
+    @GetMapping("/total-amount-of-delivered-orders-month")
+    public ResponseEntity<ApiResponse<String>> getTotalAmountOfDeliveredOrdersMonth() {
+        try {
+            BigDecimal totalAmount = orderService.getTotalAmountOfDeliveredOrdersInCurrentMonth();
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.GET_SUCCESS_MESSAGE, totalAmount.toString())
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        }
+    }
+
+    @GetMapping("/total-amount-of-delivered-orders-year")
+    public ResponseEntity<ApiResponse<String>> getTotalAmountOfDeliveredOrdersYear() {
+        try {
+            BigDecimal totalAmount = orderService.getTotalAmountOfDeliveredOrdersInCurrentYear();
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.GET_SUCCESS_MESSAGE, totalAmount.toString())
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        }
+    }
+
+    @GetMapping("/total-amount-of-delivered-orders-by-month-and-year")
+    public ResponseEntity<ApiResponse<String>> getTotalAmountOfDeliveredOrdersByMonthAndYear(
+            @RequestParam int month,
+            @RequestParam int year
+    ) {
+        try {
+            BigDecimal totalAmount = orderService.getTotalAmountOfDeliveredOrdersByMonthAndYear(month, year);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.GET_SUCCESS_MESSAGE, totalAmount.toString())
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        }
+    }
+
+    @GetMapping("/total-amount-of-delivered-orders-by-date-range")
+    public ResponseEntity<ApiResponse<String>> getTotalAmountOfDeliveredOrdersByDateRange(
+            @RequestParam String startDate,
+            @RequestParam String endDate
+    ) {
+        try {
+            BigDecimal totalAmount = orderService.getTotalAmountOfDeliveredOrdersByDateRange(startDate, endDate);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.GET_SUCCESS_MESSAGE, totalAmount.toString())
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        }
+    }
+
+    @GetMapping("/total-amount-of-delivered-orders-by-quarter-and-year")
+    public ResponseEntity<ApiResponse<String>> getTotalAmountOfDeliveredOrdersByQuarterAndYear(
+            @RequestParam int quarter,
+            @RequestParam int year
+    ) {
+        try {
+            BigDecimal totalAmount = orderService.getTotalAmountOfDeliveredOrdersByQuarterAndYear(quarter, year);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.GET_SUCCESS_MESSAGE, totalAmount.toString())
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        }
+    }
 }
+

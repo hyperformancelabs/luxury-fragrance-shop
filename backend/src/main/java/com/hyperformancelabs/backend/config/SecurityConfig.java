@@ -35,7 +35,7 @@ public class SecurityConfig {
                         // Các API không cần xác thực
                         .requestMatchers(
                                 "/api/v1/auth/**",        // Đăng nhập, đăng ký
-                                "/api/v1/products/**",    // Public product APIs
+                                "/api/v1/**",    // Public product APIs
                                 "/api/v1/cart/**",        // Giỏ hàng cho cả guest và user
                                 "/api/v1/payment/**"      // Thanh toán có thể không cần login
                         ).permitAll()

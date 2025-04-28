@@ -136,7 +136,39 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
+    @Override
+    public BigDecimal getTotalAmountOfDeliveredOrdersToday() {
+        return orderRepository.getTotalAmountOfDeliveredOrdersToday();
+    }
 
+    @Override
+    public BigDecimal getTotalAmountOfDeliveredOrdersInCurrentWeek() {
+        return orderRepository.getTotalAmountOfDeliveredOrdersInCurrentWeek();
+    }
 
+    @Override
+    public BigDecimal getTotalAmountOfDeliveredOrdersInCurrentMonth() {
+        return orderRepository.getTotalAmountOfDeliveredOrdersInCurrentMonth();
+    }
+
+    @Override
+    public BigDecimal getTotalAmountOfDeliveredOrdersInCurrentYear() {
+        return orderRepository.getTotalAmountOfDeliveredOrdersInCurrentYear();
+    }
+
+    @Override
+    public BigDecimal getTotalAmountOfDeliveredOrdersByMonthAndYear(int month, int year) {
+        return orderRepository.getTotalAmountOfDeliveredOrdersByMonthAndYear(month, year);
+    }
+
+    @Override
+    public BigDecimal getTotalAmountOfDeliveredOrdersByDateRange(String startDate, String endDate) {
+        return orderRepository.getTotalAmountOfDeliveredOrdersByDateRange(startDate, endDate);
+    }
+
+    @Override
+    public BigDecimal getTotalAmountOfDeliveredOrdersByQuarterAndYear(int quarter, int year) {
+        return orderRepository.getTotalAmountOfDeliveredOrdersByQuarterAndYear(quarter, year);
+    }
 }
 
