@@ -4,6 +4,7 @@ import com.hyperformancelabs.backend.dto.ProductDTO;
 import com.hyperformancelabs.backend.dto.Random10Product;
 import com.hyperformancelabs.backend.dto.TopSellingProductDTO;
 import com.hyperformancelabs.backend.model.Product;
+import com.hyperformancelabs.backend.model.ProductVariant;
 import com.hyperformancelabs.backend.repository.ProductRepository;
 import com.hyperformancelabs.backend.service.ProductService;
 import jakarta.transaction.Transactional;
@@ -32,11 +33,22 @@ public class ProductServiceImpl implements ProductService {
         dto.setBrandName(product.getBrand().getBrandName());
         dto.setProductName(product.getProductName());
         dto.setDescription(product.getDescription());
-        dto.setVolume(product.getVolume());
-        dto.setPrice(product.getPrice());
-        dto.setDiscountPrice(product.getDiscountPrice());
-        dto.setQuantityInStock(product.getQuantityInStock());
-        dto.setReorderLevel(product.getReorderLevel());
+        // Các trường volume, price, discountPrice, quantityInStock, reorderLevel không còn thuộc Product
+        // mà thuộc về ProductVariant. Hiển thị giá trị mặc định hoặc lấy từ variant đầu tiên nếu có
+        if (!product.getProductVariants().isEmpty()) {
+            ProductVariant firstVariant = product.getProductVariants().iterator().next();
+            dto.setVolume(firstVariant.getVolume());
+            dto.setPrice(firstVariant.getPrice());
+            dto.setDiscountPrice(firstVariant.getDiscountPrice());
+            dto.setQuantityInStock(firstVariant.getQuantityInStock());
+            dto.setReorderLevel(firstVariant.getReorderLevel());
+        } else {
+            dto.setVolume(null);
+            dto.setPrice(null);
+            dto.setDiscountPrice(null);
+            dto.setQuantityInStock(0);
+            dto.setReorderLevel(null);
+        }
         dto.setImageUrl(product.getImageUrl());
         return dto;
     }
@@ -63,11 +75,11 @@ public class ProductServiceImpl implements ProductService {
         List<Object[]> results = productRepository.findTop10TopSellingProducts(category);
         return results.stream()
                 .map(result -> new TopSellingProductDTO(
-                        (Integer) result[0],            // p.product_id
+                        (Integer) result[0],            // productVariant.product_variant_id
                         (String) result[1],             // p.product_name
                         (String) result[2],             // b.brand_name
-                        (Integer) result[3],            // p.volume
-                        (BigDecimal) result[4],         // p.price
+                        (Integer) result[3],            // productVariant.volume
+                        (BigDecimal) result[4],         // productVariant.price
                         (String) result[5],             // p.image_url
                         ((Number) result[6]).intValue() // SUM(oi.quantity)
                 ))
@@ -94,14 +106,18 @@ public class ProductServiceImpl implements ProductService {
         // Lấy 10 sản phẩm đầu tiên sau khi random
         return allProducts.stream()
                 .limit(10)
-                .map(product -> new Random10Product(
-                        product.getProductId(),
-                        product.getProductName(),
-                        product.getBrand().getBrandName(),  // Giả sử Product có quan hệ với Brand
-                        product.getVolume(),
-                        product.getPrice(),
-                        product.getImageUrl()
-                ))
+                .filter(product -> !product.getProductVariants().isEmpty())
+                .map(product -> {
+                    ProductVariant variant = product.getProductVariants().iterator().next();
+                    return new Random10Product(
+                            product.getProductId(),
+                            product.getProductName(),
+                            product.getBrand().getBrandName(),
+                            variant.getVolume(),
+                            variant.getPrice(),
+                            product.getImageUrl()
+                    );
+                })
                 .collect(Collectors.toList());
     }
 

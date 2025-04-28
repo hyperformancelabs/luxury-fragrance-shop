@@ -65,7 +65,7 @@ public class OrderServiceImpl implements OrderService {
 
         for (CartItem item : cartItems) {
             OrderItem orderItem = new OrderItem();
-            orderItem.setProduct(item.getProduct());
+            orderItem.setProductVariant(item.getProductVariant());
             orderItem.setQuantity(item.getQuantity());
             orderItem.setUnitPrice(item.getUnitPrice());
 
@@ -114,15 +114,15 @@ public class OrderServiceImpl implements OrderService {
 
         List<OrderItemDTO> itemDTOs = order.getOrderItems().stream().map(item ->
                 new OrderItemDTO(
-                        item.getProduct().getProductName(),
-                        item.getProduct().getVolume(),
-                        item.getProduct().getBrand().getBrandName(),
+                        item.getProductVariant().getProduct().getProductName(),
+                        item.getProductVariant().getVolume(),
+                        item.getProductVariant().getProduct().getBrand().getBrandName(),
                         item.getQuantity(),
                         item.getUnitPrice()
                 )
         ).toList();
         System.out.println("Order items count: " + order.getOrderItems().size());
-        order.getOrderItems().forEach(i -> System.out.println("Item: " + i.getProduct().getProductName()));
+        order.getOrderItems().forEach(i -> System.out.println("Item: " + i.getProductVariant().getProduct().getProductName()));
 
         return new OrderDetailDTO(
                 order.getOrderId(),
