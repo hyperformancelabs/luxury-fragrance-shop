@@ -2,6 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import {jwtDecode} from "jwt-decode";
+import { Toaster, toast } from "sonner";
+
 import {
   ChartBarIcon,
   Heart,
@@ -24,14 +27,15 @@ const Navbar = () => {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [authMode, setAuthMode] = useState("login");
   const [loginData, setLoginData] = useState({
-    email: "",
+    username: "",
     password: "",
   });
   const [registerData, setRegisterData] = useState({
     name: "",
-    email: "",
+    username:"",
     password: "",
-    confirmPassword: "",
+    phoneNumber: "",
+    email: "",
   });
   const [error, setError] = useState("");
 
@@ -75,50 +79,123 @@ const Navbar = () => {
     });
   };
 
-  const handleLoginSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
-    if (!loginData.email || !loginData.password) {
-      setError("Vui lòng nhập email và mật khẩu");
-      return;
-    }
-
-    const userData = {
-      id: "1",
-      name: "Người dùng",
-      email: loginData.email,
-    };
-
-    login(userData);
-    mergeGuestCartWithUserCart(userData.id);
-    setShowAuthPopup(false);
-  };
-
-  const handleRegisterSubmit = (e) => {
-    e.preventDefault();
-    setError("");
-
+  
     if (!registerData.name || !registerData.email || !registerData.password) {
       setError("Vui lòng điền đầy đủ thông tin");
       return;
     }
+  
+ 
+  
+    try {
+      const response = await fetch("http://localhost:8080/api/v1/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: registerData.name,
+          email: registerData.email,
+          password: registerData.password,
+          username: registerData.username,
+          phoneNumber: registerData.phoneNumber,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        setError(data.message || "Đăng ký thất bại");
+        return;
+      }
+  
+      // Sau khi đăng ký thành công → tự động login lại
+      handleLoginSubmit(new Event("submit"));
+    } catch (err) {
+      setError("Có lỗi xảy ra khi đăng ký");
+    }
+  };
+  
 
-    if (registerData.password !== registerData.confirmPassword) {
-      setError("Mật khẩu không khớp");
+  // const handleLoginSubmit = (e) => {
+  //   e.preventDefault();
+  //   setError("");
+
+  //   if (!loginData.email || !loginData.password) {
+  //     setError("Vui lòng nhập email và mật khẩu");
+  //     return;
+  //   }
+
+  //   const userData = {
+  //     id: "1",
+  //     name: "Người dùng",
+  //     email: loginData.email,
+  //   };
+
+  //   login(userData);
+  //   mergeGuestCartWithUserCart(userData.id);
+  //   setShowAuthPopup(false);
+  // };
+
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+  
+    if (!loginData.username || !loginData.password) {
+      setError("Vui lòng nhập username và mật khẩu");
       return;
     }
+  
+    try {
+      const response = await fetch("http://localhost:8080/api/v1/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginData),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok || !data.data) {
+        setError(data.message || "Đăng nhập thất bại");
+        return;
+      }
+      toast.success("Đăng nhập thành công!")
+      setTimeout(() => {
+    window.location.href = "/";
+        
+      },1000);
+      const token = data.data;
+  
+      // ✅ Decode token để lấy user info thật
+      const decoded = jwtDecode(token);
+      const user = {
+        id: decoded.sub,
+        username: decoded.username,
+        role: decoded.role,
+      };
+  
+      // Lưu token + user vào localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
 
-    const userData = {
-      id: "2",
-      name: registerData.name,
-      email: registerData.email,
-    };
-
-    login(userData);
-    mergeGuestCartWithUserCart(userData.id);
-    setShowAuthPopup(false);
+  
+      // Cập nhật context
+      login(user);
+      mergeGuestCartWithUserCart(user.id);
+  
+      setShowAuthPopup(false);
+    } catch (err) {
+      console.error(err);
+      setError("Có lỗi xảy ra, vui lòng thử lại");
+    }
   };
+  
+  
 
   const toggleAuthMode = () => {
     setAuthMode(authMode === "login" ? "register" : "login");
@@ -336,16 +413,16 @@ const Navbar = () => {
                               htmlFor="email"
                               className="block text-gray-700 text-sm font-medium mb-1"
                             >
-                              Email
+                              Username
                             </label>
                             <input
-                              type="email"
-                              id="email"
-                              name="email"
-                              value={loginData.email}
+                              type="text"
+                              id="username"
+                              name="username"
+                              value={loginData.username}
                               onChange={handleLoginChange}
                               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
-                              placeholder="Nhập email của bạn"
+                              placeholder="Nhập tên đăng nhập của bạn"
                             />
                           </div>
                           <div className="mb-4">
@@ -416,21 +493,22 @@ const Navbar = () => {
                           </div>
                           <div className="mb-3">
                             <label
-                              htmlFor="register-email"
+                              htmlFor="username"
                               className="block text-gray-700 text-sm font-medium mb-1"
                             >
-                              Email
+                              Username
                             </label>
                             <input
-                              type="email"
-                              id="register-email"
-                              name="email"
-                              value={registerData.email}
+                              type="text"
+                              id="username"
+                              name="username"
+                              value={registerData.username}
                               onChange={handleRegisterChange}
                               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
-                              placeholder="Nhập email của bạn"
+                              placeholder="Nhập username"
                             />
                           </div>
+                          
                           <div className="mb-3">
                             <label
                               htmlFor="register-password"
@@ -450,21 +528,39 @@ const Navbar = () => {
                           </div>
                           <div className="mb-4">
                             <label
-                              htmlFor="confirm-password"
+                              htmlFor="phoneNumber"
                               className="block text-gray-700 text-sm font-medium mb-1"
                             >
-                              Xác nhận mật khẩu
+                              Số điện thoại
                             </label>
                             <input
-                              type="password"
-                              id="confirm-password"
-                              name="confirmPassword"
-                              value={registerData.confirmPassword}
+                              type="number"
+                              id="phoneNumber"
+                              name="phoneNumber"
+                              value={registerData.phoneNumber}
                               onChange={handleRegisterChange}
                               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
-                              placeholder="Nhập lại mật khẩu"
+                              placeholder="Nhập số điện thoaị"
                             />
                           </div>
+                          <div className="mb-3">
+                            <label
+                              htmlFor="register-email"
+                              className="block text-gray-700 text-sm font-medium mb-1"
+                            >
+                              Email
+                            </label>
+                            <input
+                              type="email"
+                              id="register-email"
+                              name="email"
+                              value={registerData.email}
+                              onChange={handleRegisterChange}
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
+                              placeholder="Nhập email của bạn"
+                            />
+                          </div>
+                          
                           <button
                             type="submit"
                             className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 transition duration-200"
