@@ -1,10 +1,7 @@
 package com.hyperformancelabs.backend.service.impl;
 
 
-import com.hyperformancelabs.backend.dto.CreateOrderRequest;
-import com.hyperformancelabs.backend.dto.OrderDetailDTO;
-import com.hyperformancelabs.backend.dto.OrderItemDTO;
-import com.hyperformancelabs.backend.dto.OrderSummary;
+import com.hyperformancelabs.backend.dto.*;
 import com.hyperformancelabs.backend.model.*;
 import com.hyperformancelabs.backend.repository.CartItemRepository;
 import com.hyperformancelabs.backend.repository.CartRepository;
@@ -12,15 +9,15 @@ import com.hyperformancelabs.backend.repository.CustomerRepository;
 import com.hyperformancelabs.backend.repository.OrderRepository;
 import com.hyperformancelabs.backend.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -133,7 +130,13 @@ public class OrderServiceImpl implements OrderService {
                 order.getShippingOption(),
                 itemDTOs
         );
+    }
 
+    @Override
+    public Page<OrderDTO> getAllOrders(int page) {
+        Pageable pageable = PageRequest.of(page, 25);
+        Page<Order> orderPage = orderRepository.findAll(pageable);
+        return orderPage.map(OrderDTO::toDTO);
     }
 
     @Override
@@ -169,6 +172,16 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public BigDecimal getTotalAmountOfDeliveredOrdersByQuarterAndYear(int quarter, int year) {
         return orderRepository.getTotalAmountOfDeliveredOrdersByQuarterAndYear(quarter, year);
+    }
+
+    @Override
+    @Transactional
+    public void UpdateOrderStatus(Integer orderId, String status) {
+        Order order = orderRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        order.setOrderStatus(status);
+        orderRepository.save(order);
     }
 }
 

@@ -1,6 +1,7 @@
 package com.hyperformancelabs.backend.controller;
 
 import com.hyperformancelabs.backend.dto.CreateOrderRequest;
+import com.hyperformancelabs.backend.dto.OrderDTO;
 import com.hyperformancelabs.backend.dto.OrderDetailDTO;
 import com.hyperformancelabs.backend.dto.OrderSummary;
 import com.hyperformancelabs.backend.payload.ApiResponse;
@@ -8,10 +9,13 @@ import com.hyperformancelabs.backend.payload.ApiResponseStatus;
 import com.hyperformancelabs.backend.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -170,6 +174,59 @@ public class OrderController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
                     new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        }
+    }
+
+    @PutMapping("/update-status")
+    public ResponseEntity<ApiResponse<String>> updateOrderStatus(
+            @RequestParam Integer orderId,
+            @RequestParam String status
+    ) {
+        try {
+            orderService.UpdateOrderStatus(orderId, status);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.UPDATE_SUCCESS_MESSAGE, null)
+            );
+        } catch (Exception e) {
+            // Convert stack trace to string
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            String stackTrace = sw.toString();
+
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(
+                        ApiResponseStatus.BAD_REQUEST_CODE, 
+                        ApiResponseStatus.ERROR_STATUS, 
+                        "Error: " + e.getMessage() + "\nStack trace: " + stackTrace,
+                        null
+                    )
+            );
+        }
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<Page<OrderDTO>>> getAllOrders(@RequestParam(defaultValue = "0") int page) {
+        try {
+            Page<OrderDTO> orders = orderService.getAllOrders(page);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.GET_SUCCESS_MESSAGE, orders)
+            );
+        } catch (Exception e) {
+            // Convert stack trace to string
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            String stackTrace = sw.toString();
+
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(
+                        ApiResponseStatus.BAD_REQUEST_CODE, 
+                        ApiResponseStatus.ERROR_STATUS, 
+                        "Error: " + e.getMessage() + "\nStack trace: " + stackTrace,
+                        null
+                    )
             );
         }
     }
