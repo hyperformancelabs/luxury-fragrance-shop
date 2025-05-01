@@ -39,7 +39,7 @@ public class Customer {
     private String phoneNumber;
 
     @Email(message = "Invalid email format")
-    @Column(name = "email", length = 100, unique = true)
+    @Column(name = "email", length = 100, unique = true, nullable = true)
     private String email;
 
     @Column(name = "street", length = 255)

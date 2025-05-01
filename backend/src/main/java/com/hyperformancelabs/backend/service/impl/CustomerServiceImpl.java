@@ -38,7 +38,7 @@ public class CustomerServiceImpl implements CustomerService {
         if (customerRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username đã tồn tại");
         }
-        if (customerRepository.existsByEmail(request.getEmail())) {
+        if (request.getEmail() != null && !request.getEmail().isEmpty() && customerRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
         }
         if (customerRepository.existsByPhoneNumber(request.getPhoneNumber())) {
@@ -50,7 +50,12 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setPassword(passwordEncoder.encode(request.getPassword()));
         customer.setName(request.getName());
         customer.setPhoneNumber(request.getPhoneNumber());
-        customer.setEmail(request.getEmail());
+
+        // Chỉ set email nếu không null và không rỗng
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+            customer.setEmail(request.getEmail());
+        }
+
         customer.setCreateAt(LocalDateTime.now());
         customer.setStatus("active");
         customer.setRating(10);

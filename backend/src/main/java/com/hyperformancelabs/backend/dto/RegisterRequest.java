@@ -17,7 +17,6 @@ public class RegisterRequest {
     @Pattern(regexp = "^[0-9 ()+-]+$", message = "Định dạng số điện thoại không hợp lệ")
     private String phoneNumber;
 
-    @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không đúng định dạng")
     private String email;
 

@@ -348,6 +348,7 @@ GO
 -- 22. Table Payment
 CREATE TABLE [Payment] (
     [payment_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+    [payment_method_id] INT NOT NULL,
     [order_id] INT NOT NULL,
     [payment_date] DATETIME NOT NULL,
     [amount] DECIMAL(10,2) NOT NULL,

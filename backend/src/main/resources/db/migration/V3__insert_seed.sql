@@ -51254,28 +51254,28 @@ VALUES
 
 
 -- 22. Insert data into Payment table
-INSERT INTO Payment (order_id, payment_date, amount, payment_status, transaction_id, note, currency)
+INSERT INTO Payment (order_id, payment_method_id, payment_date, amount, payment_status, transaction_id, note, currency)
 VALUES
 -- Order 1: Completed, then refunded
-(1, '2025-02-10 11:05:00', 2783100.00, 'completed', 'VCB_TRX_001', N'Customer VCB transfer', 'VND'),
-(1, '2025-02-15 14:00:00', -2783100.00, 'refunded', 'VCB_REFUND_001', N'Refund due to return', 'VND'),
+(1, 2, '2025-02-10 11:05:00', 2783100.00, 'completed', 'VCB_TRX_001', N'Customer VCB transfer', 'VND'),
+(1, 2, '2025-02-15 14:00:00', -2783100.00, 'refunded', 'VCB_REFUND_001', N'Refund due to return', 'VND'),
 -- Order 2: Failed Momo attempt, then successful Momo
-(2, '2025-04-16 09:36:00', 1152300.00, 'failed', 'MOMO_FAIL_123', N'Momo payment attempt 1 failed', 'VND'),
-(2, '2025-04-16 09:40:00', 1152300.00, 'completed', 'MOMO_SUCCESS_456', N'Momo payment attempt 2 successful', 'VND'),
+(2, 3, '2025-04-16 09:36:00', 1152300.00, 'failed', 'MOMO_FAIL_123', N'Momo payment attempt 1 failed', 'VND'),
+(2, 3, '2025-04-16 09:40:00', 1152300.00, 'completed', 'MOMO_SUCCESS_456', N'Momo payment attempt 2 successful', 'VND'),
 -- Order 3: Completed via COD
-(3, '2025-03-07 14:00:00', 1674100.00, 'completed', NULL, N'COD collected by shipper', 'VND'),
+(3, 1, '2025-03-07 14:00:00', 1674100.00, 'completed', NULL, N'COD collected by shipper', 'VND'),
 -- Order 4: Pending
-(4, '2025-04-17 08:05:00', 1388100.00, 'pending', NULL, N'Waiting for customer transfer', 'VND'),
+(4, 2, '2025-04-17 08:05:00', 1388100.00, 'pending', NULL, N'Waiting for customer transfer', 'VND'),
 -- Order 5: Failed VNPay (order cancelled)
-(5, '2025-04-11 14:02:00', 2070500.00, 'failed', 'VNPAY_TRX_FAIL', N'VNPay transaction failed', 'VND'),
+(5, 4, '2025-04-11 14:02:00', 2070500.00, 'failed', 'VNPAY_TRX_FAIL', N'VNPay transaction failed', 'VND'),
 -- Order 6: Completed via Bank Transfer (VIP)
-(6, '2025-04-18 10:05:00', 11857700.00, 'completed', 'TCB_TRX_002', N'VIP customer TCB transfer', 'VND'),
+(6, 2, '2025-04-18 10:05:00', 11857700.00, 'completed', 'TCB_TRX_002', N'VIP customer TCB transfer', 'VND'),
 -- Order 7: Completed via COD (Old order)
-(7, '2024-10-07 16:00:00', 1686000.00, 'completed', NULL, N'COD collected (old order)', 'VND'),
+(7, 1, '2024-10-07 16:00:00', 1686000.00, 'completed', NULL, N'COD collected (old order)', 'VND'),
 -- Order 8: Completed via BePay
-(8, '2025-04-17 19:05:00', 1760800.00, 'completed', 'BEPAY_XYZ', N'Payment via Be app', 'VND'),
+(8, 2, '2025-04-17 19:05:00', 1760800.00, 'completed', 'BEPAY_XYZ', N'Payment via Be app', 'VND'),
 -- Order 9: Pending (order not processed yet)
-(9, '2025-04-18 08:02:00', 2410170.00, 'pending', NULL, N'Order awaiting payment confirmation/COD', 'VND');
+(9, 1, '2025-04-18 08:02:00', 2410170.00, 'pending', NULL, N'Order awaiting payment confirmation/COD', 'VND');
 
 
 -- 23. Insert data into Shipment table
