@@ -69,8 +69,8 @@ public class Order {
 
 //    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 //    private Set<OrderItem> orderItems = new HashSet<>();
-@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<OrderItem> orderItems = new ArrayList<>();
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> orderItems = new ArrayList<>();
     public void addOrderItem(OrderItem item) {
         this.orderItems.add(item);
         item.setOrder(this); // Gắn lại order cho item
