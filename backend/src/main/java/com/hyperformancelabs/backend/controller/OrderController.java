@@ -10,10 +10,8 @@ import com.hyperformancelabs.backend.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,9 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -207,6 +202,12 @@ public class OrderController {
         }
     }
     
+    /**
+     * Get the count of new delivered orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Count of delivered orders in the date range
+     */
     @GetMapping("/new-orders-count-by-date-range")
     public ResponseEntity<ApiResponse<Object>> getNewOrdersCountByDateRange(
             @RequestParam String startDate,  // format: dd/MM/yyyy
@@ -235,6 +236,12 @@ public class OrderController {
         }
     }
     
+    /**
+     * Get the average value of delivered orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Average value of delivered orders in the date range
+     */
     @GetMapping("/average-order-value-by-date-range")
     public ResponseEntity<ApiResponse<Object>> getAverageOrderValueByDateRange(
             @RequestParam String startDate,  // format: dd/MM/yyyy

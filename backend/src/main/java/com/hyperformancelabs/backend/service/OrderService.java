@@ -30,8 +30,20 @@ public interface OrderService {
     Map<String, Object> getRevenueDataByDateRange(String startDate, String endDate);
     
     // Phương thức mới để lấy số lượng đơn hàng mới trong khoảng thời gian
+    /**
+     * Get the count of new delivered orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Count of delivered orders in the date range
+     */
     Integer getNewOrdersCountByDateRange(String startDate, String endDate);
     
     // Phương thức mới để lấy giá trị trung bình đơn hàng trong khoảng thời gian
+    /**
+     * Get the average value of delivered orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Average value of delivered orders in the date range
+     */
     BigDecimal getAverageOrderValueByDateRange(String startDate, String endDate);
 }

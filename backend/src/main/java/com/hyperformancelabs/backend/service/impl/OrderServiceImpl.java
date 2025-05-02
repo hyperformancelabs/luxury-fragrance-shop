@@ -237,11 +237,23 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
     
+    /**
+     * Get the count of new delivered orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Count of delivered orders in the date range
+     */
     @Override
     public Integer getNewOrdersCountByDateRange(String startDate, String endDate) {
         return orderRepository.getNewOrdersCountByDateRange(startDate, endDate);
     }
     
+    /**
+     * Get the average value of delivered orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Average value of delivered orders in the date range
+     */
     @Override
     public BigDecimal getAverageOrderValueByDateRange(String startDate, String endDate) {
         return orderRepository.getAverageOrderValueByDateRange(startDate, endDate);

@@ -149,6 +149,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     FROM [Order] o
     WHERE o.order_date >= CONVERT(DATETIME, :startDate, 103)
         AND o.order_date < DATEADD(DAY, 1, CONVERT(DATETIME, :endDate, 103))
+        AND o.order_status = 'delivered'
     """, nativeQuery = true)
     Integer getNewOrdersCountByDateRange(
         @Param("startDate") String startDate,  // format: dd/MM/yyyy
@@ -160,6 +161,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     FROM [Order] o
     WHERE o.order_date >= CONVERT(DATETIME, :startDate, 103)
         AND o.order_date < DATEADD(DAY, 1, CONVERT(DATETIME, :endDate, 103))
+        AND o.order_status = 'delivered'
     """, nativeQuery = true)
     BigDecimal getAverageOrderValueByDateRange(
         @Param("startDate") String startDate,  // format: dd/MM/yyyy
