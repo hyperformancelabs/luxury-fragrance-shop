@@ -156,6 +156,24 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
         @Param("endDate") String endDate       // format: dd/MM/yyyy
     );
     
+    /**
+     * Lấy số lượng đơn hàng mới trong kỳ trước với cùng độ dài thời gian
+     * @param startDate Ngày bắt đầu của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @param endDate Ngày kết thúc của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @return Số lượng đơn hàng mới trong kỳ trước
+     */
+    @Query(value = """
+    SELECT COUNT(*)
+    FROM [Order] o
+    WHERE o.order_date >= CONVERT(DATETIME, :startDate, 103) - DATEDIFF(DAY, CONVERT(DATETIME, :startDate, 103), CONVERT(DATETIME, :endDate, 103))
+        AND o.order_date < CONVERT(DATETIME, :startDate, 103)
+        AND o.order_status = 'delivered'
+    """, nativeQuery = true)
+    Integer getNewOrdersCountInPreviousPeriod(
+        @Param("startDate") String startDate,  // format: dd/MM/yyyy
+        @Param("endDate") String endDate       // format: dd/MM/yyyy
+    );
+    
     @Query(value = """
     SELECT COALESCE(AVG(o.total_amount), 0)
     FROM [Order] o
@@ -166,5 +184,23 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     BigDecimal getAverageOrderValueByDateRange(
         @Param("startDate") String startDate,  // format: dd/MM/yyyy
         @Param("endDate") String endDate       // format: dd/MM/yyyy
+    );
+
+    /**
+     * Lấy doanh thu của kỳ trước với cùng độ dài thời gian
+     * @param startDate Ngày bắt đầu của kỳ trước (định dạng dd/MM/yyyy)
+     * @param endDate Ngày kết thúc của kỳ trước (định dạng dd/MM/yyyy)
+     * @return Tổng doanh thu của kỳ trước
+     */
+    @Query(value = """
+    SELECT COALESCE(SUM(o.total_amount), 0)
+    FROM [Order] o
+    WHERE o.order_date >= DATEADD(DAY, -DATEDIFF(DAY, :startDate, :endDate), :startDate)
+        AND o.order_date < DATEADD(DAY, 1, DATEADD(DAY, -DATEDIFF(DAY, :startDate, :endDate), :endDate))
+        AND o.order_status = 'delivered'
+    """, nativeQuery = true)
+    BigDecimal getTotalAmountOfPreviousPeriod(
+        @Param("startDate") String startDate,
+        @Param("endDate") String endDate
     );
 }

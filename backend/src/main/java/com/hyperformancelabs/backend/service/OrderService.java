@@ -38,6 +38,22 @@ public interface OrderService {
      */
     Integer getNewOrdersCountByDateRange(String startDate, String endDate);
     
+    /**
+     * Lấy số lượng đơn hàng mới trong kỳ trước với cùng độ dài thời gian
+     * @param startDate Ngày bắt đầu của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @param endDate Ngày kết thúc của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @return Số lượng đơn hàng mới trong kỳ trước
+     */
+    Integer getNewOrdersCountInPreviousPeriod(String startDate, String endDate);
+    
+    /**
+     * Lấy số lượng đơn hàng mới và phần trăm thay đổi so với kỳ trước
+     * @param startDate Ngày bắt đầu của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @param endDate Ngày kết thúc của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @return Map chứa số lượng đơn hàng mới và phần trăm thay đổi
+     */
+    Map<String, Object> getNewOrdersCountWithPercentChange(String startDate, String endDate);
+    
     // Phương thức mới để lấy giá trị trung bình đơn hàng trong khoảng thời gian
     /**
      * Get the average value of delivered orders within a date range

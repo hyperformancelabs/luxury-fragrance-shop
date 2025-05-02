@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, isSameDay } from 'date-fns';
-import { TrendingUp, ShoppingCart, Users, Clock, Calendar, Package, AlertCircle, ChevronRight, ChevronDown, Truck, User, DollarSign, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, ShoppingCart, Users, Clock, Calendar, Package, AlertCircle, ChevronRight, ChevronDown, Truck, User, DollarSign, Activity } from 'lucide-react';
 import { revenueService } from '../services/revenueService';
 import { dashboardService } from '../services/dashboardService';
 
@@ -330,7 +330,10 @@ const Dashboard = () => {
   return (
     <div className="p-6 bg-gray-50">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Tổng quan</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Tổng quan</h2>
+          <p className="text-gray-500 text-sm mt-1">Thời gian: {getDateRangeText()}</p>
+        </div>
         <div className="flex items-center relative">
           <DateRangeFilter onChange={setDateRange} />
           <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 ml-2">
@@ -344,7 +347,7 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-500 text-sm mb-1">Doanh thu {getDateRangeText()}</p>
+              <p className="text-gray-500 text-sm mb-1">Doanh thu</p>
               <h3 className="text-2xl font-bold text-gray-800">
                 {loading ? (
                   <span className="text-gray-500">Đang tải...</span>
@@ -357,11 +360,15 @@ const Dashboard = () => {
                   formatCurrency(revenueData?.totalAmount || 0)
                 )}
               </h3>
-              {!loading && !error && revenueData?.averageDailyRevenue && (
-                <div className="flex items-center text-blue-500 text-sm mt-2">
-                  <Activity size={16} className="mr-1" /> 
-                  TB: {formatCurrency(revenueData.averageDailyRevenue)}/ngày
-              </div>
+              {!loading && !error && revenueData?.previousPeriodChange && (
+                <div className={`flex items-center text-sm mt-2 ${revenueData.previousPeriodChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {revenueData.previousPeriodChange >= 0 ? (
+                    <TrendingUp size={16} className="mr-1" />
+                  ) : (
+                    <TrendingDown size={16} className="mr-1" />
+                  )}
+                  {revenueData.previousPeriodChange >= 0 ? 'Tăng' : 'Giảm'} {Math.abs(revenueData.previousPeriodChange)}% so với kỳ trước
+                </div>
               )}
             </div>
             <div className="bg-blue-50 p-3 rounded-lg">
@@ -373,7 +380,7 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-500 text-sm mb-1">Đơn hàng mới {getDateRangeText()}</p>
+              <p className="text-gray-500 text-sm mb-1">Đơn hàng mới</p>
               <h3 className="text-2xl font-bold text-gray-800">
                 {loadingOrders ? (
                   <span className="text-gray-500">Đang tải...</span>
@@ -386,10 +393,14 @@ const Dashboard = () => {
                   newOrdersData?.newOrdersCount || 0
                 )}
               </h3>
-              {!loadingOrders && !ordersError && newOrdersData?.newOrdersCount && (
-                <div className="flex items-center text-green-500 text-sm mt-2">
-                  <ShoppingCart size={16} className="mr-1" /> 
-                  Tổng số đơn hàng mới
+              {!loadingOrders && !ordersError && newOrdersData?.previousPeriodChange && (
+                <div className={`flex items-center text-sm mt-2 ${newOrdersData.previousPeriodChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {newOrdersData.previousPeriodChange >= 0 ? (
+                    <TrendingUp size={16} className="mr-1" />
+                  ) : (
+                    <TrendingDown size={16} className="mr-1" />
+                  )}
+                  {newOrdersData.previousPeriodChange >= 0 ? 'Tăng' : 'Giảm'} {Math.abs(newOrdersData.previousPeriodChange)}% so với kỳ trước
                 </div>
               )}
             </div>
@@ -402,7 +413,7 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-500 text-sm mb-1">Khách hàng mới {getDateRangeText()}</p>
+              <p className="text-gray-500 text-sm mb-1">Khách hàng mới</p>
               <h3 className="text-2xl font-bold text-gray-800">
                 {loadingCustomers ? (
                   <span className="text-gray-500">Đang tải...</span>
@@ -415,10 +426,14 @@ const Dashboard = () => {
                   newCustomersData?.newCustomersCount || 0
                 )}
               </h3>
-              {!loadingCustomers && !customersError && newCustomersData?.newCustomersCount && (
-                <div className="flex items-center text-green-500 text-sm mt-2">
-                  <Users size={16} className="mr-1" /> 
-                  Tổng số khách hàng mới
+              {!loadingCustomers && !customersError && newCustomersData?.previousPeriodChange && (
+                <div className={`flex items-center text-sm mt-2 ${newCustomersData.previousPeriodChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {newCustomersData.previousPeriodChange >= 0 ? (
+                    <TrendingUp size={16} className="mr-1" />
+                  ) : (
+                    <TrendingDown size={16} className="mr-1" />
+                  )}
+                  {newCustomersData.previousPeriodChange >= 0 ? 'Tăng' : 'Giảm'} {Math.abs(newCustomersData.previousPeriodChange)}% so với kỳ trước
                 </div>
               )}
             </div>
@@ -431,7 +446,7 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-500 text-sm mb-1">Giá trị trung bình đơn hàng {getDateRangeText()}</p>
+              <p className="text-gray-500 text-sm mb-1">Giá trị trung bình đơn hàng</p>
               <h3 className="text-2xl font-bold text-gray-800">
                 {loadingAvgOrderValue ? (
                   <span className="text-gray-500">Đang tải...</span>
@@ -444,12 +459,7 @@ const Dashboard = () => {
                   formatCurrency(avgOrderValueData?.averageOrderValue || 0)
                 )}
               </h3>
-              {!loadingAvgOrderValue && !avgOrderValueError && avgOrderValueData?.averageOrderValue && (
-                <div className="flex items-center text-blue-500 text-sm mt-2">
-                  <TrendingUp size={16} className="mr-1" /> 
-                  Giá trị trung bình mỗi đơn hàng
-                </div>
-              )}
+              {/* Không hiển thị thông tin thêm cho giá trị trung bình đơn hàng */}
             </div>
             <div className="bg-green-50 p-3 rounded-lg">
               <TrendingUp size={24} className="text-green-600" />
@@ -462,7 +472,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-lg text-gray-800">Doanh thu {getDateRangeText()}</h3>
+            <h3 className="font-semibold text-lg text-gray-800">Doanh thu</h3>
             {!loading && !error && revenueData?.maxRevenueDay && (
               <div className="text-sm text-gray-500">
                 Ngày cao nhất: {revenueData.maxRevenueDay.date} ({formatCurrency(revenueData.maxRevenueDay.amount)})

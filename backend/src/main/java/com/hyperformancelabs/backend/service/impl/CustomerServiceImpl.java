@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
@@ -140,5 +142,35 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public Integer getNewCustomersCountByDateRange(String startDate, String endDate) {
         return customerRepository.getNewCustomersCountByDateRange(startDate, endDate);
+    }
+    
+    @Override
+    public Integer getNewCustomersCountInPreviousPeriod(String startDate, String endDate) {
+        return customerRepository.getNewCustomersCountInPreviousPeriod(startDate, endDate);
+    }
+    
+    @Override
+    public Map<String, Object> getNewCustomersCountWithPercentChange(String startDate, String endDate) {
+        // Lấy số lượng khách hàng mới trong kỳ hiện tại
+        Integer currentPeriodCount = getNewCustomersCountByDateRange(startDate, endDate);
+        
+        // Lấy số lượng khách hàng mới trong kỳ trước
+        Integer previousPeriodCount = getNewCustomersCountInPreviousPeriod(startDate, endDate);
+        
+        // Tính toán phần trăm thay đổi
+        double percentChange = 0.0;
+        if (previousPeriodCount > 0) {
+            percentChange = ((double) (currentPeriodCount - previousPeriodCount) / previousPeriodCount) * 100;
+        }
+        
+        // Làm tròn phần trăm thay đổi đến 1 chữ số thập phân
+        percentChange = Math.round(percentChange * 10) / 10.0;
+        
+        // Tạo kết quả trả về
+        Map<String, Object> result = new HashMap<>();
+        result.put("newCustomersCount", currentPeriodCount);
+        result.put("previousPeriodChange", percentChange);
+        
+        return result;
     }
 }

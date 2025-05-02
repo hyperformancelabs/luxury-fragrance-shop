@@ -249,6 +249,48 @@ public class OrderServiceImpl implements OrderService {
     }
     
     /**
+     * Get the count of new delivered orders in previous period
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Count of delivered orders in the previous period
+     */
+    @Override
+    public Integer getNewOrdersCountInPreviousPeriod(String startDate, String endDate) {
+        return orderRepository.getNewOrdersCountInPreviousPeriod(startDate, endDate);
+    }
+    
+    /**
+     * Get the count of new delivered orders with percent change
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Map with count and percent change
+     */
+    @Override
+    public Map<String, Object> getNewOrdersCountWithPercentChange(String startDate, String endDate) {
+        // Lấy số lượng đơn hàng mới trong kỳ hiện tại
+        Integer currentPeriodCount = getNewOrdersCountByDateRange(startDate, endDate);
+        
+        // Lấy số lượng đơn hàng mới trong kỳ trước
+        Integer previousPeriodCount = getNewOrdersCountInPreviousPeriod(startDate, endDate);
+        
+        // Tính toán phần trăm thay đổi
+        double percentChange = 0.0;
+        if (previousPeriodCount > 0) {
+            percentChange = ((double) (currentPeriodCount - previousPeriodCount) / previousPeriodCount) * 100;
+        }
+        
+        // Làm tròn phần trăm thay đổi đến 1 chữ số thập phân
+        percentChange = Math.round(percentChange * 10) / 10.0;
+        
+        // Tạo kết quả trả về
+        Map<String, Object> result = new HashMap<>();
+        result.put("newOrdersCount", currentPeriodCount);
+        result.put("previousPeriodChange", percentChange);
+        
+        return result;
+    }
+    
+    /**
      * Get the average value of delivered orders within a date range
      * @param startDate Start date in format dd/MM/yyyy
      * @param endDate End date in format dd/MM/yyyy

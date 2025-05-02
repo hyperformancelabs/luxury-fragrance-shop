@@ -203,10 +203,10 @@ public class OrderController {
     }
     
     /**
-     * Get the count of new delivered orders within a date range
+     * Get the count of new delivered orders within a date range with percent change
      * @param startDate Start date in format dd/MM/yyyy
      * @param endDate End date in format dd/MM/yyyy
-     * @return Count of delivered orders in the date range
+     * @return Count of delivered orders in the date range and percent change
      */
     @GetMapping("/new-orders-count-by-date-range")
     public ResponseEntity<ApiResponse<Object>> getNewOrdersCountByDateRange(
@@ -214,15 +214,12 @@ public class OrderController {
             @RequestParam String endDate     // format: dd/MM/yyyy
     ) {
         try {
-            // Lấy số lượng đơn hàng mới trong khoảng thời gian
-            Integer newOrdersCount = orderService.getNewOrdersCountByDateRange(startDate, endDate);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("newOrdersCount", newOrdersCount);
+            // Lấy số lượng đơn hàng mới và phần trăm thay đổi
+            Map<String, Object> result = orderService.getNewOrdersCountWithPercentChange(startDate, endDate);
             
             return ResponseEntity.ok(
                     new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
-                    ApiResponseStatus.GET_SUCCESS_MESSAGE, response)
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE, result)
             );
         } catch (Exception e) {
             StringWriter sw = new StringWriter();

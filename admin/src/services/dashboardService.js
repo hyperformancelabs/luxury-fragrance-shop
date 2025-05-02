@@ -152,7 +152,7 @@ const generateStatsMockData = (startDate, endDate) => {
 };
 
 export const dashboardService = {
-  // Lấy số lượng khách hàng mới theo khoảng thời gian
+  // Lấy số lượng khách hàng mới theo khoảng thời gian và phần trăm thay đổi
   getNewCustomersCountByDateRange: async (startDate, endDate) => {
     try {
       const formattedStartDate = formatDate(startDate);
@@ -177,12 +177,14 @@ export const dashboardService = {
           if (!data) {
             console.warn('API returned null or undefined data');
             return {
-              newCustomersCount: 0
+              newCustomersCount: 0,
+              previousPeriodChange: 0
             };
           }
           
           return {
-            newCustomersCount: data.newCustomersCount || 0
+            newCustomersCount: data.newCustomersCount || 0,
+            previousPeriodChange: data.previousPeriodChange || 0
           };
         } else {
           console.error('API error:', response.data);
@@ -197,7 +199,8 @@ export const dashboardService = {
             (apiError.response && apiError.response.status >= 500)) {
           console.warn('Using mock data due to backend error');
           return {
-            newCustomersCount: Math.floor(Math.random() * 8) + 3 // 3-10 khách hàng
+            newCustomersCount: Math.floor(Math.random() * 8) + 3, // 3-10 khách hàng
+            previousPeriodChange: Math.floor(Math.random() * 20) - 5 // -5% đến +15%
           };
         }
         
@@ -209,7 +212,7 @@ export const dashboardService = {
     }
   },
   
-  // Lấy số lượng đơn hàng mới theo khoảng thời gian
+  // Lấy số lượng đơn hàng mới theo khoảng thời gian và phần trăm thay đổi
   getNewOrdersCountByDateRange: async (startDate, endDate) => {
     try {
       const formattedStartDate = formatDate(startDate);
@@ -234,12 +237,14 @@ export const dashboardService = {
           if (!data) {
             console.warn('API returned null or undefined data');
             return {
-              newOrdersCount: 0
+              newOrdersCount: 0,
+              previousPeriodChange: 0
             };
           }
           
           return {
-            newOrdersCount: data.newOrdersCount || 0
+            newOrdersCount: data.newOrdersCount || 0,
+            previousPeriodChange: data.previousPeriodChange || 0
           };
         } else {
           console.error('API error:', response.data);
@@ -254,7 +259,8 @@ export const dashboardService = {
             (apiError.response && apiError.response.status >= 500)) {
           console.warn('Using mock data due to backend error');
           return {
-            newOrdersCount: Math.floor(Math.random() * 10) + 5 // 5-15 đơn hàng
+            newOrdersCount: Math.floor(Math.random() * 10) + 5, // 5-15 đơn hàng
+            previousPeriodChange: Math.floor(Math.random() * 25) - 10 // -10% đến +15%
           };
         }
         
@@ -323,7 +329,7 @@ export const dashboardService = {
     }
   },
   
-  // Lấy doanh thu theo range thời gian
+  // Lấy doanh thu theo range thời gian và phần trăm thay đổi
   getRevenueByDateRange: async (startDate, endDate) => {
     try {
       const formattedStartDate = formatDate(startDate);
@@ -351,16 +357,23 @@ export const dashboardService = {
               totalAmount: 0,
               chartData: [],
               maxRevenueDay: null,
-              averageDailyRevenue: 0
+              averageDailyRevenue: 0,
+              previousPeriodChange: 0
             };
           }
+          
+          // Tạm thời tạo giá trị phần trăm thay đổi ngẫu nhiên cho đến khi backend trả về giá trị thật
+          // Trong tương lai, backend sẽ trả về giá trị này
+          const previousPeriodChange = data.previousPeriodChange !== undefined ? 
+            data.previousPeriodChange : (Math.floor(Math.random() * 30) - 10); // -10% đến +20%
           
           // Đảm bảo đối tượng trả về có các thuộc tính cần thiết
           return {
             totalAmount: data.totalAmount || 0,
             chartData: data.chartData || [],
             maxRevenueDay: data.maxRevenueDay || null,
-            averageDailyRevenue: data.averageDailyRevenue || 0
+            averageDailyRevenue: data.averageDailyRevenue || 0,
+            previousPeriodChange: previousPeriodChange
           };
         } else {
           console.error('API error:', response.data);
@@ -375,7 +388,9 @@ export const dashboardService = {
             (apiError.response && apiError.response.status >= 500)) {
           console.warn('Using mock data due to backend error');
           // Trả về dữ liệu mẫu động dựa trên khoảng thời gian đã chọn
-          return generateMockData(startDate, endDate);
+          const mockData = generateMockData(startDate, endDate);
+          mockData.previousPeriodChange = Math.floor(Math.random() * 30) - 10; // -10% đến +20%
+          return mockData;
         }
         
         throw apiError;
