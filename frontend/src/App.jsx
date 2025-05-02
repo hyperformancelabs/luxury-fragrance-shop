@@ -20,6 +20,7 @@ import { Toaster } from "sonner";
 import MbBankPage from "./pages/payment/MbBankPage";
 import PaymentReturn from "./pages/payment/PaymentReturn";
 import VnPayPage from "./pages/payment/VnPayPage";
+import PaymentResult from "./pages/payment/PaymentResult";
 
 function App() {
   return (
@@ -41,13 +42,14 @@ function App() {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/test" element={<TestProduct />} />
                 <Route path="/checkout" element={<Checkout />} />
-                <Route path="/ordersuccess" element={<OrderSuccess />} />
+                <Route path="/order-success" element={<OrderSuccess />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="*" element={<h1>404 Not Found</h1>} />
                 <Route path="/vnpay-payment" element={<VnPayPage />} />
                 <Route path="/mbbank-payment" element={<MbBankPage />} />
                 <Route path="/payment-return" element={<PaymentReturn />} />
+                <Route path="/payment-result" element={<PaymentResult />} />
               </Routes>
             </main>
             <Footer />

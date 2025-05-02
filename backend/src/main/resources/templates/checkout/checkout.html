@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán - APH Perfume</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/checkout.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="/">APH Perfume</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop">Sản phẩm</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop/top-selling">Bán chạy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">Giới thiệu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contact">Liên hệ</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a href="/login" class="btn btn-outline-dark me-2">
+                        <i class="fas fa-user me-1"></i> Đăng nhập
+                    </a>
+                    <a href="/cart" class="btn btn-dark">
+                        <i class="fas fa-shopping-cart me-1"></i> Giỏ hàng
+                        <span class="badge bg-danger ms-1" th:text="${itemCount}">2</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Breadcrumb -->
+    <header class="breadcrumb-section">
+        <div class="container">
+            <nav class="d-flex">
+                <a href="/" class="me-2">TRANG CHỦ</a>
+                <span class="mx-2">/</span>
+                <a href="/cart" class="me-2">GIỎ HÀNG</a>
+                <span class="mx-2">/</span>
+                <span>THANH TOÁN</span>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container py-5">
+        <h1 class="mb-4">Thanh toán</h1>
+        
+        <form id="checkout-form" class="needs-validation" novalidate>
+            <div class="row">
+                <!-- Checkout Form -->
+                <div class="col-lg-8 mb-4 mb-lg-0">
+                    <div class="checkout-container">
+                        <!-- Billing Information -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">Thông tin thanh toán</h3>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="firstName" class="form-label">Họ</label>
+                                    <input type="text" class="form-control" id="firstName" required>
+                                    <div class="invalid-feedback">
+                                        Vui lòng nhập họ của bạn.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="lastName" class="form-label">Tên</label>
+                                    <input type="text" class="form-control" id="lastName" required>
+                                    <div class="invalid-feedback">
+                                        Vui lòng nhập tên của bạn.
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" placeholder="you@example.com" required>
+                                    <div class="invalid-feedback">
+                                        Vui lòng nhập địa chỉ email hợp lệ.
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="phone" class="form-label">Số điện thoại</label>
+                                    <input type="tel" class="form-control" id="phone" required>
+                                    <div class="invalid-feedback">
+                                        Vui lòng nhập số điện thoại.
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="address" class="form-label">Địa chỉ</label>
+                                    <input type="text" class="form-control" id="address" required>
+                                    <div class="invalid-feedback">
+                                        Vui lòng nhập địa chỉ của bạn.
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <label for="province" class="form-label">Tỉnh/Thành phố</label>
+                                    <select class="form-select" id="province" required>
+                                        <option value="">Chọn tỉnh/thành phố</option>
+                                        <option value="hanoi">Hà Nội</option>
+                                        <option value="hcm">TP. Hồ Chí Minh</option>
+                                        <option value="danang">Đà Nẵng</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Vui lòng chọn tỉnh/thành phố.
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="district" class="form-label">Quận/Huyện</label>
+                                    <select class="form-select" id="district" required disabled>
+                                        <option value="">Chọn quận/huyện</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Vui lòng chọn quận/huyện.
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="zip" class="form-label">Mã bưu điện</label>
+                                    <input type="text" class="form-control" id="zip">
+                                </div>
+                            </div>
+                            
+                            <div class="form-check mt-3">
+                                <input type="checkbox" class="form-check-input" id="sameAddress" checked>
+                                <label class="form-check-label" for="sameAddress">Địa chỉ giao hàng giống địa chỉ thanh toán</label>
+                            </div>
+                        </div>
+                        
+                        <!-- Shipping Address -->
+                        <div class="form-section" id="shipping-address-section" style="display: none;">
+                            <h3 class="form-section-title">Địa chỉ giao hàng</h3>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="shippingFirstName" class="form-label">Họ</label>
+                                    <input type="text" class="form-control" id="shippingFirstName">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="shippingLastName" class="form-label">Tên</label>
+                                    <input type="text" class="form-control" id="shippingLastName">
+                                </div>
+                                <div class="col-12">
+                                    <label for="shippingPhone" class="form-label">Số điện thoại</label>
+                                    <input type="tel" class="form-control" id="shippingPhone">
+                                </div>
+                                <div class="col-12">
+                                    <label for="shippingAddress" class="form-label">Địa chỉ</label>
+                                    <input type="text" class="form-control" id="shippingAddress">
+                                </div>
+                                <div class="col-md-5">
+                                    <label for="shippingProvince" class="form-label">Tỉnh/Thành phố</label>
+                                    <select class="form-select" id="shippingProvince">
+                                        <option value="">Chọn tỉnh/thành phố</option>
+                                        <option value="hanoi">Hà Nội</option>
+                                        <option value="hcm">TP. Hồ Chí Minh</option>
+                                        <option value="danang">Đà Nẵng</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="shippingDistrict" class="form-label">Quận/Huyện</label>
+                                    <select class="form-select" id="shippingDistrict" disabled>
+                                        <option value="">Chọn quận/huyện</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="shippingZip" class="form-label">Mã bưu điện</label>
+                                    <input type="text" class="form-control" id="shippingZip">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Method -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">Phương thức thanh toán</h3>
+                            
+                            <div class="payment-method active">
+                                <div class="payment-method-header">
+                                    <input type="radio" class="payment-method-radio" name="paymentMethod" id="cod" value="cod" checked>
+                                    <label class="payment-method-title" for="cod">Thanh toán khi nhận hàng (COD)</label>
+                                </div>
+                                <div class="payment-method-description">
+                                    Bạn sẽ thanh toán bằng tiền mặt khi nhận hàng.
+                                </div>
+                            </div>
+                            
+                            <div class="payment-method">
+                                <div class="payment-method-header">
+                                    <input type="radio" class="payment-method-radio" name="paymentMethod" id="bank-transfer" value="bank-transfer">
+                                    <label class="payment-method-title" for="bank-transfer">Chuyển khoản ngân hàng</label>
+                                </div>
+                                <div class="payment-method-description">
+                                    Thực hiện thanh toán vào tài khoản ngân hàng của chúng tôi. Vui lòng sử dụng Mã đơn hàng của bạn trong phần Nội dung thanh toán. Đơn hàng của bạn sẽ được giao sau khi tiền đã chuyển vào tài khoản của chúng tôi.
+                                </div>
+                            </div>
+                            
+                            <div class="payment-method">
+                                <div class="payment-method-header">
+                                    <input type="radio" class="payment-method-radio" name="paymentMethod" id="credit-card" value="credit-card">
+                                    <label class="payment-method-title" for="credit-card">Thẻ tín dụng/Thẻ ghi nợ</label>
+                                    <div>
+                                        <img src="/images/payment/visa.png" alt="Visa" class="payment-method-logo me-1">
+                                        <img src="/images/payment/mastercard.png" alt="MasterCard" class="payment-method-logo me-1">
+                                        <img src="/images/payment/jcb.png" alt="JCB" class="payment-method-logo">
+                                    </div>
+                                </div>
+                                <div class="payment-method-description">
+                                    Thanh toán an toàn với thẻ tín dụng/thẻ ghi nợ của bạn.
+                                </div>
+                            </div>
+                            
+                            <div class="payment-method">
+                                <div class="payment-method-header">
+                                    <input type="radio" class="payment-method-radio" name="paymentMethod" id="momo" value="momo">
+                                    <label class="payment-method-title" for="momo">Ví MoMo</label>
+                                    <div>
+                                        <img src="/images/payment/momo.png" alt="MoMo" class="payment-method-logo">
+                                    </div>
+                                </div>
+                                <div class="payment-method-description">
+                                    Thanh toán qua ví điện tử MoMo.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mt-3">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">Tôi đã đọc và đồng ý với <a href="#">điều khoản và điều kiện</a> của cửa hàng</label>
+                            <div class="invalid-feedback">
+                                Bạn phải đồng ý với điều khoản và điều kiện để tiếp tục.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="/cart" class="back-to-cart mt-3">
+                        <i class="fas fa-arrow-left"></i> Quay lại giỏ hàng
+                    </a>
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="col-lg-4">
+                    <div class="order-summary">
+                        <h3 class="summary-header">Đơn hàng của bạn</h3>
+                        
+                        <div th:each="item : ${cartItems}" class="summary-item">
+                            <div class="summary-item-name" th:text="${item.name}">Nước Hoa Nữ Versace Bright Crystal EDT</div>
+                            <div class="summary-item-quantity" th:text="${'x' + item.quantity}">x2</div>
+                            <div class="summary-item-price" th:text="${#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT') + 'đ'}">4.800.000đ</div>
+                        </div>
+                        
+                        <div class="summary-subtotal">
+                            <span>Tạm tính:</span>
+                            <span th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT') + 'đ'}">8.000.000đ</span>
+                        </div>
+                        
+                        <div class="summary-shipping">
+                            <span>Phí vận chuyển:</span>
+                            <span th:text="${shipping == 0 ? 'Miễn phí' : #numbers.formatDecimal(shipping, 0, 'COMMA', 0, 'POINT') + 'đ'}">Miễn phí</span>
+                        </div>
+                        
+                        <div class="summary-total">
+                            <span>Tổng cộng:</span>
+                            <span th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT') + 'đ'}">8.000.000đ</span>
+                        </div>
+                        
+                        <button type="submit" id="place-order-btn" class="place-order-btn">
+                            Đặt hàng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5>APH Perfume</h5>
+                    <p>Điểm đến cho những mùi hương xa xỉ và nước hoa cao cấp.</p>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5>Liên Kết Nhanh</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-white">Trang chủ</a></li>
+                        <li><a href="/shop" class="text-white">Sản phẩm</a></li>
+                        <li><a href="/about" class="text-white">Giới thiệu</a></li>
+                        <li><a href="/contact" class="text-white">Liên hệ</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5>Dịch Vụ Khách Hàng</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white">Câu hỏi thường gặp</a></li>
+                        <li><a href="#" class="text-white">Vận chuyển & Đổi trả</a></li>
+                        <li><a href="#" class="text-white">Chính sách bảo mật</a></li>
+                        <li><a href="#" class="text-white">Điều khoản & Điều kiện</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Kết Nối Với Chúng Tôi</h5>
+                    <div class="d-flex gap-3 fs-4 mb-3">
+                        <a href="#" class="text-white"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-pinterest"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 APH Perfume. Tất cả các quyền được bảo lưu.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/checkout.js"></script>
+</body>
+</html>

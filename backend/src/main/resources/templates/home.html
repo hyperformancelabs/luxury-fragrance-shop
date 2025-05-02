@@ -1,56 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APH Perfume - Luxury Fragrance Shop</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .hero-section {
-            background-image: url('/images/banner.jpg');
-            background-size: cover;
-            background-position: center;
-            color: white;
-            padding: 100px 0;
-            margin-bottom: 40px;
-        }
-        .product-card {
-            transition: transform 0.3s;
-        }
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-        .product-img {
-            height: 200px;
-            object-fit: contain;
-        }
-        .section-title {
-            position: relative;
-            display: inline-block;
-            margin-bottom: 30px;
-        }
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 50px;
-            height: 2px;
-            background-color: #000;
-        }
-        .brand-logo {
-            max-height: 60px;
-            filter: grayscale(100%);
-            opacity: 0.7;
-            transition: all 0.3s;
-        }
-        .brand-logo:hover {
-            filter: grayscale(0%);
-            opacity: 1;
-        }
-    </style>
+<head th:replace="fragments/head :: head('Trang chủ', ~{::link})">
+    <link rel="stylesheet" href="/css/home.css">
 </head>
 <body>
     <!-- Navigation -->
@@ -63,56 +14,98 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="/">Home</a>
+                        <a class="nav-link active" href="/">Trang chủ</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/shop">Shop</a>
+                        <a class="nav-link" href="/shop">Sản phẩm</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/shop/top-selling">Best Sellers</a>
+                        <a class="nav-link" href="/shop/top-selling">Bán chạy</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/about">About Us</a>
+                        <a class="nav-link" href="/about">Giới thiệu</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/contact">Contact</a>
+                        <a class="nav-link" href="/contact">Liên hệ</a>
                     </li>
                 </ul>
                 <div class="d-flex">
                     <a href="/login" class="btn btn-outline-dark me-2">
-                        <i class="fas fa-user me-1"></i> Login
+                        <i class="fas fa-user me-1"></i> Đăng nhập
                     </a>
                     <a href="/cart" class="btn btn-dark">
-                        <i class="fas fa-shopping-cart me-1"></i> Cart
+                        <i class="fas fa-shopping-cart me-1"></i> Giỏ hàng
                     </a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero-section text-center">
+    <!-- Banner Section -->
+    <section class="banner-section text-center">
         <div class="container">
-            <h1 class="display-4 fw-bold">Discover Luxury Fragrances</h1>
-            <p class="lead">Explore our collection of premium perfumes from top brands</p>
-            <a href="/shop" class="btn btn-light btn-lg mt-3">Shop Now</a>
+            <h1 class="display-4 fw-bold">Khám Phá Hương Thơm Xa Xỉ</h1>
+            <p class="lead">Bộ sưu tập nước hoa cao cấp từ các thương hiệu hàng đầu</p>
+            <a href="/shop" class="btn btn-light btn-lg mt-3">Mua Ngay</a>
         </div>
     </section>
 
-    <!-- Featured Products -->
-    <section class="container mb-5">
-        <h2 class="section-title">Featured Products</h2>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-            <div class="col" th:each="product : ${featuredProducts}">
-                <div class="card product-card h-100">
-                    <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
-                    <div class="card-body">
-                        <h5 class="card-title" th:text="${product.productName}">Product Name</h5>
-                        <p class="card-text text-truncate" th:text="${product.description}">Product description...</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <a th:href="@{'/shop/product/' + ${product.productId}}" class="btn btn-sm btn-outline-dark">View Details</a>
-                            <button class="btn btn-sm btn-dark">
-                                <i class="fas fa-shopping-cart"></i> Add to Cart
+    <!-- Flash Deal Section -->
+    <section class="flash-deal-section">
+        <div class="container">
+            <div class="flash-deal-header">
+                <h2 class="section-title">Flash Deal</h2>
+                <div class="countdown">
+                    <div class="countdown-item">
+                        <div class="countdown-value">02</div>
+                        <div class="countdown-label">Ngày</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value">12</div>
+                        <div class="countdown-label">Giờ</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value">45</div>
+                        <div class="countdown-label">Phút</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value">30</div>
+                        <div class="countdown-label">Giây</div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-6 g-4">
+                <div class="col" th:each="product : ${flashDealProducts}">
+                    <div class="card product-card h-100">
+                        <div class="position-absolute top-0 start-0 m-2">
+                            <span class="badge bg-danger">-30%</span>
+                        </div>
+                        <div class="product-actions">
+                            <button class="action-btn" title="Yêu thích">
+                                <i class="far fa-heart"></i>
+                            </button>
+                            <button class="action-btn" title="Xem nhanh">
+                                <i class="far fa-eye"></i>
+                            </button>
+                        </div>
+                        <a th:href="@{'/shop/product/' + ${product.productId}}">
+                            <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
+                        </a>
+                        <div class="card-body text-center">
+                            <div class="rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                            <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
+                            <div class="product-price">
+                                <span class="original-price">3.500.000đ</span>
+                                <span class="sale-price">2.450.000đ</span>
+                            </div>
+                            <button class="btn btn-sm btn-dark mt-2 w-100">
+                                <i class="fas fa-shopping-cart me-1"></i> Thêm vào giỏ
                             </button>
                         </div>
                     </div>
@@ -121,25 +114,133 @@
         </div>
     </section>
 
+    <!-- Featured Products -->
+    <section class="container mb-5">
+        <h2 class="section-title">Sản Phẩm Nổi Bật</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+            <div class="col" th:each="product : ${featuredProducts}">
+                <div class="card product-card h-100">
+                    <div class="product-actions">
+                        <button class="action-btn" title="Yêu thích">
+                            <i class="far fa-heart"></i>
+                        </button>
+                        <button class="action-btn" title="Xem nhanh">
+                            <i class="far fa-eye"></i>
+                        </button>
+                    </div>
+                    <a th:href="@{'/shop/product/' + ${product.productId}}">
+                        <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
+                    </a>
+                    <div class="card-body text-center">
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
+                        <div class="product-price">
+                            <span class="sale-price">2.450.000đ</span>
+                        </div>
+                        <button class="btn btn-sm btn-dark mt-2 w-100">
+                            <i class="fas fa-shopping-cart me-1"></i> Thêm vào giỏ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Brand Section -->
+    <section class="container mb-5">
+        <h2 class="section-title text-center">Thương Hiệu</h2>
+        <div class="row justify-content-center align-items-center">
+            <div class="col-4 col-md-2 text-center mb-4" th:each="brand : ${brands}">
+                <a th:href="@{'/shop?brand=' + ${brand.brandName}}">
+                    <img th:src="${brand.logoUrl != null ? brand.logoUrl : '/images/brands/default.png'}"
+                         th:alt="${brand.brandName}"
+                         class="img-fluid brand-logo">
+                    <p class="mt-2 brand-name" th:text="${brand.brandName}">Brand Name</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- New Arrivals -->
     <section class="container mb-5">
-        <h2 class="section-title">New Arrivals</h2>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+        <h2 class="section-title">Sản Phẩm Mới</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             <div class="col" th:each="product : ${newProducts}">
                 <div class="card product-card h-100">
-                    <div class="position-absolute top-0 end-0 m-2">
-                        <span class="badge bg-danger">New</span>
+                    <div class="position-absolute top-0 start-0 m-2">
+                        <span class="badge bg-danger">Mới</span>
                     </div>
-                    <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
-                    <div class="card-body">
-                        <h5 class="card-title" th:text="${product.productName}">Product Name</h5>
-                        <p class="card-text text-truncate" th:text="${product.description}">Product description...</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <a th:href="@{'/shop/product/' + ${product.productId}}" class="btn btn-sm btn-outline-dark">View Details</a>
-                            <button class="btn btn-sm btn-dark">
-                                <i class="fas fa-shopping-cart"></i> Add to Cart
-                            </button>
+                    <div class="product-actions">
+                        <button class="action-btn" title="Yêu thích">
+                            <i class="far fa-heart"></i>
+                        </button>
+                        <button class="action-btn" title="Xem nhanh">
+                            <i class="far fa-eye"></i>
+                        </button>
+                    </div>
+                    <a th:href="@{'/shop/product/' + ${product.productId}}">
+                        <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
+                    </a>
+                    <div class="card-body text-center">
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
                         </div>
+                        <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
+                        <div class="product-price"
+                             th:if="${productPriceRangeMap.containsKey(product.productId)}"
+                             th:with="priceRange=${productPriceRangeMap[product.productId]},
+                                  minPrice=${priceRange[0]},
+                                  maxPrice=${priceRange[1]}">
+                        <span class="sale-price"
+                              th:if="${minPrice != null and maxPrice != null and minPrice.equals(maxPrice)}"
+                              th:text="${#numbers.formatDecimal(minPrice, 0, 'COMMA', 0, 'POINT') + 'đ'}">
+                            1.950.000đ
+                        </span>
+                            <span class="sale-price"
+                                  th:if="${minPrice != null and maxPrice != null and !minPrice.equals(maxPrice)}"
+                                  th:text="${#numbers.formatDecimal(minPrice, 0, 'COMMA', 0, 'POINT') + 'đ - ' + #numbers.formatDecimal(maxPrice, 0, 'COMMA', 0, 'POINT') + 'đ'}">
+                            1.950.000đ - 2.950.000đ
+                        </span>
+                        </div>
+                        <button class="btn btn-sm btn-dark mt-2 w-100">
+                            <i class="fas fa-shopping-cart me-1"></i> Thêm vào giỏ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Collection Season -->
+    <section class="container mb-5">
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="collection-season">
+                    <img src="/images/collection-spring.jpg" alt="Spring Collection" class="collection-image">
+                    <div class="collection-content">
+                        <h3 class="collection-title">Bộ Sưu Tập Mùa Xuân</h3>
+                        <p class="collection-description">Khám phá những mùi hương tươi mới và đầy sức sống của mùa xuân.</p>
+                        <a href="/shop" class="btn btn-light">Khám Phá Ngay</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="collection-season">
+                    <img src="/images/collection-summer.jpg" alt="Summer Collection" class="collection-image">
+                    <div class="collection-content">
+                        <h3 class="collection-title">Bộ Sưu Tập Mùa Hè</h3>
+                        <p class="collection-description">Tận hưởng những mùi hương mát lạnh và trái cây cho những ngày hè nóng bức.</p>
+                        <a href="/shop" class="btn btn-light">Khám Phá Ngay</a>
                     </div>
                 </div>
             </div>
@@ -148,51 +249,83 @@
 
     <!-- Best Sellers -->
     <section class="container mb-5">
-        <h2 class="section-title">Best Sellers</h2>
+        <h2 class="section-title">Sản Phẩm Bán Chạy</h2>
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
             <div class="col" th:each="product : ${bestSellingProducts}">
                 <div class="card product-card h-100">
-                    <div class="position-absolute top-0 end-0 m-2">
-                        <span class="badge bg-success">Best Seller</span>
+                    <div class="position-absolute top-0 start-0 m-2">
+                        <span class="badge bg-success">Bán chạy</span>
                     </div>
-                    <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
-                    <div class="card-body">
-                        <h5 class="card-title" th:text="${product.productName}">Product Name</h5>
-                        <p class="card-text text-truncate" th:text="${product.description}">Product description...</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <a th:href="@{'/shop/product/' + ${product.productId}}" class="btn btn-sm btn-outline-dark">View Details</a>
-                            <button class="btn btn-sm btn-dark">
-                                <i class="fas fa-shopping-cart"></i> Add to Cart
-                            </button>
+                    <div class="product-actions">
+                        <button class="action-btn" title="Yêu thích">
+                            <i class="far fa-heart"></i>
+                        </button>
+                        <button class="action-btn" title="Xem nhanh">
+                            <i class="far fa-eye"></i>
+                        </button>
+                    </div>
+                    <a th:href="@{'/shop/product/' + ${product.productId}}">
+                        <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
+                    </a>
+                    <div class="card-body text-center">
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
                         </div>
+                        <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
+                        <div class="product-price">
+                            <span class="sale-price">2.150.000đ</span>
+                        </div>
+                        <button class="btn btn-sm btn-dark mt-2 w-100">
+                            <i class="fas fa-shopping-cart me-1"></i> Thêm vào giỏ
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
         <div class="text-center mt-4">
-            <a href="/shop/top-selling" class="btn btn-outline-dark">View All Best Sellers</a>
+            <a href="/shop/top-selling" class="btn btn-outline-dark">Xem Tất Cả Sản Phẩm Bán Chạy</a>
         </div>
     </section>
 
-    <!-- Brands Section -->
-    <section class="bg-light py-5 mb-5">
+    <!-- Top Search Section -->
+    <section class="top-search-section">
         <div class="container">
-            <h2 class="section-title text-center mb-4">Our Brands</h2>
-            <div class="row justify-content-center align-items-center">
-                <div class="col-6 col-md-2 text-center mb-4">
-                    <img src="/images/brands/chanel.png" alt="Chanel" class="img-fluid brand-logo">
-                </div>
-                <div class="col-6 col-md-2 text-center mb-4">
-                    <img src="/images/brands/dior.png" alt="Dior" class="img-fluid brand-logo">
-                </div>
-                <div class="col-6 col-md-2 text-center mb-4">
-                    <img src="/images/brands/gucci.png" alt="Gucci" class="img-fluid brand-logo">
-                </div>
-                <div class="col-6 col-md-2 text-center mb-4">
-                    <img src="/images/brands/versace.png" alt="Versace" class="img-fluid brand-logo">
-                </div>
-                <div class="col-6 col-md-2 text-center mb-4">
-                    <img src="/images/brands/ysl.png" alt="YSL" class="img-fluid brand-logo">
+            <h2 class="section-title text-center">Tìm Kiếm Hàng Đầu</h2>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-6 g-4">
+                <div class="col" th:each="product : ${topSearchProducts}">
+                    <div class="card product-card h-100">
+                        <div class="product-actions">
+                            <button class="action-btn" title="Yêu thích">
+                                <i class="far fa-heart"></i>
+                            </button>
+                            <button class="action-btn" title="Xem nhanh">
+                                <i class="far fa-eye"></i>
+                            </button>
+                        </div>
+                        <a th:href="@{'/shop/product/' + ${product.productId}}">
+                            <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
+                        </a>
+                        <div class="card-body text-center">
+                            <div class="rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
+                            <div class="product-price">
+                                <span class="sale-price">1.850.000đ</span>
+                            </div>
+                            <button class="btn btn-sm btn-dark mt-2 w-100">
+                                <i class="fas fa-shopping-cart me-1"></i> Thêm vào giỏ
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -202,14 +335,38 @@
     <section class="container mb-5">
         <div class="row align-items-center">
             <div class="col-md-6 mb-4 mb-md-0">
-                <h2 class="section-title">About APH Perfume</h2>
-                <p>APH Perfume is a luxury fragrance shop dedicated to bringing you the finest perfumes from around the world. We carefully curate our collection to ensure that every bottle represents the pinnacle of perfumery art.</p>
-                <p>Our team of fragrance experts is passionate about helping you find the perfect scent that matches your personality and style.</p>
-                <a href="/about" class="btn btn-outline-dark">Learn More</a>
+                <h2 class="section-title">Về APH Perfume</h2>
+                <p>APH Perfume là cửa hàng nước hoa cao cấp chuyên cung cấp những sản phẩm nước hoa tốt nhất từ khắp nơi trên thế giới. Chúng tôi tự hào mang đến cho khách hàng những sản phẩm chất lượng cao và độc đáo.</p>
+                <p>Đội ngũ chuyên gia về nước hoa của chúng tôi luôn nhiệt tình giúp bạn tìm ra mùi hương hoàn hảo, phù hợp với phong cách và cá tính của bạn.</p>
+                <a href="/about" class="btn btn-outline-dark">Tìm Hiểu Thêm</a>
             </div>
             <div class="col-md-6">
-                <img src="/images/about-store.jpg" alt="Our Store" class="img-fluid rounded">
+                <img src="/images/about-store.jpg" alt="Cửa hàng của chúng tôi" class="img-fluid rounded">
             </div>
+        </div>
+    </section>
+
+    <!-- Blog Section -->
+    <section class="container mb-5">
+        <h2 class="section-title">Bài Viết Mới Nhất</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div class="col" th:each="post : ${blogPosts}">
+                <div class="card blog-card h-100">
+                    <img th:src="${post.image}" class="card-img-top blog-img" alt="Blog Image">
+                    <div class="card-body">
+                        <div class="blog-meta">
+                            <span><i class="far fa-user me-1"></i> <span th:text="${post.author}">Admin</span></span>
+                            <span><i class="far fa-calendar me-1"></i> <span th:text="${post.date}">15/04/2023</span></span>
+                        </div>
+                        <h5 class="card-title" th:text="${post.title}">Tiêu đề bài viết</h5>
+                        <p class="card-text" th:text="${post.excerpt}">Mô tả ngắn về bài viết...</p>
+                        <a th:href="@{'/blog/' + ${post.id}}" class="btn btn-outline-dark">Xem Thêm</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/blog" class="btn btn-outline-dark">Xem Tất Cả Bài Viết</a>
         </div>
     </section>
 
@@ -219,50 +376,52 @@
             <div class="row">
                 <div class="col-md-3 mb-4 mb-md-0">
                     <h5>APH Perfume</h5>
-                    <p>Your destination for luxury fragrances and premium perfumes.</p>
+                    <p>Điểm đến cho những mùi hương xa xỉ và nước hoa cao cấp.</p>
                 </div>
                 <div class="col-md-3 mb-4 mb-md-0">
-                    <h5>Quick Links</h5>
+                    <h5>Liên Kết Nhanh</h5>
                     <ul class="list-unstyled">
-                        <li><a href="/" class="text-white">Home</a></li>
-                        <li><a href="/shop" class="text-white">Shop</a></li>
-                        <li><a href="/about" class="text-white">About Us</a></li>
-                        <li><a href="/contact" class="text-white">Contact</a></li>
+                        <li><a href="/" class="text-white">Trang chủ</a></li>
+                        <li><a href="/shop" class="text-white">Sản phẩm</a></li>
+                        <li><a href="/about" class="text-white">Giới thiệu</a></li>
+                        <li><a href="/contact" class="text-white">Liên hệ</a></li>
                     </ul>
                 </div>
                 <div class="col-md-3 mb-4 mb-md-0">
-                    <h5>Customer Service</h5>
+                    <h5>Dịch Vụ Khách Hàng</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-white">FAQ</a></li>
-                        <li><a href="#" class="text-white">Shipping & Returns</a></li>
-                        <li><a href="#" class="text-white">Privacy Policy</a></li>
-                        <li><a href="#" class="text-white">Terms & Conditions</a></li>
+                        <li><a href="#" class="text-white">Câu hỏi thường gặp</a></li>
+                        <li><a href="#" class="text-white">Vận chuyển & Đổi trả</a></li>
+                        <li><a href="#" class="text-white">Chính sách bảo mật</a></li>
+                        <li><a href="#" class="text-white">Điều khoản & Điều kiện</a></li>
                     </ul>
                 </div>
                 <div class="col-md-3">
-                    <h5>Connect With Us</h5>
+                    <h5>Kết Nối Với Chúng Tôi</h5>
                     <div class="d-flex gap-3 fs-4 mb-3">
                         <a href="#" class="text-white"><i class="fab fa-facebook"></i></a>
                         <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
                         <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
                         <a href="#" class="text-white"><i class="fab fa-pinterest"></i></a>
                     </div>
-                    <p>Subscribe to our newsletter:</p>
+                    <p>Đăng ký nhận bản tin:</p>
                     <form>
                         <div class="input-group">
-                            <input type="email" class="form-control" placeholder="Your email">
-                            <button class="btn btn-light" type="submit">Subscribe</button>
+                            <input type="email" class="form-control" placeholder="Email của bạn">
+                            <button class="btn btn-light" type="submit">Đăng Ký</button>
                         </div>
                     </form>
                 </div>
             </div>
             <hr class="my-4">
             <div class="text-center">
-                <p class="mb-0">&copy; 2023 APH Perfume. All rights reserved.</p>
+                <p class="mb-0">&copy; 2023 APH Perfume. Tất cả các quyền được bảo lưu.</p>
             </div>
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <th:block th:replace="fragments/scripts :: scripts(~{::script})">
+        <script src="/js/home.js"></script>
+    </th:block>
 </body>
 </html>

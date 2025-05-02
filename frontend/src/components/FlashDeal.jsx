@@ -14,7 +14,6 @@
 //   const [startIndex, setStartIndex] = useState(0);
 //     const [selectedSizes, setSelectedSizes] = useState({});
 
-
 //   const sizes = [
 //     { value: '50ml', label: '50ml' },
 //     { value: '75ml', label: '75ml' },
@@ -89,8 +88,6 @@
 //   const formatSecondPrice = (price) => price.toLocaleString('vi-VN') + ' VND';
 //   const formatFirstPrice = (price) => price.toLocaleString('vi-VN');
 
-
-
 //   return (
 //     <div  id="flash-deal" className="flex flex-col mx-4 md:m-12 relative">
 //       <div  className="flex absolute translate-y-4 translate-x-2 md:translate-x-12 items-center bg-gradient-to-r from-red-500 to-red-700 text-white py-1 md:py-2 px-2 md:px-4 rounded-lg shadow-lg">
@@ -164,7 +161,7 @@
 //                   {product.price}
 //                 </div> */}
 //                 <p className="my-2 text-xs text-red-700 font-bold">
-//   {selectedSizes[product.id] 
+//   {selectedSizes[product.id]
 //     ? formatSecondPrice(product.volumes.find(volume => volume.volume === selectedVolumes[product.id]).price)
 //     : `${formatFirstPrice(Math.min(...product.volumes.map(volume => volume.price)))} - ${formatSecondPrice(Math.max(...product.volumes.map(volume => volume.price)))}`}
 // </p>
@@ -186,7 +183,6 @@
 //         </div>
 //       </div>
 
-
 //       {showPopup && selectedProduct && (
 //         <QuickView
 //           selectedProduct={selectedProduct}
@@ -199,8 +195,6 @@
 // };
 
 // export default FlashDeal;
-
-
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -222,9 +216,18 @@ const FlashDeal = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    axios
-      .get("http://localhost:8080/api/v1/products/random-10")
-      .then((res) => setProduct(res.data))
+
+    fetch("http://localhost:8080/api/v1/products/flash-sale")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setProduct(data);
+        console.log(data);
+      })
       .catch((err) => console.error("Error Fetching Data", err))
       .finally(() => setIsLoading(false));
   }, []);
@@ -258,7 +261,9 @@ const FlashDeal = () => {
   const handlePrevProducts = () => {
     const perView = getProductsPerView();
     setStartIndex((prev) =>
-      prev - perView >= 0 ? prev - perView : Math.max(0, product.length - perView)
+      prev - perView >= 0
+        ? prev - perView
+        : Math.max(0, product.length - perView)
     );
   };
 
@@ -278,23 +283,64 @@ const FlashDeal = () => {
   }, []);
 
   const formatTime = (time) => (time < 10 ? `0${time}` : time);
-  const formatPrice = (price) => price.toLocaleString("vi-VN") + " VND";
+  // const formatPrice = (price) => price.toLocaleString("vi-VN") + " VND";
 
   const skeletonItems = new Array(getProductsPerView()).fill(null);
 
+  const formatPrice = (price, withVND = true) => {
+    if (!price) return "0";
+    const formatted = Number(price).toLocaleString("vi-VN");
+    return withVND ? `${formatted} VND` : formatted;
+  };
+
+  const renderPriceRange = (volumePrices) => {
+    if (!volumePrices || volumePrices.length === 0) return "Chưa có giá";
+
+    const sortedPrices = volumePrices
+      .map((vp) => vp.price)
+      .sort((a, b) => a - b);
+
+    if (sortedPrices.length === 1) {
+      return formatPrice(sortedPrices[0]);
+    } else {
+      return `${formatPrice(sortedPrices[0], false)} - ${formatPrice(
+        sortedPrices[sortedPrices.length - 1]
+      )}`;
+    }
+  };
+
+  const renderVolumeRange = (volumePrices) => {
+    if (!volumePrices || volumePrices.length === 0) return "";
+
+    const sortedVolumes = volumePrices
+      .map((vp) => vp.volume)
+      .sort((a, b) => a - b);
+
+    if (sortedVolumes.length === 1) {
+      return `${sortedVolumes[0]}ml`;
+    } else {
+      return `${sortedVolumes[0]}ml - ${
+        sortedVolumes[sortedVolumes.length - 1]
+      }ml`;
+    }
+  };
+
   return (
     <div id="flash-deal" className="flex flex-col mx-4 md:m-12 relative">
-      {/* Title */}
       <div className="flex absolute translate-y-4 translate-x-2 md:translate-x-12 items-center bg-gradient-to-r from-red-500 to-red-700 text-white py-1 md:py-2 px-2 md:px-4 rounded-lg shadow-lg">
-        <svg width="16" height="24" className="fill-yellow-300 animate-pulse" xmlns="http://www.w3.org/2000/svg">
-          <path d="M14.394 11.6854..." />
+        <svg
+          width="16"
+          height="24"
+          className="fill-yellow-300 animate-pulse"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M14.394 11.6854C14.349 11.5226 14.2702 11.371 14.1626 11.2407C14.0551 11.1104 13.9212 11.0043 13.7698 10.9293L9.70106 8.91289L10.7933 1.36344C10.8292 1.10179 10.7778 0.835614 10.6471 0.606141C10.5164 0.376669 10.3136 0.196718 10.0702 0.094173C9.82685 -0.00837155 9.55645 -0.0277836 9.30093 0.0389447C9.0454 0.105673 8.81902 0.254816 8.65686 0.463262L0.255241 11.2653C0.141203 11.411 0.0623685 11.581 0.0248924 11.7621C-0.0125837 11.9433 -0.00768753 12.1306 0.0391991 12.3095C0.0921791 12.4886 0.184268 12.6536 0.30881 12.7926C0.433351 12.9317 0.587235 13.0414 0.759338 13.1137L5.88433 15.1661L4.79212 22.6315C4.75499 22.8995 4.80946 23.1721 4.94672 23.4052C5.08397 23.6383 5.29594 23.8183 5.54826 23.9158C5.68891 23.9741 5.84011 24.0027 5.99235 23.9998C6.19003 23.9988 6.38441 23.9489 6.5582 23.8547C6.73199 23.7605 6.87981 23.6248 6.98854 23.4597L14.1899 12.6576C14.2914 12.5195 14.3621 12.3613 14.3972 12.1936C14.4324 12.0259 14.4313 11.8526 14.394 11.6854Z" />
         </svg>
         <h2 className="text-white md:font-bold text-xs md:text-xl ml-1 md:ml-2">
           Flash Deals
         </h2>
       </div>
 
-      {/* Countdown */}
       <div className="flex absolute translate-y-4 right-0 mr-2 md:mr-8 bg-white px-2 md:px-4 items-center space-x-1 md:space-x-4">
         <div className="text-black font-semibold hidden md:block md:text-base">
           Kết thúc sau:
@@ -315,22 +361,29 @@ const FlashDeal = () => {
         </div>
       </div>
 
-      {/* Arrows */}
       <div className="w-full items-center top-1/2 absolute">
-        <button className="absolute w-8 h-8 md:w-12 md:h-12 left-0 bg-white rounded-full flex items-center justify-center shadow-lg z-10" onClick={handlePrevProducts}>
+        <button
+          className="absolute w-8 h-8 md:w-12 md:h-12 left-0 bg-white rounded-full flex items-center justify-center shadow-lg z-10"
+          onClick={handlePrevProducts}
+        >
           <ChevronLeft className="w-6 h-6 md:w-12 md:h-12 text-red-600" />
         </button>
-        <button className="absolute w-8 h-8 md:w-12 md:h-12 right-0 bg-white rounded-full flex items-center justify-center shadow-lg z-10" onClick={handleNextProducts}>
+        <button
+          className="absolute w-8 h-8 md:w-12 md:h-12 right-0 bg-white rounded-full flex items-center justify-center shadow-lg z-10"
+          onClick={handleNextProducts}
+        >
           <ChevronRight className="w-6 h-6 md:w-12 md:h-12 text-red-600" />
         </button>
       </div>
 
-      {/* Product List */}
       <div className="p-4 md:p-8 border-2 rounded-lg mt-8">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-4">
           {isLoading
             ? skeletonItems.map((_, index) => (
-                <div key={index} className="flex flex-col animate-pulse items-center border-2 border-gray-300 rounded-lg p-2 md:p-4">
+                <div
+                  key={index}
+                  className="flex flex-col animate-pulse items-center border-2 border-gray-300 rounded-lg p-2 md:p-4"
+                >
                   <div className="bg-gray-200 h-20 md:h-40 w-full mb-2 rounded"></div>
                   <div className="bg-gray-200 h-4 w-3/4 rounded mb-1"></div>
                   <div className="bg-gray-200 h-4 w-1/2 rounded mb-1"></div>
@@ -341,26 +394,53 @@ const FlashDeal = () => {
                   </div>
                 </div>
               ))
-            : product.slice(startIndex, startIndex + getProductsPerView()).map((product) => (
-                <div key={product.productId} className="flex flex-col items-center border-2 border-gray-300 rounded-lg p-2 md:p-4">
-                  <img src={product.imageUrl || "/default.jpg"} alt={product.productName} className="h-20 md:h-40 w-auto object-contain" />
-                  <div className="flex flex-col items-center mt-2 md:mt-4 w-full h-full">
-                    <h3 className="font-bold text-xs md:text-base">{product.brandName}</h3>
-                    <p className="font-medium text-xs md:text-sm text-center">{product.productName}</p>
-                    <p className="my-2 text-xs text-red-700 font-bold">{formatPrice(product.price)}</p>
-                    <div className="flex justify-center gap-4 w-full mt-auto">
-                      <button className="p-1 md:p-2 text-white text-xs rounded-md bg-red-600">Yêu thích</button>
-                      <button className="p-1 md:p-2 text-white text-xs rounded-md bg-black" onClick={() => handleQuickView(product)}>Xem nhanh</button>
+            : product
+                .slice(startIndex, startIndex + getProductsPerView())
+                .map((product) => (
+                  <div
+                    key={product.productId}
+                    className="flex flex-col items-center border-2 border-gray-300 rounded-lg p-2 md:p-4"
+                  >
+                    <img
+                      src={product.imageUrl || "/default.jpg"}
+                      alt={product.productName}
+                      className="h-20 md:h-40 w-auto object-contain"
+                    />
+                    <div className="flex flex-col items-center mt-2 md:mt-4 w-full h-full">
+                      {/* Bỏ brandName vì flash-sale không có brandName */}
+                      <p className="font-medium text-xs md:text-sm text-center">
+                        {product.productName}
+                      </p>
+
+                      <p className="text-xs text-gray-500">
+                        {renderVolumeRange(product.volumePrices)}
+                      </p>
+                      <p className="my-2 text-xs text-red-700 font-bold">
+                        {renderPriceRange(product.volumePrices)}
+                      </p>
+
+                      <div className="flex justify-center gap-4 w-full mt-auto">
+                        <button className="p-1 md:p-2 text-white text-xs rounded-md bg-red-600">
+                          Yêu thích
+                        </button>
+                        <button
+                          className="p-1 md:p-2 text-white text-xs rounded-md bg-black"
+                          onClick={() => handleQuickView(product)}
+                        >
+                          Xem nhanh
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
         </div>
       </div>
 
-      {/* Popup */}
       {showPopup && selectedProduct && (
-        <QuickView selectedProduct={selectedProduct} handleClosePopup={handleClosePopup} />
+        <QuickView
+          selectedProduct={selectedProduct}
+          handleClosePopup={handleClosePopup}
+        />
       )}
     </div>
   );

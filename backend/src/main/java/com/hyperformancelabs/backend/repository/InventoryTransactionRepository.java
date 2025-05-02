@@ -7,8 +7,19 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface InventoryTransactionRepository extends JpaRepository<InventoryTransaction, Integer> {
+
+    // Lấy top 6 giao dịch nhập hàng mới nhất
+    @Query(value = """
+            SELECT TOP 6 *
+            FROM [InventoryTransaction]
+            WHERE transaction_type = 'IMPORT'
+            ORDER BY transaction_date DESC;
+    """, nativeQuery = true)
+    List<InventoryTransaction> findTop6ImportTransactionsNative();
 
     // Tuần hiện tại
     @Query(value = """

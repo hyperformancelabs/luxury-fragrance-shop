@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import { Toaster, toast } from "sonner";
 
 import {
@@ -19,7 +19,8 @@ import {
 
 const Navbar = () => {
   const { user, login } = useAuth();
-  const { cart, mergeGuestCartWithUserCart } = useCart();
+  const { localCart, cartItems, syncCartToServer } = useCart();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [showCartPopup, setShowCartPopup] = useState(false);
   const [showAuthPopup, setShowAuthPopup] = useState(false);
@@ -32,14 +33,12 @@ const Navbar = () => {
   });
   const [registerData, setRegisterData] = useState({
     name: "",
-    username:"",
+    username: "",
     password: "",
     phoneNumber: "",
     email: "",
   });
   const [error, setError] = useState("");
-
-  const { updateQuantity } = useCart();
 
   const cartPopupRef = useRef(null);
   const cartIconRef = useRef(null);
@@ -59,10 +58,18 @@ const Navbar = () => {
     setShowMobileSearch(false);
   };
 
-  const calculateTotal = () => {
-    if (!cart || cart.length === 0) return 0;
-    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const cartTotal = (user ? cartItems : localCart).reduce(
+    (sum, item) => sum + item.unitPrice * item.quantity,
+    0
+  );
+
+  const formatPrice = (price, withVND = true) => {
+    if (!price) return "0";
+    const formatted = Number(price).toLocaleString("vi-VN");
+    return withVND ? `${formatted} VND` : formatted;
   };
+
+  const cartCount = user ? cartItems?.length || 0 : localCart?.length || 0;
 
   const handleLoginChange = (e) => {
     setLoginData({
@@ -81,43 +88,42 @@ const Navbar = () => {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setError("");
-  
+
     if (!registerData.name || !registerData.email || !registerData.password) {
       setError("Vui lòng điền đầy đủ thông tin");
       return;
     }
-  
- 
-  
+
     try {
-      const response = await fetch("http://localhost:8080/api/v1/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: registerData.name,
-          email: registerData.email,
-          password: registerData.password,
-          username: registerData.username,
-          phoneNumber: registerData.phoneNumber,
-        }),
-      });
-  
+      const response = await fetch(
+        "http://localhost:8080/api/v1/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: registerData.name,
+            email: registerData.email,
+            password: registerData.password,
+            username: registerData.username,
+            phoneNumber: registerData.phoneNumber,
+          }),
+        }
+      );
+
       const data = await response.json();
-  
+
       if (!response.ok) {
         setError(data.message || "Đăng ký thất bại");
         return;
       }
-  
-      // Sau khi đăng ký thành công → tự động login lại
+
       handleLoginSubmit(new Event("submit"));
     } catch (err) {
       setError("Có lỗi xảy ra khi đăng ký");
     }
   };
-  
 
   // const handleLoginSubmit = (e) => {
   //   e.preventDefault();
@@ -142,12 +148,12 @@ const Navbar = () => {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError("");
-  
+
     if (!loginData.username || !loginData.password) {
       setError("Vui lòng nhập username và mật khẩu");
       return;
     }
-  
+
     try {
       const response = await fetch("http://localhost:8080/api/v1/auth/login", {
         method: "POST",
@@ -156,45 +162,38 @@ const Navbar = () => {
         },
         body: JSON.stringify(loginData),
       });
-  
+
       const data = await response.json();
-  
+
       if (!response.ok || !data.data) {
         setError(data.message || "Đăng nhập thất bại");
         return;
       }
-      toast.success("Đăng nhập thành công!")
+      toast.success("Đăng nhập thành công!");
       setTimeout(() => {
-    window.location.href = "/";
-        
-      },1000);
+        window.location.href = "/";
+      }, 1000);
       const token = data.data;
-  
-      // ✅ Decode token để lấy user info thật
+
       const decoded = jwtDecode(token);
       const user = {
         id: decoded.sub,
         username: decoded.username,
         role: decoded.role,
       };
-  
-      // Lưu token + user vào localStorage
+
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
-  
-      // Cập nhật context
       login(user);
-      mergeGuestCartWithUserCart(user.id);
-  
+      syncCartToServer();
+
       setShowAuthPopup(false);
     } catch (err) {
       console.error(err);
       setError("Có lỗi xảy ra, vui lòng thử lại");
     }
   };
-  
-  
 
   const toggleAuthMode = () => {
     setAuthMode(authMode === "login" ? "register" : "login");
@@ -254,8 +253,6 @@ const Navbar = () => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
-
-  const formatPrice = (price) => price.toLocaleString("vi-VN") + " VND";
 
   return (
     <>
@@ -509,7 +506,7 @@ const Navbar = () => {
                               placeholder="Nhập username"
                             />
                           </div>
-                          
+
                           <div className="mb-3">
                             <label
                               htmlFor="register-password"
@@ -561,7 +558,7 @@ const Navbar = () => {
                               placeholder="Nhập email của bạn"
                             />
                           </div>
-                          
+
                           <button
                             type="submit"
                             className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 transition duration-200"
@@ -619,7 +616,7 @@ const Navbar = () => {
                 <Link to="/cart" className="flex flex-col items-center">
                   <ShoppingCartIcon className="w-5 h-5 md:w-6 md:h-6" />
                   <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                    {cart ? cart.length : 0}
+                    {cartCount}
                   </span>
                   <span className="text-xs mt-1 hidden sm:block">Giỏ hàng</span>
                 </Link>
@@ -635,136 +632,35 @@ const Navbar = () => {
                       </h3>
 
                       <div className="max-h-60 overflow-y-auto">
-                        {/* {cart && cart.length > 0 ? (
-                          cart.map((item, index) => (
-                            <div key={index} className="flex items-center py-2 border-b">
-                              <div className="w-16 h-16 bg-gray-100 rounded mr-3 flex-shrink-0">
-                                {item.image && (
-                                  <img 
-                                    src="/sp2.jpg"
-                                    alt={item.name} 
-                                    className="w-full h-full object-cover rounded"
-                                  />
-                                )}
-                              </div>
-                              
-                              <div className='flex items-center justify-between w-full'>
-                                <div className="flex-grow">
-                                  <p className="text-sm font-medium">{item.name}</p>
-                                  <p className="text-xs text-gray-500">
-                                    {item.quantity} x {item.price?.toLocaleString('vi-VN')}₫
-                                  </p>
-                                </div>
-                                <div>
-                                  <button className='border-2 rounded font-bold border-black px-2'>-</button>
-                                  <span className='font-bold mx-4'>{item.quantity}</span>
-                                  <button className='border-2 rounded font-bold border-black px-2'>+</button>
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-center text-gray-500 py-4">Giỏ hàng trống</p>
-                        )} */}
-
-                        {cart && cart.length > 0 ? (
-                          cart.map((item) => (
+                        {(user ? cartItems : localCart).length > 0 ? (
+                          (user ? cartItems : localCart).map((item, index) => (
                             <div
-                              key={item.id}
+                              key={index}
                               className="flex items-center py-2 border-b"
                             >
                               <div className="w-16 h-16 bg-gray-100 rounded mr-3 flex-shrink-0">
-                                {item.image ? (
-                                  <img
-                                    src={item.image}
-                                    alt={item.name}
-                                    className="w-full h-full object-cover rounded"
-                                  />
-                                ) : (
-                                  <img
-                                    src="/sp2.jpg"
-                                    alt={item.name}
-                                    className="w-full h-full object-cover rounded"
-                                  />
-                                )}
+                                <img
+                                  src={item.imageUrl || "/sp2.jpg"}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover rounded"
+                                />
                               </div>
-
                               <div className="flex flex-col w-full">
-                                <div className="flex-grow">
-                                  <p className="text-sm font-medium">
-                                    {item.name}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {item.selectedSize &&
-                                      `Dung tích: ${item.selectedSize}`}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {item.quantity} x{" "}
-                                    {item.price?.toLocaleString("vi-VN")}₫
-                                  </p>
-                                </div>
-                                <div className="flex w-full mt-1 justify-between">
-                                  <div className="flex">
-                                    <button
-                                      className="px-2 bg-gray-100 hover:bg-gray-200 transition-colors"
-                                      onClick={() =>
-                                        updateQuantity(
-                                          item.id,
-                                          item.selectedSize,
-                                          Math.max(1, item.quantity - 1)
-                                        )
-                                      }
-                                    >
-                                      <svg
-                                        className="w-2 h-2"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth="2"
-                                          d="M20 12H4"
-                                        ></path>
-                                      </svg>
-                                    </button>
-                                    <span className="flex items-center justify-center w-8 font-medium">
-                                      {item.quantity}
-                                    </span>
-                                    <button
-                                      className="px-2 bg-gray-100 hover:bg-gray-200 transition-colors"
-                                      onClick={() =>
-                                        updateQuantity(
-                                          item.id,
-                                          item.selectedSize,
-                                          item.quantity + 1
-                                        )
-                                      }
-                                    >
-                                      <svg
-                                        className="w-2 h-2"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth="2"
-                                          d="M12 4v16m8-8H4"
-                                        ></path>
-                                      </svg>
-                                    </button>
-                                  </div>
-                                  <div>
-                                    <p>
-                                      {formatPrice(item.quantity * item.price)}
-                                    </p>
-                                  </div>
-                                </div>
+                                <p className="text-sm font-medium">
+                                  {item.productName}
+                                </p>
+                                {/* {item.selectedSize && (
+                    <p className="text-xs text-gray-500">
+                      `Dung tích: ${item.volume}ml`
+                    </p>
+                  )} */}
+                                <p className="text-xs text-gray-500">
+                                  Dung tích: {item.volume}ml
+                                </p>
+                                <p className="text-right text-sm font-semibold text-red-500">
+                                  {item.quantity} x{" "}
+                                  {formatPrice(item.unitPrice)}
+                                </p>
                               </div>
                             </div>
                           ))
@@ -775,12 +671,12 @@ const Navbar = () => {
                         )}
                       </div>
 
-                      {cart && cart.length > 0 && (
+                      {(user ? cartItems : localCart).length > 0 && (
                         <div className="mt-3 border-t pt-2">
                           <div className="flex justify-between items-center mb-3">
                             <span className="font-semibold">Tổng cộng:</span>
                             <span className="font-semibold text-red-600">
-                              {formatPrice(calculateTotal())}
+                              {formatPrice(cartTotal)}
                             </span>
                           </div>
 

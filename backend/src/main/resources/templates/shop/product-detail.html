@@ -3,208 +3,298 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${product.productName + ' - Perfume Store'}">Product Detail</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title th:text="${product.productName + ' - APH Perfume'}">Chi tiết sản phẩm - APH Perfume</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .product-image {
-            max-height: 400px;
-            object-fit: contain;
-        }
-        .related-product-img {
-            height: 150px;
-            object-fit: contain;
-        }
-        .quantity-selector {
-            width: 120px;
-        }
-        .brand-logo {
-            max-width: 100px;
-            max-height: 50px;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/product-detail.css">
 </head>
 <body>
-    <div class="container mt-4">
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-4">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a th:href="@{/shop}">Shop</a></li>
-                <li class="breadcrumb-item"><a th:href="@{/shop(brand=${product.brandName})}" th:text="${product.brandName}">Brand</a></li>
-                <li class="breadcrumb-item active" aria-current="page" th:text="${product.productName}">Product Name</li>
-            </ol>
-        </nav>
-        
-        <!-- Product Detail -->
-        <div class="row mb-5">
-            <!-- Product Image -->
-            <div class="col-md-5 mb-4 mb-md-0">
-                <div class="card">
-                    <img th:src="${product.imageUrl}" class="card-img-top product-image" alt="Product Image">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="/">APH Perfume</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/shop">Sản phẩm</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop/top-selling">Bán chạy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">Giới thiệu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contact">Liên hệ</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a href="/login" class="btn btn-outline-dark me-2">
+                        <i class="fas fa-user me-1"></i> Đăng nhập
+                    </a>
+                    <a href="/cart" class="btn btn-dark">
+                        <i class="fas fa-shopping-cart me-1"></i> Giỏ hàng
+                    </a>
                 </div>
             </div>
-            
+        </div>
+    </nav>
+
+    <!-- Breadcrumb -->
+    <header class="breadcrumb-section">
+        <div class="container">
+            <nav class="d-flex">
+                <a href="/" class="me-2">TRANG CHỦ</a>
+                <span class="mx-2">/</span>
+                <a href="/shop" class="me-2">SẢN PHẨM</a>
+                <span class="mx-2">/</span>
+                <span th:text="${product.productName}">TÊN SẢN PHẨM</span>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container py-5">
+        <div class="row">
+            <!-- Product Images -->
+            <div class="col-md-5 mb-4 mb-md-0">
+                <div class="product-image-container">
+                    <img th:src="${images[0]}" id="main-product-image" class="product-main-image" alt="Product Image">
+                </div>
+                <div class="product-thumbnails">
+                    <img th:each="image, iterStat : ${images}"
+                         th:src="${image}"
+                         th:class="${iterStat.index == 0 ? 'product-thumbnail active' : 'product-thumbnail'}"
+                         alt="Product Thumbnail">
+                </div>
+            </div>
+
             <!-- Product Info -->
             <div class="col-md-7">
-                <h2 th:text="${product.productName}">Product Name</h2>
-                
-                <div class="d-flex align-items-center mb-3">
-                    <a th:href="@{/shop(brand=${product.brandName})}" class="text-decoration-none">
-                        <span class="badge bg-secondary me-2" th:text="${product.brandName}">Brand</span>
-                    </a>
-                    <span class="text-muted" th:text="${product.volume + 'ml'}">Volume</span>
+                <div class="product-brand" th:text="${product.brandId}">VERSACE</div>
+                <h1 class="product-title" th:text="${product.productName}">Nước Hoa Nữ Versace Bright Crystal EDT</h1>
+
+                <div class="product-rating">
+                    <div class="rating-stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                    <span th:text="${rating + ' (' + reviewCount + ' đánh giá)'}">4.5 (125 đánh giá)</span>
                 </div>
-                
-                <div class="mb-3">
-                    <h3 class="mb-0">
-                        <span th:text="${'$' + #numbers.formatDecimal(product.price, 0, 'COMMA', 2, 'POINT')}">$99.99</span>
-                        <span class="text-decoration-line-through text-muted fs-5 ms-2" 
-                              th:if="${product.discountPrice != null}" 
-                              th:text="${'$' + #numbers.formatDecimal(product.discountPrice, 0, 'COMMA', 2, 'POINT')}">$129.99</span>
-                    </h3>
-                    <span class="badge bg-success" th:if="${product.discountPrice != null}">On Sale</span>
+
+                <div class="product-price">
+                    <span class="original-price" th:text="${#numbers.formatDecimal(originalPrice, 0, 'COMMA', 0, 'POINT') + 'đ'}">3.500.000đ</span>
+                    <span class="sale-price" th:text="${#numbers.formatDecimal(salePrice, 0, 'COMMA', 0, 'POINT') + 'đ'}">2.400.000đ</span>
                 </div>
-                
-                <div class="mb-4">
-                    <p class="text-muted" th:text="${product.description}">Product description goes here...</p>
+
+                <div class="size-options">
+                    <div class="mb-2">Dung tích:</div>
+                    <div>
+                        <span th:each="size, iterStat : ${sizes}"
+                              th:class="${iterStat.index == 0 ? 'size-option active' : 'size-option'}"
+                              th:data-value="${size.value}"
+                              th:data-price="${size.price}"
+                              th:text="${size.label}">50ml</span>
+                    </div>
                 </div>
-                
-                <div class="mb-4">
-                    <p>
-                        <span class="fw-bold">Availability:</span>
-                        <span th:if="${product.quantityInStock > 0}" class="text-success">In Stock</span>
-                        <span th:unless="${product.quantityInStock > 0}" class="text-danger">Out of Stock</span>
-                        <span th:if="${product.quantityInStock > 0}" class="text-muted" 
-                              th:text="${'(' + product.quantityInStock + ' available)'}"></span>
-                    </p>
+
+                <div class="quantity-selector">
+                    <div class="mb-2">Số lượng:</div>
+                    <div class="d-flex">
+                        <button class="quantity-btn quantity-decrease">-</button>
+                        <input type="number" id="quantity" class="quantity-input" value="1" min="1">
+                        <button class="quantity-btn quantity-increase">+</button>
+                    </div>
                 </div>
-                
-                <!-- Add to Cart Form -->
-                <form class="mb-4" th:if="${product.quantityInStock > 0}">
-                    <div class="row g-3 align-items-center">
-                        <div class="col-auto">
-                            <label for="quantity" class="col-form-label">Quantity:</label>
-                        </div>
-                        <div class="col-auto">
-                            <div class="input-group quantity-selector">
-                                <button type="button" class="btn btn-outline-secondary" id="decrease-qty">-</button>
-                                <input type="number" class="form-control text-center" id="quantity" value="1" min="1" 
-                                       th:max="${product.quantityInStock}">
-                                <button type="button" class="btn btn-outline-secondary" id="increase-qty">+</button>
+
+                <button id="add-to-cart-btn" class="add-to-cart-btn" th:data-product-id="${product.productId}">
+                    <i class="fas fa-shopping-cart me-2"></i>Thêm vào giỏ hàng
+                </button>
+
+                <div class="product-actions mt-3">
+                    <div class="action-btn">
+                        <i class="far fa-heart"></i>
+                        <span>Thêm vào yêu thích</span>
+                    </div>
+                    <div class="action-btn">
+                        <i class="fas fa-share-alt"></i>
+                        <span>Chia sẻ</span>
+                    </div>
+                </div>
+
+                <div class="product-description mt-4">
+                    <p th:text="${product.description}">Mô tả sản phẩm...</p>
+                </div>
+
+                <div class="product-tabs">
+                    <div class="tab-buttons">
+                        <div class="tab-button" data-tab="fragrance">Hương</div>
+                        <div class="tab-button" data-tab="details">Chi tiết</div>
+                        <div class="tab-button" data-tab="reviews">Đánh giá</div>
+                    </div>
+
+                    <div class="tab-content" data-tab="fragrance">
+                        <h4>Thông tin hương thơm</h4>
+                        <p>Bright Crystal là một hương thơm tươi mát và quyến rũ, được lấy cảm hứng từ sự kết hợp yêu thích của Donatella Versace.</p>
+
+                        <div class="seasonal-chart">
+                            <h5>Khuyến nghị theo mùa</h5>
+
+                            <div th:each="entry : ${seasonalRecommendations}">
+                                <div class="chart-label">
+                                    <span th:text="${entry.key}">MÙA XUÂN</span>
+                                    <span th:text="${entry.value + '%'}">70%</span>
+                                </div>
+                                <div class="chart-bar">
+                                    <div class="chart-fill" th:style="'width: ' + ${entry.value + '%'}"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col">
-                            <button type="button" class="btn btn-primary">
-                                <i class="fas fa-shopping-cart me-2"></i>Add to Cart
-                            </button>
-                            <button type="button" class="btn btn-outline-danger ms-2">
-                                <i class="fas fa-heart"></i>
-                            </button>
+                    </div>
+
+                    <div class="tab-content" data-tab="details" style="display: none;">
+                        <h4>Thông tin chi tiết</h4>
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th>Thương hiệu</th>
+                                    <td>Versace</td>
+                                </tr>
+                                <tr>
+                                    <th>Xuất xứ</th>
+                                    <td>Ý</td>
+                                </tr>
+                                <tr>
+                                    <th>Năm ra mắt</th>
+                                    <td>2006</td>
+                                </tr>
+                                <tr>
+                                    <th>Nhóm hương</th>
+                                    <td>Hương hoa cỏ trái cây</td>
+                                </tr>
+                                <tr>
+                                    <th>Độ lưu hương</th>
+                                    <td>Trung bình, 3-6 giờ</td>
+                                </tr>
+                                <tr>
+                                    <th>Độ tỏa hương</th>
+                                    <td>Gần, toả hương trong khoảng cách gần</td>
+                                </tr>
+                                <tr>
+                                    <th>Thời điểm khuyên dùng</th>
+                                    <td>Ngày, Xuân, Hạ</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="tab-content" data-tab="reviews" style="display: none;">
+                        <h4>Đánh giá từ khách hàng</h4>
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rating-stars me-2">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <span class="fw-bold">Nguyễn Văn A</span>
+                                <span class="ms-auto text-muted">15/04/2023</span>
+                            </div>
+                            <p>Sản phẩm rất tuyệt vời, hương thơm nhẹ nhàng và quyến rũ. Tôi rất hài lòng với sản phẩm này.</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rating-stars me-2">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </div>
+                                <span class="fw-bold">Trần Thị B</span>
+                                <span class="ms-auto text-muted">10/04/2023</span>
+                            </div>
+                            <p>Hương thơm rất dễ chịu, nhưng độ lưu hương không được lâu như mong đợi.</p>
                         </div>
                     </div>
-                </form>
-                
-                <!-- Product Details -->
-                <div class="mb-4">
-                    <h4>Product Details</h4>
-                    <table class="table table-striped">
-                        <tbody>
-                            <tr>
-                                <th scope="row">Brand</th>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img th:if="${brand.logoUrl != null}" th:src="${brand.logoUrl}" class="brand-logo me-2" alt="Brand Logo">
-                                        <span th:text="${brand.brandName}">Brand Name</span>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Volume</th>
-                                <td th:text="${product.volume + ' ml'}">100 ml</td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Country of Origin</th>
-                                <td th:text="${brand.countryOfOrigin}">France</td>
-                            </tr>
-                            <tr th:each="detail : ${product.productDetails}">
-                                <th scope="row" th:text="${detail.detailName}">Detail Name</th>
-                                <td th:text="${detail.detailValue}">Detail Value</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Brand Description -->
-                <div class="mb-4" th:if="${brand.brandDescription != null && !brand.brandDescription.isEmpty()}">
-                    <h4>About the Brand</h4>
-                    <p th:text="${brand.brandDescription}">Brand description goes here...</p>
-                    <a th:if="${brand.websiteUrl != null && !brand.websiteUrl.isEmpty()}" 
-                       th:href="${brand.websiteUrl}" target="_blank" class="btn btn-sm btn-outline-secondary">
-                        Visit Brand Website <i class="fas fa-external-link-alt ms-1"></i>
-                    </a>
                 </div>
             </div>
         </div>
-        
-        <!-- Product Variants -->
-        <div class="mb-5" th:if="${!#lists.isEmpty(product.productVariants) && product.productVariants.size() > 1}">
-            <h3 class="mb-3">Available Sizes</h3>
-            <div class="d-flex flex-wrap gap-2">
-                <a th:each="variant : ${product.productVariants}" 
-                   th:href="@{'/shop/product/' + ${variant.productVariantId}}"
-                   th:class="${variant.productVariantId == product.productVariantId ? 'btn btn-primary' : 'btn btn-outline-primary'}"
-                   th:text="${variant.volume + ' ml - $' + #numbers.formatDecimal(variant.price, 0, 'COMMA', 2, 'POINT')}">
-                    50 ml - $49.99
-                </a>
-            </div>
-        </div>
-        
+
         <!-- Related Products -->
-        <div class="mb-5" th:if="${!#lists.isEmpty(relatedProducts)}">
-            <h3 class="mb-3">You May Also Like</h3>
+        <div class="related-products">
+            <h3 class="mb-4">Sản phẩm liên quan</h3>
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-                <div class="col" th:each="related : ${relatedProducts}">
-                    <div class="card h-100">
-                        <img th:src="${related.imageUrl}" class="card-img-top related-product-img" alt="Related Product">
-                        <div class="card-body">
-                            <h5 class="card-title" th:text="${related.productName}">Related Product</h5>
-                            <p class="card-text">
-                                <small class="text-muted" th:text="${related.brandName}">Brand</small>
-                            </p>
-                            <p class="card-text">
-                                <span class="fw-bold" th:text="${'$' + #numbers.formatDecimal(related.price, 0, 'COMMA', 2, 'POINT')}">$79.99</span>
-                            </p>
-                            <a th:href="@{'/shop/product/' + ${related.productId}}" class="btn btn-sm btn-outline-primary">View Details</a>
+                <div class="col" th:each="relatedProduct : ${relatedProducts}">
+                    <div class="related-product-card">
+                        <a th:href="@{'/shop/product/' + ${relatedProduct.productId}}">
+                            <img th:src="${relatedProduct.imageUrl}" class="related-product-image" alt="Related Product">
+                        </a>
+                        <div class="related-product-info">
+                            <h5 class="related-product-title" th:text="${relatedProduct.productName}">Tên sản phẩm liên quan</h5>
+                            <div class="related-product-price">1.950.000đ</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Quantity selector functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const quantityInput = document.getElementById('quantity');
-            const decreaseBtn = document.getElementById('decrease-qty');
-            const increaseBtn = document.getElementById('increase-qty');
-            
-            decreaseBtn.addEventListener('click', function() {
-                const currentValue = parseInt(quantityInput.value);
-                if (currentValue > 1) {
-                    quantityInput.value = currentValue - 1;
-                }
-            });
-            
-            increaseBtn.addEventListener('click', function() {
-                const currentValue = parseInt(quantityInput.value);
-                const maxValue = parseInt(quantityInput.getAttribute('max'));
-                if (currentValue < maxValue) {
-                    quantityInput.value = currentValue + 1;
-                }
-            });
-        });
-    </script>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5>APH Perfume</h5>
+                    <p>Điểm đến cho những mùi hương xa xỉ và nước hoa cao cấp.</p>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5>Liên Kết Nhanh</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-white">Trang chủ</a></li>
+                        <li><a href="/shop" class="text-white">Sản phẩm</a></li>
+                        <li><a href="/about" class="text-white">Giới thiệu</a></li>
+                        <li><a href="/contact" class="text-white">Liên hệ</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5>Dịch Vụ Khách Hàng</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white">Câu hỏi thường gặp</a></li>
+                        <li><a href="#" class="text-white">Vận chuyển & Đổi trả</a></li>
+                        <li><a href="#" class="text-white">Chính sách bảo mật</a></li>
+                        <li><a href="#" class="text-white">Điều khoản & Điều kiện</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Kết Nối Với Chúng Tôi</h5>
+                    <div class="d-flex gap-3 fs-4 mb-3">
+                        <a href="#" class="text-white"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-pinterest"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 APH Perfume. Tất cả các quyền được bảo lưu.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/product-detail.js"></script>
 </body>
 </html>

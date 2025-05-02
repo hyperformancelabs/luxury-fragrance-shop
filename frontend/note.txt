@@ -2,3 +2,7 @@ wishlist table
 product created - api get new product
 status for payment
 group_id cho sản phẩm => để gom các sản phẩm cùng loại nhưng khác volume, price 
+
+
+người đặt hàng mới được xem đơn hàng
+gửi mail sau khi đặt hàng

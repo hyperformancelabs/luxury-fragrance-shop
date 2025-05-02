@@ -48,18 +48,34 @@
 .quick-view-btn, .wishlist-btn {
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.3s;
 }
+
 .wishlist-btn {
     background-color: #dc3545;
     color: white;
     border: none;
-    border-radius: 0.25rem;
 }
+
+.wishlist-btn:hover {
+    background-color: #c82333;
+}
+
 .quick-view-btn {
     background-color: #212529;
     color: white;
     border: none;
-    border-radius: 0.25rem;
+}
+
+.quick-view-btn:hover {
+    background-color: #343a40;
+}
+
+.wishlist-btn.active {
+    background-color: #c82333;
+    color: white;
 }
 .breadcrumb-section {
     background-color: #212529;
@@ -86,7 +102,7 @@
         padding: 0.2rem 0.5rem;
         font-size: 0.75rem;
     }
-    
+
     .product-img {
         height: 150px;
     }
@@ -111,10 +127,4 @@
     color: #dc3545;
 }
 
-.wishlist-btn:hover {
-    background-color: #c82333;
-}
-
-.quick-view-btn:hover {
-    background-color: #343a40;
-}
+/* Hover effects already defined above */

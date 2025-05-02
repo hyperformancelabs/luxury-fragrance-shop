@@ -1,13 +1,51 @@
 import { Trash2 } from "lucide-react";
 import { useCart } from "../context/CartContext";
-import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const Cart = () => {
-  const { cart, removeFromCart, updateQuantity, calculateTotal } = useCart();
+  const { user } = useAuth();
+  const {
+    cartItems,
+    updateServerCartQuantity,
+    removeFromServerCart,
+    updateQuantityInCart,
+    localCart,
+  } = useCart();
 
-  const formatPrice = (price) => price.toLocaleString("vi-VN") + " VND";
+  const currentCart = user ? cartItems : localCart;
 
-  if (cart.length === 0) {
+  const cartTotal = currentCart.reduce(
+    (sum, item) => sum + item.unitPrice * item.quantity,
+    0
+  );
+
+  const [quantity, setQuantity] = useState(1);
+
+  const formatPrice = (price, withVND = true) => {
+    if (!price) return "0";
+    const formatted = Number(price).toLocaleString("vi-VN");
+    return withVND ? `${formatted} VND` : formatted;
+  };
+
+  const handleQuantityChange = (cartItemId, newQuantity, productVariantId) => {
+    // console.log("Handle Quantity Change:");
+    // console.log("Cart Item ID:", cartItemId);
+    // console.log("New Quantity:", newQuantity);
+    // console.log("Product Variant ID:", productVariantId);
+
+    setQuantity(newQuantity);
+    if (user) {
+      toast.success("Cập nhật số lượng sản phẩm thành công");
+      updateQuantityInCart(cartItemId, newQuantity, productVariantId);
+    } else {
+      toast.error("Không thể cập nhật số lượng sản phẩm trong giỏ hàng");
+    }
+  };
+
+  if (currentCart.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <h2 className="text-2xl font-semibold mb-2">Giỏ hàng trống</h2>
@@ -48,27 +86,29 @@ const Cart = () => {
             <div className="md:col-span-3 text-right">Tổng</div>
           </div>
 
-          {cart.map((item) => (
+          {currentCart.map((item, index) => (
             <div
-              key={item.id}
+              key={index}
               className="border-b py-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
             >
               <div className="md:col-span-6 flex items-center">
                 <img
-                  src={item.image || "/sp2.jpg"}
+                  src={item.imageUrl || "/sp2.jpg"}
                   alt={item.name}
                   className="w-16 h-16 object-contain mr-4"
                 />
                 <div>
-                  <h3 className="text-base font-medium">{item.name}</h3>
+                  <h3 className="text-base font-medium">{item.productName}</h3>
                   <div className="flex gap-4">
-                    {item.selectedSize && (
-                      <p className="text-sm text-gray-500">
-                        Dung tích: {item.selectedSize}
-                      </p>
-                    )}
-                    <p className="text-sm text-gray-500">Brand: {item.brand}</p>
+                    <p className="text-sm text-gray-500">
+                      Dung tích: {item.volume}ml
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Brand: {item.brandName}
+                    </p>
                   </div>
+
+                  <p className="text-sm text-gray-500">Ghi chú: {item.note}</p>
                 </div>
               </div>
 
@@ -77,10 +117,10 @@ const Cart = () => {
                   <button
                     className="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
                     onClick={() =>
-                      updateQuantity(
-                        item.id,
-                        item.selectedSize,
-                        Math.max(1, item.quantity - 1)
+                      handleQuantityChange(
+                        item.cartItemId,
+                        item.quantity - 1,
+                        item.productVariantId
                       )
                     }
                   >
@@ -89,7 +129,6 @@ const Cart = () => {
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
                     >
                       <path
                         strokeLinecap="round"
@@ -105,10 +144,10 @@ const Cart = () => {
                   <button
                     className="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
                     onClick={() =>
-                      updateQuantity(
-                        item.id,
-                        item.selectedSize,
-                        item.quantity + 1
+                      handleQuantityChange(
+                        item.cartItemId,
+                        item.quantity + 1,
+                        item.productVariantId
                       )
                     }
                   >
@@ -117,7 +156,6 @@ const Cart = () => {
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
                     >
                       <path
                         strokeLinecap="round"
@@ -132,11 +170,21 @@ const Cart = () => {
 
               <div className="md:col-span-3 flex justify-between items-center">
                 <span className="text-red-600 font-bold md:ml-auto">
-                  {formatPrice(item.quantity * item.price)}
+                  {formatPrice(item.unitPrice)}
                 </span>
                 <button
                   className="p-2 text-gray-500"
-                  onClick={() => removeFromCart(item.id, item.selectedSize)}
+                  onClick={() =>
+                    user
+                      ? removeFromServerCart(
+                          item.cartItemId,
+                          item.productVariantId
+                        )
+                      : removeFromLocalCart(
+                          item.cartItemId,
+                          item.productVariantId
+                        )
+                  }
                 >
                   <Trash2 />
                 </button>
@@ -157,19 +205,19 @@ const Cart = () => {
           </h2>
 
           <div className="mt-4 space-y-3">
-            {cart.map((item) => (
-              <div key={item.id} className="flex justify-between text-sm">
+            {currentCart.map((item, index) => (
+              <div key={index} className="flex justify-between text-sm">
                 <div>
-                  {item.name} ({item.selectedSize})
+                  {item.productName} ({item.volume}ml)
                 </div>
-                <div>{formatPrice(item.price * item.quantity)}</div>
+                <div>{formatPrice(item.unitPrice * item.quantity)}</div>
               </div>
             ))}
           </div>
 
-          <div className="flex justify-between font-bold py-4 border-t border-gray-200 mt-4">
+          <div className="flex justify-between font-bold py-4 border-t text-red-600 border-gray-200 mt-4">
             <div>Tổng đơn hàng</div>
-            <div>{formatPrice(calculateTotal())}</div>
+            <div>{formatPrice(cartTotal)}</div>
           </div>
 
           <Link to="/checkout">

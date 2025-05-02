@@ -14,6 +14,9 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     
     // Tìm tất cả biến thể của một sản phẩm
     List<ProductVariant> findByProduct_ProductId(Integer productId);
+
+    // Tìm biến thể theo ID
+    ProductVariant findByProductVariantId(Integer productVariantId);
     
     // Tìm biến thể theo sản phẩm và dung tích
     Optional<ProductVariant> findByProduct_ProductIdAndVolume(Integer productId, Integer volume);
