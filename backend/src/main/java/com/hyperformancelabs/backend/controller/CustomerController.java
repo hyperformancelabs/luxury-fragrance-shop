@@ -69,4 +69,33 @@ public class CustomerController {
                 )
         );
     }
+    
+    @GetMapping("/new-customers-count-by-date-range")
+    public ResponseEntity<ApiResponse<Object>> getNewCustomersCountByDateRange(
+            @RequestParam String startDate,  // format: dd/MM/yyyy
+            @RequestParam String endDate     // format: dd/MM/yyyy
+    ) {
+        try {
+            // Lấy số lượng khách hàng mới trong khoảng thời gian
+            Integer newCustomersCount = customerService.getNewCustomersCountByDateRange(startDate, endDate);
+            
+            return ResponseEntity.ok(
+                    new ApiResponse<>(
+                            ApiResponseStatus.SUCCESS_CODE,
+                            ApiResponseStatus.SUCCESS_STATUS, 
+                            ApiResponseStatus.GET_SUCCESS_MESSAGE,
+                            java.util.Map.of("newCustomersCount", newCustomersCount)
+                    )
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(
+                            ApiResponseStatus.BAD_REQUEST_CODE, 
+                            ApiResponseStatus.ERROR_STATUS, 
+                            "Error: " + e.getMessage(), 
+                            null
+                    )
+            );
+        }
+    }
 }

@@ -145,10 +145,13 @@ const Dashboard = () => {
   const [dateRange, setDateRange] = useState({ from: new Date(), to: new Date() });
   const [revenueData, setRevenueData] = useState(null);
   const [newOrdersData, setNewOrdersData] = useState(null);
+  const [newCustomersData, setNewCustomersData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [error, setError] = useState(null);
   const [ordersError, setOrdersError] = useState(null);
+  const [customersError, setCustomersError] = useState(null);
 
   // Fetch revenue data when date range changes
   useEffect(() => {
@@ -202,6 +205,33 @@ const Dashboard = () => {
     };
 
     fetchNewOrdersData();
+  }, [dateRange]);
+  
+  // Fetch new customers count data when date range changes
+  useEffect(() => {
+    const fetchNewCustomersData = async () => {
+      try {
+        setLoadingCustomers(true);
+        setCustomersError(null);
+        console.log('Fetching new customers data for range:', dateRange);
+        const data = await dashboardService.getNewCustomersCountByDateRange(dateRange.from, dateRange.to);
+        console.log('New customers data received:', data);
+        
+        // Kiểm tra dữ liệu trả về
+        if (data === null || data === undefined) {
+          throw new Error('Dữ liệu khách hàng trả về không hợp lệ');
+        }
+        
+        setNewCustomersData(data);
+      } catch (err) {
+        console.error('Error fetching new customers data:', err);
+        setCustomersError(err.message || 'Không thể lấy dữ liệu khách hàng mới. Vui lòng thử lại sau.');
+      } finally {
+        setLoadingCustomers(false);
+      }
+    };
+
+    fetchNewCustomersData();
   }, [dateRange]);
 
   // Format currency function
@@ -342,11 +372,25 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-500 text-sm mb-1">Khách hàng mới</p>
-              <h3 className="text-2xl font-bold text-gray-800">12</h3>
-              <div className="flex items-center text-green-500 text-sm mt-2">
-                <TrendingUp size={16} className="mr-1" /> +8% so với hôm qua
-              </div>
+              <p className="text-gray-500 text-sm mb-1">Khách hàng mới {getDateRangeText()}</p>
+              <h3 className="text-2xl font-bold text-gray-800">
+                {loadingCustomers ? (
+                  <span className="text-gray-500">Đang tải...</span>
+                ) : customersError ? (
+                  <div>
+                    <span className="text-red-500 text-sm">Lỗi khi tải dữ liệu</span>
+                    <span className="block text-xs text-gray-500 mt-1">{customersError}</span>
+                  </div>
+                ) : (
+                  newCustomersData?.newCustomersCount || 0
+                )}
+              </h3>
+              {!loadingCustomers && !customersError && newCustomersData?.newCustomersCount && (
+                <div className="flex items-center text-green-500 text-sm mt-2">
+                  <Users size={16} className="mr-1" /> 
+                  Tổng số khách hàng mới
+                </div>
+              )}
             </div>
             <div className="bg-yellow-50 p-3 rounded-lg">
               <Users size={24} className="text-yellow-600" />

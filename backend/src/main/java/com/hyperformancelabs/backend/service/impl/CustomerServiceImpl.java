@@ -136,4 +136,9 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setPassword(passwordEncoder.encode(newPassword));
         customerRepository.save(customer);
     }
+    
+    @Override
+    public Integer getNewCustomersCountByDateRange(String startDate, String endDate) {
+        return customerRepository.getNewCustomersCountByDateRange(startDate, endDate);
+    }
 }

@@ -21,4 +21,7 @@ public interface CustomerService {
     Customer getCustomerByUsername(String username);
 
     void changePassword(String username, String oldPassword, String newPassword);
+    
+    // Phương thức mới để lấy số lượng khách hàng mới trong khoảng thời gian
+    Integer getNewCustomersCountByDateRange(String startDate, String endDate);
 }

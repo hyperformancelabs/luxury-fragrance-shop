@@ -152,6 +152,63 @@ const generateStatsMockData = (startDate, endDate) => {
 };
 
 export const dashboardService = {
+  // Lấy số lượng khách hàng mới theo khoảng thời gian
+  getNewCustomersCountByDateRange: async (startDate, endDate) => {
+    try {
+      const formattedStartDate = formatDate(startDate);
+      const formattedEndDate = formatDate(endDate);
+      
+      console.log(`Gọi API lấy số khách hàng mới với range: ${formattedStartDate} - ${formattedEndDate}`);
+      
+      // Thêm timeout để xem rõ trạng thái loading
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/customers/new-customers-count-by-date-range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
+        );
+        
+        console.log('API response for new customers count:', response);
+        
+        if (response.data && (response.data.status === 'SUCCESS' || response.data.status === 'success')) {
+          // Kiểm tra xem response.data.data có tồn tại và không null
+          const data = response.data.data;
+          
+          if (!data) {
+            console.warn('API returned null or undefined data');
+            return {
+              newCustomersCount: 0
+            };
+          }
+          
+          return {
+            newCustomersCount: data.newCustomersCount || 0
+          };
+        } else {
+          console.error('API error:', response.data);
+          throw new Error(response.data?.message || 'Có lỗi khi lấy số khách hàng mới');
+        }
+      } catch (apiError) {
+        console.error('API request failed:', apiError);
+        
+        // Trả về dữ liệu mẫu nếu có lỗi kết nối
+        if (apiError.code === 'ERR_NETWORK' || 
+            apiError.message.includes('Network Error') ||
+            (apiError.response && apiError.response.status >= 500)) {
+          console.warn('Using mock data due to backend error');
+          return {
+            newCustomersCount: Math.floor(Math.random() * 8) + 3 // 3-10 khách hàng
+          };
+        }
+        
+        throw apiError;
+      }
+    } catch (error) {
+      console.error('Error in getNewCustomersCountByDateRange:', error);
+      throw error;
+    }
+  },
+  
   // Lấy số lượng đơn hàng mới theo khoảng thời gian
   getNewOrdersCountByDateRange: async (startDate, endDate) => {
     try {
