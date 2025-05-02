@@ -1,7 +1,120 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, isSameDay } from 'date-fns';
 import { TrendingUp, ShoppingCart, Users, Clock, Calendar, Package, AlertCircle, ChevronRight, ChevronDown, Truck, User, DollarSign, Activity } from 'lucide-react';
 
+// Quick select presets
+const presets = [
+  { label: 'Hôm nay', range: [new Date(), new Date()] },
+  { label: 'Tuần này', range: [startOfWeek(new Date(), { weekStartsOn: 1 }), endOfWeek(new Date(), { weekStartsOn: 1 })] },
+  { label: 'Tháng này', range: [startOfMonth(new Date()), endOfMonth(new Date())] },
+  { label: 'Quý này', range: [startOfQuarter(new Date()), endOfQuarter(new Date())] },
+  { label: 'Năm nay', range: [startOfYear(new Date()), endOfYear(new Date())] }
+];
+
+function DateRangeFilter({ onChange }) {
+  const [range, setRange] = useState({ from: new Date(), to: new Date() });
+  const [tempRange, setTempRange] = useState(range);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [customizing, setCustomizing] = useState(false);
+  const containerRef = useRef(null);
+  
+  // Determine if current range matches a preset
+  const activePreset = presets.find(p =>
+    isSameDay(p.range[0], range.from) && isSameDay(p.range[1], range.to)
+  );
+
+  const handlePreset = (preset) => {
+    const [from, to] = preset.range;
+    setRange({ from, to });
+    setTempRange({ from, to });
+    onChange({ from, to });
+    setMenuOpen(false);
+    setCustomizing(false);
+  };
+
+  // Close menu on outside click, discard temp if customizing
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        if (customizing) {
+          setTempRange(range);
+          setCustomizing(false);
+        }
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen, customizing, range]);
+
+  // Format the display date
+  const getDisplayText = () => {
+    if (activePreset) return activePreset.label;
+    return `${format(range.from, 'dd/MM/yyyy')} - ${format(range.to, 'dd/MM/yyyy')}`;
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* Trigger Button */}
+      <button
+        className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+        onClick={() => { setMenuOpen(!menuOpen); setCustomizing(false); setTempRange(range); }}
+      >
+        <span>{getDisplayText()}</span>
+        <ChevronDown size={16} className="ml-2 text-gray-500" />
+      </button>
+      
+      {/* Dropdown Panel */}
+      {menuOpen && (
+        <div className={`absolute top-full right-0 mt-2 bg-white shadow-lg rounded-md z-50 ${customizing ? 'w-[340px]' : 'w-64'}`}>
+          {!customizing ? (
+            <ul className="divide-y divide-gray-100">
+              {presets.map((p) => (
+                <li key={p.label}>
+                  <button
+                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 ${p.label === activePreset?.label ? 'bg-blue-50 text-blue-600' : ''}`}
+                    onClick={() => handlePreset(p)}
+                  >{p.label}</button>
+                </li>
+              ))}
+              <li>
+                <button
+                  className={`w-full text-left px-4 py-2 hover:bg-gray-100 ${!activePreset ? 'bg-blue-50 text-blue-600' : ''}`}
+                  onClick={() => setCustomizing(true)}
+                >Tùy chỉnh</button>
+              </li>
+            </ul>
+          ) : (
+            <div className="p-4">
+              <DayPicker
+                mode="range"
+                selected={tempRange}
+                onSelect={(r) => { if (r?.from && r?.to) setTempRange(r); }}
+              />
+              <div className="mt-2 flex justify-end space-x-2">
+                <button
+                  className="px-2 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
+                  onClick={() => setCustomizing(false)}
+                >Hủy</button>
+                <button
+                  className="px-2 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  onClick={() => { setRange(tempRange); onChange(tempRange); setMenuOpen(false); setCustomizing(false); }}
+                >Xác nhận</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const Dashboard = () => {
+  const [dateRange, setDateRange] = useState({ from: new Date(), to: new Date() });
+
   // Sample data for charts and widgets
   const salesData = [
     { month: 'T1', amount: 4500000 },
@@ -49,13 +162,10 @@ const Dashboard = () => {
     <div className="p-6 bg-gray-50">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Tổng quan</h2>
-        <div className="flex items-center">
-          <select className="mr-2 bg-white border border-gray-300 rounded-md px-3 py-2 text-sm">
-            <option>Hôm nay</option>
-            <option>Tuần này</option>
-            <option>Tháng này</option>
-          </select>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">
+        <div className="flex items-center relative">
+          {/* Replace select with custom DateRangeFilter */}
+          <DateRangeFilter onChange={setDateRange} />
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 ml-2">
             Xuất báo cáo
           </button>
         </div>
