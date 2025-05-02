@@ -1,20 +1,20 @@
 import React, { useState } from "react";
 import { useCart } from "../context/CartContext";
 import { Toaster, toast } from "sonner";
+import { useAuth } from "../context/AuthContext";
 
 const QuickView = ({ selectedProduct, handleClosePopup }) => {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
   const [error, setError] = useState("");
-  const { addToCart } = useCart();
+  const { addToCart, localCart, setLocalCart } = useCart();
+  const { user } = useAuth();
 
-  const sizes = [
-    { value: "50ml", label: "50ml", price: 350000 },
-    { value: "75ml", label: "75ml", price: 420000 },
-    { value: "100ml", label: "100ml", price: 520000 },
-    { value: "120ml", label: "120ml", price: 610000 },
-    { value: "200ml", label: "200ml", price: 700000 },
-  ];
+  const sizes = selectedProduct.volumePrices.map((item) => ({
+    value: `${item.volume}ml`,
+    label: `${item.volume}ml`,
+    price: item.price,
+  }));
 
   const handleIncrement = () => {
     setQuantity(quantity + 1);
@@ -28,37 +28,89 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
 
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
-    setError(""); 
+    setError("");
   };
 
-  const formatPrice = (price) => price.toLocaleString("vi-VN") + " VND";
+  const formatPrice = (price, withVND = true) => {
+    if (!price) return "0";
+    const formatted = Number(price).toLocaleString("vi-VN");
+    return withVND ? `${formatted} VND` : formatted;
+  };
 
   const selectedSizeObj = sizes.find((size) => size.value === selectedSize);
 
-  const priceDisplay = selectedSizeObj
-    ? formatPrice(selectedSizeObj.price)
-    : `${formatPrice(
-        Math.min(...sizes.map((size) => size.price))
-      )} - ${formatPrice(Math.max(...sizes.map((size) => size.price)))}`;
+  const priceDisplay = (() => {
+    if (!sizes || sizes.length === 0) return "Chưa có giá";
+
+    if (selectedSizeObj) {
+      return formatPrice(selectedSizeObj.price);
+    }
+
+    if (sizes.length === 1) {
+      return formatPrice(sizes[0].price);
+    } else {
+      const sortedPrices = sizes
+        .map((size) => size.price)
+        .sort((a, b) => a - b);
+      return `${formatPrice(sortedPrices[0], false)} - ${formatPrice(
+        sortedPrices[sortedPrices.length - 1]
+      )}`;
+    }
+  })();
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-      toast.error("Vui lòng chọn dung tích trước khi thêm vào giỏ hàng");
+      toast.error("Vui lòng chọn dung tích");
       return;
     }
 
-    addToCart({
-      id: selectedProduct.id,
-      name: selectedProduct.name,
-      price: selectedSizeObj.price,
-      quantity: quantity,
-      image: selectedProduct.img,
-      selectedSize: selectedSize,
-      brand: selectedProduct.brand,
-      country: selectedProduct.country,
-    });
+    const variant = selectedProduct.volumePrices.find(
+      (v) => `${v.volume}ml` === selectedSize
+    );
 
-    toast.success("Sản phẩm đã được thêm vào giỏ hàng!");
+    const variantId = variant?.variantId || variant?.productVariantId || variant?.id;
+
+    if (!variant || !variantId) {
+      toast.error("Không tìm thấy dung tích phù hợp!");
+      return;
+    }
+
+    const item = {
+      productVariantId: variantId,
+      productName: selectedProduct.productName,
+      unitPrice: variant.price,
+      quantity: quantity,
+      imageUrl: selectedProduct.imageUrl,
+      volume: variant.volume,
+      note: `Size ${variant.volume}ml`,
+      selectedSize: selectedSize,
+    };
+
+    if (user) {
+      addToCart(item);
+      toast.success("Sản phẩm đã được thêm vào giỏ hàng");
+      handleClosePopup();
+    } else {
+      const isProductInCart = localCart.some(
+        (product) => product.productVariantId === item.productVariantId && product.selectedSize === item.selectedSize
+      );
+
+    if (isProductInCart) {
+      setLocalCart((prevCart) =>
+        prevCart.map((product) =>
+          product.productVariantId === item.productVariantId && product.selectedSize === item.selectedSize
+            ? { ...product, quantity: product.quantity + quantity }
+            : product
+        )
+      );
+      toast.success("Cập nhật số lượng giỏ hàng");
+    } else {
+      setLocalCart((prevCart) => [...prevCart, item]);
+      toast.success("Đã thêm vào giỏ hàng");
+    }
+}
+    
+
     handleClosePopup();
   };
 
@@ -75,21 +127,21 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
         <div className="w-full md:w-1/2 mb-4 md:mb-0">
           <div className="mb-4 flex justify-center items-center border">
             <img
-              src={selectedProduct.img}
-              alt={selectedProduct.name}
+              src={selectedProduct.imageUrl}
+              alt={selectedProduct.productName}
               className="w-32 h-32 md:w-64 md:h-64"
             />
           </div>
 
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-2 justify-start items-start">
             <img
-              src={selectedProduct.img}
-              alt="Thumbnail 1"
+              src={selectedProduct.imageUrl}
+              alt={selectedProduct.productName}
               className="w-12 h-12 md:w-24 md:h-24 border"
             />
             <img
-              src={selectedProduct.img}
-              alt="Thumbnail 2"
+              src={selectedProduct.imageUrl}
+              alt={selectedProduct.productName}
               className="w-12 h-12 md:w-24 md:h-24 border"
             />
           </div>
@@ -97,20 +149,16 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
 
         <div className="p-2 md:p-4 w-full md:w-1/2 flex flex-col justify-start items-start">
           <p className="text-start text-base md:text-xl font-bold mb-2 md:mb-4">
-            {selectedProduct.name}
+            {selectedProduct.productName}
           </p>
           <div className="flex flex-row justify-between items-start md:items-center w-full">
             <p className="text-sm md:text-base">
               Thương hiệu:{" "}
-              <span className="text-red-600 font-semibold">
-                {selectedProduct.brand}
-              </span>
+              <span className="text-red-600 font-semibold"></span>
             </p>
             <p className="text-sm md:text-base">
               Quốc gia:{" "}
-              <span className="text-red-600 font-semibold">
-                {selectedProduct.country}
-              </span>
+              <span className="text-red-600 font-semibold"></span>
             </p>
           </div>
           <p className="text-start text-red-600 font-bold my-2 text-xl md:text-2xl">
@@ -138,24 +186,6 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
             </div>
           </div>
 
-          {/* <div className="flex items-center gap-2 mb-4 w-full">
-            <p className="text-sm md:text-base">Số lượng: </p>
-            <div className="flex items-center gap-2">
-              <button
-                className="border font-bold border-gray-300 px-2 md:px-4 py-1 md:py-2 rounded-md"
-                onClick={handleDecrement}
-              >
-                -
-              </button>
-              <div className="font-bold text-base md:text-xl px-2 md:px-4 py-1">{quantity}</div>
-              <button
-                className="border font-bold border-gray-300 px-2 md:px-4 py-1 md:py-2 rounded-md"
-                onClick={handleIncrement}
-              >
-                +
-              </button>
-            </div>
-          </div> */}
           <div className="my-2 flex gap-4 items-center">
             <label className="block text-base font-medium">Số lượng:</label>
             <div className="inline-flex rounded-md border border-gray-300 overflow-hidden">

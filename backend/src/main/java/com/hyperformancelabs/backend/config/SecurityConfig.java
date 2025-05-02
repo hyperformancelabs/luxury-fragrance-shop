@@ -32,15 +32,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Các API không cần xác thực
                         .requestMatchers(
-                                "/api/v1/auth/**",        // Đăng nhập, đăng ký
-                                "/api/v1/products/**",    // Public product APIs
-                                "/api/v1/cart/**",        // Giỏ hàng cho cả guest và user
-                                "/api/v1/payment/**"      // Thanh toán có thể không cần login
+                                "/api/v1/auth/**",
+                                "/api/v1/products/**",
+                                "/api/v1/cart/**",
+                                "/api/v1/payment/**",
+                                "/api/v1/orders/**"
                         ).permitAll()
-
-                        // Các API còn lại yêu cầu JWT
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

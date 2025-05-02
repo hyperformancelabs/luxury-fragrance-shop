@@ -1,14 +1,10 @@
 package com.hyperformancelabs.backend.service;
 
-import com.hyperformancelabs.backend.dto.CreateOrderRequest;
-import com.hyperformancelabs.backend.dto.OrderDetailDTO;
-import com.hyperformancelabs.backend.dto.OrderSummary;
-
-import java.util.List;
+import com.hyperformancelabs.backend.dto.*;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface OrderService {
-    void createOrder(String username, CreateOrderRequest request);
-    List<OrderSummary> getOrdersForCustomer(String username);
-    OrderDetailDTO getOrderDetail(Integer orderId, String username);
-
+    Object createOrderFromCart(CreateOrderFromCartRequest request, HttpServletRequest servletRequest);
+    Object createOrderFromAnonymous(CreateAnonymousOrderRequest request, HttpServletRequest servletRequest);
+    OrderDetailFullResponse getFullOrderDetail(Integer orderId);
 }

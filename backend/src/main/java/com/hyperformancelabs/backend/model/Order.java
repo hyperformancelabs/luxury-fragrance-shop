@@ -34,10 +34,11 @@ public class Order {
     @JoinColumn(name = "employee_id")
     private Employee employee;
 
-    @NotNull(message = "Order date cannot be empty")
-    @PastOrPresent(message = "Order date cannot be in the future")
-    @Column(name = "order_date", nullable = false)
-    private LocalDateTime orderDate;
+//    @NotNull(message = "Order date cannot be empty")
+@PastOrPresent(message = "Order date cannot be in the future")
+@Column(name = "order_date", nullable = false, insertable = false, updatable = false)
+private LocalDateTime orderDate;
+
 
     @DecimalMin(value = "0.0", inclusive = true, message = "Total amount cannot be negative")
     @Column(name = "total_amount", precision = 10, scale = 2)
@@ -48,7 +49,7 @@ public class Order {
     private BigDecimal shippingFee;
 
     @NotBlank(message = "Order status cannot be empty")
-    @Pattern(regexp = "pending|processing|shipping|delivered|cancelled", message = "Invalid order status")
+    @Pattern(regexp = "pending|processing|shipping|delivered|cancelled|waitPayment|cod|paid", message = "Invalid order status")
     @Column(name = "order_status", nullable = false, length = 20)
     private String orderStatus;
 

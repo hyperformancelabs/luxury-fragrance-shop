@@ -1,11 +1,10 @@
 package com.hyperformancelabs.backend.service.impl;
 
-import com.hyperformancelabs.backend.dto.ProductDTO;
-import com.hyperformancelabs.backend.dto.Random10Product;
-import com.hyperformancelabs.backend.dto.TopSellingProductDTO;
+import com.hyperformancelabs.backend.dto.*;
 import com.hyperformancelabs.backend.model.Product;
 import com.hyperformancelabs.backend.model.ProductVariant;
 import com.hyperformancelabs.backend.repository.ProductRepository;
+import com.hyperformancelabs.backend.repository.ProductVariantRepository;
 import com.hyperformancelabs.backend.service.ProductService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +14,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -26,15 +27,13 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    // Chuyển từ Product sang ProductDTO
+
     private ProductDTO convertToDTO(Product product) {
         ProductDTO dto = new ProductDTO();
         dto.setProductId(product.getProductId());
         dto.setBrandName(product.getBrand().getBrandName());
         dto.setProductName(product.getProductName());
         dto.setDescription(product.getDescription());
-        // Các trường volume, price, discountPrice, quantityInStock, reorderLevel không còn thuộc Product
-        // mà thuộc về ProductVariant. Hiển thị giá trị mặc định hoặc lấy từ variant đầu tiên nếu có
         if (!product.getProductVariants().isEmpty()) {
             ProductVariant firstVariant = product.getProductVariants().iterator().next();
             dto.setVolume(firstVariant.getVolume());
@@ -53,7 +52,6 @@ public class ProductServiceImpl implements ProductService {
         return dto;
     }
 
-    // Phân trang tất cả sản phẩm
     @Override
     public Page<ProductDTO> getAllProducts(int page) {
         Pageable pageable = PageRequest.of(page, 25);
@@ -61,7 +59,6 @@ public class ProductServiceImpl implements ProductService {
         return productPage.map(this::convertToDTO);
     }
 
-    // Phân trang theo brand
     @Override
     public Page<ProductDTO> getProductsByBrand(String brandName, int page) {
         Pageable pageable = PageRequest.of(page, 25);
@@ -69,7 +66,6 @@ public class ProductServiceImpl implements ProductService {
         return productPage.map(this::convertToDTO);
     }
 
-    // Sản phẩm bán chạy nhất (có thông tin số lượng đã bán)
     @Override
     public List<TopSellingProductDTO> getTopSellingProducts(String category, int limit) {
         List<Object[]> results = productRepository.findTop10TopSellingProducts(category);
@@ -87,7 +83,6 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toList());
     }
 
-    // Tìm sản phẩm theo tên (phân trang)
     @Override
     public Page<ProductDTO> findByProductNameContainingIgnoreCase(String productName, Pageable pageable) {
         Page<Product> productPage = productRepository.findByProductNameContainingIgnoreCase(productName, pageable);
@@ -97,13 +92,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<Random10Product> getRandom10Product() {
-        // Lấy toàn bộ danh sách sản phẩm từ database
-        List<Product> allProducts = productRepository.findAll();
 
-        // Shuffle để ngẫu nhiên thứ tự
+        List<Product> allProducts = productRepository.findAll();
         Collections.shuffle(allProducts);
 
-        // Lấy 10 sản phẩm đầu tiên sau khi random
         return allProducts.stream()
                 .limit(10)
                 .filter(product -> !product.getProductVariants().isEmpty())
@@ -121,4 +113,78 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toList());
     }
 
+    @Autowired
+    private ProductVariantRepository productVariantRepository;
+
+    public List<ProductCard> getProductVariantsGroupedByProduct() {
+
+        List<ProductVariant> productVariants = productVariantRepository.findAll();
+        Map<Integer, List<ProductVariant>> groupedByProduct = productVariants.stream()
+                .collect(Collectors.groupingBy(variant -> variant.getProduct().getProductId()));
+
+        List<ProductCard> response = new ArrayList<>();
+        for (Map.Entry<Integer, List<ProductVariant>> entry : groupedByProduct.entrySet()) {
+            Integer productId = entry.getKey();
+            List<ProductVariant> variants = entry.getValue();
+
+            List<VolumePriceDTO> volumePriceList = variants.stream()
+                    .map(variant -> new VolumePriceDTO(
+                            variant.getProductVariantId(),
+                            variant.getVolume(),
+                            variant.getPrice()
+
+                    ))
+                    .collect(Collectors.toList());
+
+            Product product = variants.get(0).getProduct();
+
+            ProductCard productResponse = new ProductCard(
+                    productId,
+                    product.getProductName(),
+                    product.getImageUrl(),
+                    volumePriceList
+            );
+
+            response.add(productResponse);
+        }
+
+        return response;
+    }
+
+    @Override
+    public List<ProductCard> getFlashSaleProducts() {
+        List<ProductVariant> productVariants = productVariantRepository.findAll();
+
+        List<ProductVariant> flashSaleVariants = productVariants.stream()
+                .filter(variant -> variant.getProduct().getProductId() != null)
+                .filter(variant -> variant.getProduct().getProductId() >= 1 && variant.getProduct().getProductId() <= 10)
+                .collect(Collectors.toList());
+
+        Map<Integer, List<ProductVariant>> groupedByProduct = flashSaleVariants.stream()
+                .collect(Collectors.groupingBy(variant -> variant.getProduct().getProductId()));
+
+        List<ProductCard> response = new ArrayList<>();
+
+        for (Map.Entry<Integer, List<ProductVariant>> entry : groupedByProduct.entrySet()) {
+            Integer productId = entry.getKey();
+            List<ProductVariant> variants = entry.getValue();
+
+            List<VolumePriceDTO> volumePrices = variants.stream()
+                    .map(variant -> new VolumePriceDTO(variant.getProductVariantId(),variant.getVolume(), variant.getPrice()))
+                    .collect(Collectors.toList());
+
+            Product product = variants.get(0).getProduct(); // Tất cả variant cùng product
+
+            ProductCard productCard = new ProductCard(
+                    productId,
+                    product.getProductName(),
+                    product.getImageUrl(),
+                    volumePrices
+            );
+
+            response.add(productCard);
+        }
+
+        return response;
+    }
 }

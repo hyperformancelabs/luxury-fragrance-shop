@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.service;
 
+import com.hyperformancelabs.backend.dto.ProductCard;
 import com.hyperformancelabs.backend.dto.ProductDTO;
 import com.hyperformancelabs.backend.dto.Random10Product;
 import com.hyperformancelabs.backend.dto.TopSellingProductDTO;
@@ -19,4 +20,8 @@ public interface ProductService {
     List<TopSellingProductDTO> getTopSellingProducts(String category, int limit);
 
     List<Random10Product> getRandom10Product();
+
+    List<ProductCard> getProductVariantsGroupedByProduct();
+
+    List<ProductCard> getFlashSaleProducts();
 }

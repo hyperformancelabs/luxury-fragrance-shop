@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.repository;
 
+import com.hyperformancelabs.backend.dto.ProductCard;
 import com.hyperformancelabs.backend.model.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,4 +38,9 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     ORDER BY SUM(oi.quantity) DESC
     """, nativeQuery = true)
     List<Object[]> findTop10TopSellingProducts(@Param("category") String category);
+
+    @Query(value = "SELECT p FROM Product p LEFT JOIN FETCH p.productVariants WHERE p.productId BETWEEN 1 AND 10")
+    List<Product> findFlashSaleProducts();
+
+
 }

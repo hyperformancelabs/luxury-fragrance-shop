@@ -17,9 +17,10 @@ public class JwtUtil {
     @Value("${jwt.expirationMs}")
     private long jwtExpirationMs;
 
-    public String generateToken(String username) {
+    public String generateToken(Integer customerId,String username) {
         return Jwts.builder()
                 .setSubject(username)
+                .claim("customerId", customerId)
                 .claim("role", "customer")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
@@ -35,6 +36,15 @@ public class JwtUtil {
                 .getBody()
                 .getSubject();
     }
+    public Integer getCustomerIdFromToken(String token) {
+        return (Integer) Jwts.parserBuilder()
+                .setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes()))
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("customerId", Integer.class);
+    }
+
 
     public boolean validateToken(String token) {
         try {

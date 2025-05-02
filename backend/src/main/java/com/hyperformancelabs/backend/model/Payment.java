@@ -24,6 +24,9 @@ public class Payment {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
+    @Column(name = "payment_method_id", nullable = false)
+    private Integer paymentMethodId;
+
     @Column(name = "payment_date", nullable = false)
     private LocalDateTime paymentDate;
 

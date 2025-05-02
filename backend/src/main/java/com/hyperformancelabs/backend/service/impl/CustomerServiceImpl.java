@@ -88,7 +88,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public String loginAndGenerateToken(LoginRequest request) {
         Customer customer = login(request);
-        return jwtUtil.generateToken(customer.getUsername());
+        return jwtUtil.generateToken(customer.getCustomerId(), customer.getUsername());
     }
 
     @Override

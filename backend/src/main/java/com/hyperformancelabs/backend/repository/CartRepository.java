@@ -10,13 +10,12 @@ import java.util.Optional;
 
 @Repository
 public interface CartRepository extends JpaRepository<Cart, Integer> {
-    Optional<Cart> findByCustomer_CustomerIdAndStatus(Integer customerId, String status);
-    List<Cart> findByCustomerUsername(String username);
-    // Lấy danh sách giỏ hàng của customer
-    List<Cart> findByCustomer_Username(String username);
-
-    // Lấy giỏ hàng active mới nhất
+    Optional<Cart> findByCustomerAndStatus(Customer customer, String status);
+    Optional<Cart> findByCustomer_CustomerId(Integer customerId);  // This is the correct format
     Optional<Cart> findTopByCustomerAndStatusOrderByCartIdDesc(Customer customer, String status);
     Optional<Cart> findTopBySessionIdOrderByCartIdDesc(String sessionId);
-
+    Optional<Cart> findTopBySessionIdAndStatusOrderByCartIdDesc(String sessionId, String status);
+    List<Cart> findByCustomerUsername(String username);
+    List<Cart> findByCustomer_Username(String username);
+    Optional<Cart> findBySessionIdAndStatus(String sessionId, String status);
 }

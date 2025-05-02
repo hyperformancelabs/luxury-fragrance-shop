@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.controller;
 
+import com.hyperformancelabs.backend.dto.ProductCard;
 import com.hyperformancelabs.backend.dto.ProductDTO;
 import com.hyperformancelabs.backend.dto.Random10Product;
 import com.hyperformancelabs.backend.dto.TopSellingProductDTO;
@@ -25,7 +26,7 @@ public class ProductController {
     @Autowired
     private ProductServiceImpl productService;
 
-    // API lấy tất cả sản phẩm với phân trang
+
     @GetMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllProducts(@RequestParam(defaultValue = "0") int page) {
         try {
@@ -57,7 +58,6 @@ public class ProductController {
         }
     }
 
-    // API lấy sản phẩm theo brand với phân trang
     @GetMapping("/brand/{brandName}")
     public ResponseEntity<ApiResponse<Page<ProductDTO>>> getProductsByBrand(
             @PathVariable String brandName,
@@ -164,5 +164,15 @@ public class ProductController {
     @GetMapping("/random-10")
     public List<Random10Product> getRandom10Products() {
         return productService.getRandom10Product();
+    }
+
+    @GetMapping("/variants")
+    public List<ProductCard> getProductVariantsGroupedByProduct() {
+        return productService.getProductVariantsGroupedByProduct();
+    }
+
+    @GetMapping("/flash-sale")
+    public List<ProductCard> getFlashSaleProducts() {
+        return productService.getFlashSaleProducts();
     }
 }

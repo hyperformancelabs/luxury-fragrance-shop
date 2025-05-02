@@ -3,6 +3,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import QuickView from "./QuickView";
 
 const NewProduct = () => {
   const [selectedSize, setSelectedSize] = useState('75ml');

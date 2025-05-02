@@ -8,6 +8,7 @@ import com.hyperformancelabs.backend.util.VnPayUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -26,6 +27,7 @@ public class VnPayServiceImpl implements VnPayService {
     private final OrderRepository orderRepository;
 
     @Override
+    @Transactional
     public String createVnPayPaymentURL(Order order, HttpServletRequest request) {
         long amount = order.getTotalAmount().multiply(BigDecimal.valueOf(100)).longValue();
         String txnRef = UUID.randomUUID().toString().replace("-", "").substring(0, 15);

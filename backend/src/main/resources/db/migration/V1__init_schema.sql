@@ -312,7 +312,7 @@ CREATE TABLE [Order] (
     [shipping_fee] DECIMAL(10,2) NULL,
     [order_status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Order_Status] DEFAULT 'pending'
-        CONSTRAINT [CK_Order_Status] CHECK ([order_status] IN ('pending','processing','shipping','delivered','cancelled')),
+        CONSTRAINT [CK_Order_Status] CHECK ([order_status] IN ('pending','processing','shipping','delivered','cancelled','waitPayment', 'paid','cod')),
     [shipping_address] NVARCHAR(255) NOT NULL,
     [shipping_option] NVARCHAR(50) NOT NULL,
     [note] NVARCHAR(MAX) NULL,
@@ -348,6 +348,7 @@ GO
 -- 22. Table Payment
 CREATE TABLE [Payment] (
     [payment_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+    [payment_method_id] INT NOT NULL,
     [order_id] INT NOT NULL,
     [payment_date] DATETIME NOT NULL,
     [amount] DECIMAL(10,2) NOT NULL,
