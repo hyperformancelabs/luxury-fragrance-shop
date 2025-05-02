@@ -241,5 +241,10 @@ public class OrderServiceImpl implements OrderService {
     public Integer getNewOrdersCountByDateRange(String startDate, String endDate) {
         return orderRepository.getNewOrdersCountByDateRange(startDate, endDate);
     }
+    
+    @Override
+    public BigDecimal getAverageOrderValueByDateRange(String startDate, String endDate) {
+        return orderRepository.getAverageOrderValueByDateRange(startDate, endDate);
+    }
 }
 

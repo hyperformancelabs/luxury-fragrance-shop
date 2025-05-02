@@ -154,4 +154,15 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
         @Param("startDate") String startDate,  // format: dd/MM/yyyy
         @Param("endDate") String endDate       // format: dd/MM/yyyy
     );
+    
+    @Query(value = """
+    SELECT COALESCE(AVG(o.total_amount), 0)
+    FROM [Order] o
+    WHERE o.order_date >= CONVERT(DATETIME, :startDate, 103)
+        AND o.order_date < DATEADD(DAY, 1, CONVERT(DATETIME, :endDate, 103))
+    """, nativeQuery = true)
+    BigDecimal getAverageOrderValueByDateRange(
+        @Param("startDate") String startDate,  // format: dd/MM/yyyy
+        @Param("endDate") String endDate       // format: dd/MM/yyyy
+    );
 }

@@ -146,12 +146,15 @@ const Dashboard = () => {
   const [revenueData, setRevenueData] = useState(null);
   const [newOrdersData, setNewOrdersData] = useState(null);
   const [newCustomersData, setNewCustomersData] = useState(null);
+  const [avgOrderValueData, setAvgOrderValueData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [loadingAvgOrderValue, setLoadingAvgOrderValue] = useState(false);
   const [error, setError] = useState(null);
   const [ordersError, setOrdersError] = useState(null);
   const [customersError, setCustomersError] = useState(null);
+  const [avgOrderValueError, setAvgOrderValueError] = useState(null);
 
   // Fetch revenue data when date range changes
   useEffect(() => {
@@ -232,6 +235,33 @@ const Dashboard = () => {
     };
 
     fetchNewCustomersData();
+  }, [dateRange]);
+  
+  // Fetch average order value data when date range changes
+  useEffect(() => {
+    const fetchAverageOrderValueData = async () => {
+      try {
+        setLoadingAvgOrderValue(true);
+        setAvgOrderValueError(null);
+        console.log('Fetching average order value data for range:', dateRange);
+        const data = await dashboardService.getAverageOrderValueByDateRange(dateRange.from, dateRange.to);
+        console.log('Average order value data received:', data);
+        
+        // Kiểm tra dữ liệu trả về
+        if (data === null || data === undefined) {
+          throw new Error('Dữ liệu giá trị trung bình đơn hàng trả về không hợp lệ');
+        }
+        
+        setAvgOrderValueData(data);
+      } catch (err) {
+        console.error('Error fetching average order value data:', err);
+        setAvgOrderValueError(err.message || 'Không thể lấy dữ liệu giá trị trung bình đơn hàng. Vui lòng thử lại sau.');
+      } finally {
+        setLoadingAvgOrderValue(false);
+      }
+    };
+
+    fetchAverageOrderValueData();
   }, [dateRange]);
 
   // Format currency function
@@ -401,14 +431,28 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-500 text-sm mb-1">Trung bình đơn hàng</p>
-              <h3 className="text-2xl font-bold text-gray-800">₫950,000</h3>
-              <div className="flex items-center text-red-500 text-sm mt-2">
-                <TrendingUp size={16} className="mr-1" /> -3% so với hôm qua
-              </div>
+              <p className="text-gray-500 text-sm mb-1">Giá trị trung bình đơn hàng {getDateRangeText()}</p>
+              <h3 className="text-2xl font-bold text-gray-800">
+                {loadingAvgOrderValue ? (
+                  <span className="text-gray-500">Đang tải...</span>
+                ) : avgOrderValueError ? (
+                  <div>
+                    <span className="text-red-500 text-sm">Lỗi khi tải dữ liệu</span>
+                    <span className="block text-xs text-gray-500 mt-1">{avgOrderValueError}</span>
+                  </div>
+                ) : (
+                  formatCurrency(avgOrderValueData?.averageOrderValue || 0)
+                )}
+              </h3>
+              {!loadingAvgOrderValue && !avgOrderValueError && avgOrderValueData?.averageOrderValue && (
+                <div className="flex items-center text-blue-500 text-sm mt-2">
+                  <TrendingUp size={16} className="mr-1" /> 
+                  Giá trị trung bình mỗi đơn hàng
+                </div>
+              )}
             </div>
             <div className="bg-green-50 p-3 rounded-lg">
-              <Activity size={24} className="text-green-600" />
+              <TrendingUp size={24} className="text-green-600" />
             </div>
           </div>
         </div>

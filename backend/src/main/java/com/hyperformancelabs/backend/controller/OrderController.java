@@ -10,16 +10,28 @@ import com.hyperformancelabs.backend.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 @RestController
 @RequestMapping("/orders")
@@ -201,15 +213,67 @@ public class OrderController {
             @RequestParam String endDate     // format: dd/MM/yyyy
     ) {
         try {
+            // Kiểm tra định dạng ngày
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            dateFormat.setLenient(false);
+            dateFormat.parse(startDate);
+            dateFormat.parse(endDate);
+
             // Lấy số lượng đơn hàng mới trong khoảng thời gian
             Integer newOrdersCount = orderService.getNewOrdersCountByDateRange(startDate, endDate);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("newOrdersCount", newOrdersCount);
-            
+
+            // Tạo response với dữ liệu
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("newOrdersCount", newOrdersCount);
+
             return ResponseEntity.ok(
-                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
-                    ApiResponseStatus.GET_SUCCESS_MESSAGE, response)
+                    new ApiResponse<Object>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE, responseData)
+            );
+        } catch (ParseException e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<Object>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
+                    "Định dạng ngày không hợp lệ. Sử dụng định dạng dd/MM/yyyy", null)
+            );
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ApiResponse<Object>(ApiResponseStatus.SERVER_ERROR_CODE, ApiResponseStatus.ERROR_STATUS, 
+                    "Lỗi khi lấy số lượng đơn hàng mới: " + e.getMessage(), null)
+            );
+        }
+    }
+    
+    @GetMapping("/average-order-value-by-date-range")
+    public ResponseEntity<ApiResponse<Object>> getAverageOrderValueByDateRange(
+            @RequestParam String startDate,  // format: dd/MM/yyyy
+            @RequestParam String endDate     // format: dd/MM/yyyy
+    ) {
+        try {
+            // Kiểm tra định dạng ngày
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            dateFormat.setLenient(false);
+            dateFormat.parse(startDate);
+            dateFormat.parse(endDate);
+
+            // Lấy giá trị trung bình đơn hàng trong khoảng thời gian
+            BigDecimal averageOrderValue = orderService.getAverageOrderValueByDateRange(startDate, endDate);
+
+            // Tạo response với dữ liệu
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("averageOrderValue", averageOrderValue);
+
+            return ResponseEntity.ok(
+                    new ApiResponse<Object>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE, responseData)
+            );
+        } catch (ParseException e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<Object>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
+                    "Định dạng ngày không hợp lệ. Sử dụng định dạng dd/MM/yyyy", null)
             );
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
@@ -217,8 +281,8 @@ public class OrderController {
             e.printStackTrace(pw);
             
             return ResponseEntity.badRequest().body(
-                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
-                    "Error: " + e.getMessage(), null)
+                    new ApiResponse<Object>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
+                    "Lỗi khi lấy giá trị trung bình đơn hàng: " + e.getMessage(), null)
             );
         }
     }

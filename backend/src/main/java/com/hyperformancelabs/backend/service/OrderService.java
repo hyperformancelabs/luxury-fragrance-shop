@@ -31,4 +31,7 @@ public interface OrderService {
     
     // Phương thức mới để lấy số lượng đơn hàng mới trong khoảng thời gian
     Integer getNewOrdersCountByDateRange(String startDate, String endDate);
+    
+    // Phương thức mới để lấy giá trị trung bình đơn hàng trong khoảng thời gian
+    BigDecimal getAverageOrderValueByDateRange(String startDate, String endDate);
 }
