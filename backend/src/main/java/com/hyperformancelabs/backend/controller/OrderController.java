@@ -213,36 +213,24 @@ public class OrderController {
             @RequestParam String endDate     // format: dd/MM/yyyy
     ) {
         try {
-            // Kiểm tra định dạng ngày
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-            dateFormat.setLenient(false);
-            dateFormat.parse(startDate);
-            dateFormat.parse(endDate);
-
             // Lấy số lượng đơn hàng mới trong khoảng thời gian
             Integer newOrdersCount = orderService.getNewOrdersCountByDateRange(startDate, endDate);
-
-            // Tạo response với dữ liệu
-            Map<String, Object> responseData = new HashMap<>();
-            responseData.put("newOrdersCount", newOrdersCount);
-
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("newOrdersCount", newOrdersCount);
+            
             return ResponseEntity.ok(
-                    new ApiResponse<Object>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
-                    ApiResponseStatus.GET_SUCCESS_MESSAGE, responseData)
-            );
-        } catch (ParseException e) {
-            return ResponseEntity.badRequest().body(
-                    new ApiResponse<Object>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
-                    "Định dạng ngày không hợp lệ. Sử dụng định dạng dd/MM/yyyy", null)
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE, response)
             );
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
             
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    new ApiResponse<Object>(ApiResponseStatus.SERVER_ERROR_CODE, ApiResponseStatus.ERROR_STATUS, 
-                    "Lỗi khi lấy số lượng đơn hàng mới: " + e.getMessage(), null)
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
+                    "Error: " + e.getMessage(), null)
             );
         }
     }
@@ -253,27 +241,15 @@ public class OrderController {
             @RequestParam String endDate     // format: dd/MM/yyyy
     ) {
         try {
-            // Kiểm tra định dạng ngày
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-            dateFormat.setLenient(false);
-            dateFormat.parse(startDate);
-            dateFormat.parse(endDate);
-
             // Lấy giá trị trung bình đơn hàng trong khoảng thời gian
             BigDecimal averageOrderValue = orderService.getAverageOrderValueByDateRange(startDate, endDate);
-
-            // Tạo response với dữ liệu
-            Map<String, Object> responseData = new HashMap<>();
-            responseData.put("averageOrderValue", averageOrderValue);
-
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("averageOrderValue", averageOrderValue);
+            
             return ResponseEntity.ok(
-                    new ApiResponse<Object>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
-                    ApiResponseStatus.GET_SUCCESS_MESSAGE, responseData)
-            );
-        } catch (ParseException e) {
-            return ResponseEntity.badRequest().body(
-                    new ApiResponse<Object>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
-                    "Định dạng ngày không hợp lệ. Sử dụng định dạng dd/MM/yyyy", null)
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE, response)
             );
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
@@ -281,8 +257,8 @@ public class OrderController {
             e.printStackTrace(pw);
             
             return ResponseEntity.badRequest().body(
-                    new ApiResponse<Object>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
-                    "Lỗi khi lấy giá trị trung bình đơn hàng: " + e.getMessage(), null)
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
+                    "Error: " + e.getMessage(), null)
             );
         }
     }
