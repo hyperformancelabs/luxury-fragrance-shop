@@ -300,5 +300,20 @@ public class OrderServiceImpl implements OrderService {
     public BigDecimal getAverageOrderValueByDateRange(String startDate, String endDate) {
         return orderRepository.getAverageOrderValueByDateRange(startDate, endDate);
     }
+    
+    /**
+     * Get the top K recent orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @param limit Number of orders to retrieve (K)
+     * @return List of top K recent orders in the date range
+     */
+    @Override
+    public List<OrderDTO> getTopRecentOrdersByDateRange(String startDate, String endDate, int limit) {
+        List<Order> orders = orderRepository.findTopRecentOrdersByDateRange(startDate, endDate, limit);
+        return orders.stream()
+                .map(OrderDTO::toDTO)
+                .collect(Collectors.toList());
+    }
 }
 

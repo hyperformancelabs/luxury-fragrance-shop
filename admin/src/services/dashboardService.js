@@ -152,6 +152,58 @@ const generateStatsMockData = (startDate, endDate) => {
 };
 
 export const dashboardService = {
+  // Lấy danh sách sản phẩm có tồn kho thấp
+  getLowStockProducts: async (limit = 10) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/inventory/low-stock-alerts`, {
+        params: { limit },
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.data.code === 200) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Không thể lấy danh sách sản phẩm tồn kho thấp');
+      }
+    } catch (error) {
+      console.error('Error fetching low stock products:', error);
+      throw error;
+    }
+  },
+  
+  // Lấy danh sách đơn hàng gần đây theo khoảng thời gian
+  getRecentOrdersByDateRange: async (startDate, endDate, limit = 5) => {
+    try {
+      const formattedStartDate = formatDate(startDate);
+      const formattedEndDate = formatDate(endDate);
+      
+      // Gọi API để lấy danh sách đơn hàng gần đây
+      const response = await axios.get(`${API_BASE_URL}/orders/recent-orders-by-date-range`, {
+        params: {
+          startDate: formattedStartDate,
+          endDate: formattedEndDate,
+          limit
+        },
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.data.code === 200) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Không thể lấy danh sách đơn hàng gần đây');
+      }
+    } catch (error) {
+      console.error('Error fetching recent orders:', error);
+      throw error;
+    }
+  },
+  
   // Lấy số lượng khách hàng mới theo khoảng thời gian và phần trăm thay đổi
   getNewCustomersCountByDateRange: async (startDate, endDate) => {
     try {

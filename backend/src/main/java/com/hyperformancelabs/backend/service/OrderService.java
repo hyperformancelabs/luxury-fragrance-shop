@@ -62,4 +62,13 @@ public interface OrderService {
      * @return Average value of delivered orders in the date range
      */
     BigDecimal getAverageOrderValueByDateRange(String startDate, String endDate);
+    
+    /**
+     * Get the top K recent orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @param limit Number of orders to retrieve (K)
+     * @return List of top K recent orders in the date range
+     */
+    List<OrderDTO> getTopRecentOrdersByDateRange(String startDate, String endDate, int limit);
 }

@@ -203,4 +203,26 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
         @Param("startDate") String startDate,
         @Param("endDate") String endDate
     );
+    
+    /**
+     * Get the top K recent orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @param limit Number of orders to retrieve (K)
+     * @return List of top K recent orders in the date range
+     */
+    @Query(value = """
+    SELECT o.*
+    FROM [Order] o
+    WHERE o.order_date >= CONVERT(DATETIME, :startDate, 103)
+        AND o.order_date < DATEADD(DAY, 1, CONVERT(DATETIME, :endDate, 103))
+    ORDER BY o.order_date DESC
+    OFFSET 0 ROWS
+    FETCH NEXT :limit ROWS ONLY
+    """, nativeQuery = true)
+    List<Order> findTopRecentOrdersByDateRange(
+        @Param("startDate") String startDate,
+        @Param("endDate") String endDate,
+        @Param("limit") int limit
+    );
 }

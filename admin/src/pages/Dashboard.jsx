@@ -160,14 +160,20 @@ const Dashboard = () => {
   const [newOrdersData, setNewOrdersData] = useState(null);
   const [newCustomersData, setNewCustomersData] = useState(null);
   const [avgOrderValueData, setAvgOrderValueData] = useState(null);
+  const [apiRecentOrders, setApiRecentOrders] = useState([]);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [loadingAvgOrderValue, setLoadingAvgOrderValue] = useState(false);
+  const [loadingRecentOrders, setLoadingRecentOrders] = useState(false);
+  const [loadingLowStock, setLoadingLowStock] = useState(false);
   const [error, setError] = useState(null);
   const [ordersError, setOrdersError] = useState(null);
   const [customersError, setCustomersError] = useState(null);
   const [avgOrderValueError, setAvgOrderValueError] = useState(null);
+  const [recentOrdersError, setRecentOrdersError] = useState(null);
+  const [lowStockError, setLowStockError] = useState(null);
 
   // Fetch revenue data when date range changes
   useEffect(() => {
@@ -276,6 +282,60 @@ const Dashboard = () => {
 
     fetchAverageOrderValueData();
   }, [dateRange]);
+  
+  // Fetch recent orders data when date range changes
+  useEffect(() => {
+    const fetchRecentOrders = async () => {
+      try {
+        setLoadingRecentOrders(true);
+        setRecentOrdersError(null);
+        console.log('Fetching recent orders for range:', dateRange);
+        const data = await dashboardService.getRecentOrdersByDateRange(dateRange.from, dateRange.to, 5);
+        console.log('Recent orders data received:', data);
+        
+        // Kiểm tra dữ liệu trả về
+        if (data === null || data === undefined) {
+          throw new Error('Dữ liệu đơn hàng gần đây trả về không hợp lệ');
+        }
+        
+        setApiRecentOrders(data);
+      } catch (err) {
+        console.error('Error fetching recent orders data:', err);
+        setRecentOrdersError(err.message || 'Không thể lấy dữ liệu đơn hàng gần đây. Vui lòng thử lại sau.');
+      } finally {
+        setLoadingRecentOrders(false);
+      }
+    };
+
+    fetchRecentOrders();
+  }, [dateRange]);
+  
+  // Fetch low stock products
+  useEffect(() => {
+    const fetchLowStockProducts = async () => {
+      try {
+        setLoadingLowStock(true);
+        setLowStockError(null);
+        console.log('Fetching low stock products');
+        const data = await dashboardService.getLowStockProducts(5); // Get top 5 low stock products
+        console.log('Low stock products data received:', data);
+        
+        // Kiểm tra dữ liệu trả về
+        if (data === null || data === undefined) {
+          throw new Error('Dữ liệu sản phẩm tồn kho thấp trả về không hợp lệ');
+        }
+        
+        setLowStockProducts(data);
+      } catch (err) {
+        console.error('Error fetching low stock products:', err);
+        setLowStockError(err.message || 'Không thể lấy dữ liệu sản phẩm tồn kho thấp. Vui lòng thử lại sau.');
+      } finally {
+        setLoadingLowStock(false);
+      }
+    };
+
+    fetchLowStockProducts();
+  }, []);
 
   // Format currency function
   const formatCurrency = (amount) => {
@@ -712,36 +772,78 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng tiền</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {recentOrders.map((order, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{order.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{order.customer}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.date}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        order.status === 'Đã giao' ? 'bg-green-100 text-green-800' : 
-                        order.status === 'Đang giao' ? 'bg-yellow-100 text-yellow-800' : 
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">₫{order.amount.toLocaleString()}</td>
+            {loadingRecentOrders ? (
+              <div className="p-6 flex justify-center items-center">
+                <div className="text-gray-500 flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
+                  <span>Đang tải dữ liệu...</span>
+                </div>
+              </div>
+            ) : recentOrdersError ? (
+              <div className="p-6 text-center">
+                <div className="text-red-500 mb-2">
+                  <AlertCircle size={24} className="mx-auto mb-2" />
+                  <p>Không thể tải dữ liệu đơn hàng gần đây</p>
+                </div>
+                <p className="text-sm text-gray-500">{recentOrdersError}</p>
+              </div>
+            ) : apiRecentOrders.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                <ShoppingCart size={24} className="mx-auto mb-2" />
+                <p>Không có đơn hàng nào trong khoảng thời gian này</p>
+              </div>
+            ) : (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng tiền</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {apiRecentOrders.map((order, index) => {
+                    // Format the order date
+                    const orderDate = order.orderDate ? 
+                      `${order.orderDate[2]}/${order.orderDate[1]}/${order.orderDate[0]}` : 
+                      'N/A';
+                    
+                    // Map order status to Vietnamese
+                    const statusMap = {
+                      'pending': 'Chờ xử lý',
+                      'processing': 'Đang xử lý',
+                      'shipping': 'Đang giao',
+                      'delivered': 'Đã giao',
+                      'cancelled': 'Đã hủy'
+                    };
+                    
+                    const statusClass = {
+                      'pending': 'bg-blue-100 text-blue-800',
+                      'processing': 'bg-purple-100 text-purple-800',
+                      'shipping': 'bg-yellow-100 text-yellow-800',
+                      'delivered': 'bg-green-100 text-green-800',
+                      'cancelled': 'bg-red-100 text-red-800'
+                    };
+                    
+                    return (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">#{order.orderId}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">ID: {order.customerId}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{orderDate}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs rounded-full ${statusClass[order.orderStatus] || 'bg-gray-100 text-gray-800'}`}>
+                            {statusMap[order.orderStatus] || order.orderStatus}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{formatCurrency(order.totalAmount)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
         
@@ -785,22 +887,51 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="p-3">
-              {lowStockItems.map((item, index) => (
-                <div key={index} className="p-3 hover:bg-gray-50 rounded-lg">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-                      <AlertCircle size={20} className="text-red-500" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">{item.name}</h4>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-sm text-gray-500">Ngưỡng: {item.threshold}</span>
-                        <span className="text-sm font-medium text-red-600">Còn lại: {item.stock}</span>
+              {loadingLowStock ? (
+                <div className="p-6 flex justify-center items-center">
+                  <div className="text-gray-500 flex flex-col items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mb-2"></div>
+                    <span>Đang tải dữ liệu...</span>
+                  </div>
+                </div>
+              ) : lowStockError ? (
+                <div className="p-6 text-center">
+                  <div className="text-red-500 mb-2">
+                    <AlertCircle size={24} className="mx-auto mb-2" />
+                    <p>Không thể tải dữ liệu cảnh báo tồn kho</p>
+                  </div>
+                  <p className="text-sm text-gray-500">{lowStockError}</p>
+                </div>
+              ) : lowStockProducts.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">
+                  <Package size={24} className="mx-auto mb-2" />
+                  <p>Không có sản phẩm nào dưới ngưỡng tồn kho</p>
+                </div>
+              ) : (
+                lowStockProducts.map((item, index) => (
+                  <div key={index} className="p-3 hover:bg-gray-50 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                        <AlertCircle size={20} className="text-red-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-800">{item.brandName} {item.productName} {item.volume}ml</h4>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-sm text-gray-500">Ngưỡng: {item.reorderLevel}</span>
+                          <span className="text-sm font-medium text-red-600">Còn lại: {item.quantityInStock}</span>
+                        </div>
+                        {/* Progress bar showing stock level relative to threshold */}
+                        <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                          <div 
+                            className="bg-red-500 h-1.5 rounded-full" 
+                            style={{ width: `${Math.min(100, (item.quantityInStock / item.reorderLevel) * 100)}%` }}
+                          ></div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

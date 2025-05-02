@@ -67,4 +67,28 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
         @Param("category") String category,
         @Param("limit") int limit
     );
+    
+    /**
+     * Find products with low stock levels (below or equal to reorder level)
+     * @param limit Number of products to return
+     * @return List of product data with low stock levels, sorted by stock level (ascending)
+     */
+    @Query(value = """
+    SELECT pv.product_variant_id, p.product_name, b.brand_name, pv.volume, pv.price, 
+           p.image_url, pv.quantity_in_stock, pv.reorder_level
+    FROM [ProductVariant] pv
+    JOIN [Product] p ON p.product_id = pv.product_id
+    JOIN [Brand] b ON b.brand_id = p.brand_id
+    WHERE pv.quantity_in_stock <= pv.reorder_level
+      AND pv.reorder_level IS NOT NULL
+      AND pv.reorder_level > 0
+    ORDER BY 
+      CASE 
+        WHEN pv.reorder_level = 0 THEN 0 
+        ELSE (pv.quantity_in_stock * 1.0 / pv.reorder_level) 
+      END ASC
+    OFFSET 0 ROWS
+    FETCH NEXT :limit ROWS ONLY
+    """, nativeQuery = true)
+    List<Object[]> findProductsWithLowStock(@Param("limit") int limit);
 }

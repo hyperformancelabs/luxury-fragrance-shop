@@ -336,5 +336,41 @@ public class OrderController {
             );
         }
     }
+    
+    /**
+     * Get the top K recent orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @param limit Number of orders to retrieve (K)
+     * @return List of top K recent orders in the date range
+     */
+    @GetMapping("/recent-orders-by-date-range")
+    public ResponseEntity<ApiResponse<List<OrderDTO>>> getTopRecentOrdersByDateRange(
+            @RequestParam String startDate,  // format: dd/MM/yyyy
+            @RequestParam String endDate,     // format: dd/MM/yyyy
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        try {
+            List<OrderDTO> orders = orderService.getTopRecentOrdersByDateRange(startDate, endDate, limit);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE, orders)
+            );
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            String stackTrace = sw.toString();
+            
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(
+                        ApiResponseStatus.BAD_REQUEST_CODE, 
+                        ApiResponseStatus.ERROR_STATUS, 
+                        "Error: " + e.getMessage() + "\nStack trace: " + stackTrace,
+                        null
+                    )
+            );
+        }
+    }
 }
 
