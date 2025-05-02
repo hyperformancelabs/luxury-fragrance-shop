@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface OrderService {
@@ -24,4 +25,10 @@ public interface OrderService {
     BigDecimal getTotalAmountOfDeliveredOrdersByDateRange(String startDate, String endDate);
     BigDecimal getTotalAmountOfDeliveredOrdersByQuarterAndYear(int quarter, int year);
     void UpdateOrderStatus(Integer orderId, String status);
+    
+    // Phương thức mới để lấy dữ liệu doanh thu chi tiết theo khoảng thời gian
+    Map<String, Object> getRevenueDataByDateRange(String startDate, String endDate);
+    
+    // Phương thức mới để lấy số lượng đơn hàng mới trong khoảng thời gian
+    Integer getNewOrdersCountByDateRange(String startDate, String endDate);
 }

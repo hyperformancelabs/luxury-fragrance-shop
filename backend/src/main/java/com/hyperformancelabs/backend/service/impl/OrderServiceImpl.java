@@ -16,9 +16,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -170,6 +175,54 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public Map<String, Object> getRevenueDataByDateRange(String startDate, String endDate) {
+        // Lấy dữ liệu doanh thu theo ngày
+        List<Object[]> revenueByDate = orderRepository.getRevenueByDateRange(startDate, endDate);
+        
+        // Chuyển đổi kết quả thành dạng dễ sử dụng
+        List<Map<String, Object>> chartData = new ArrayList<>();
+        
+        for (Object[] row : revenueByDate) {
+            Map<String, Object> dataPoint = new HashMap<>();
+            dataPoint.put("date", row[0]);  // Ngày (dd/MM/yyyy)
+            dataPoint.put("amount", row[1]); // Tổng doanh thu
+            dataPoint.put("orderCount", row[2]); // Số lượng đơn hàng
+            
+            chartData.add(dataPoint);
+        }
+        
+        // Tạo response
+        Map<String, Object> response = new HashMap<>();
+        response.put("chartData", chartData);
+        
+        // Tính toán thêm một số thống kê (nếu cần)
+        if (!chartData.isEmpty()) {
+            // Tìm ngày có doanh thu cao nhất
+            Map<String, Object> maxRevenueDay = chartData.stream()
+                .max(Comparator.comparing(day -> ((BigDecimal) day.get("amount"))))
+                .orElse(null);
+                
+            if (maxRevenueDay != null) {
+                response.put("maxRevenueDay", maxRevenueDay);
+            }
+            
+            // Tính doanh thu trung bình mỗi ngày
+            BigDecimal totalRevenue = chartData.stream()
+                .map(day -> (BigDecimal) day.get("amount"))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                
+            BigDecimal avgDailyRevenue = totalRevenue.divide(BigDecimal.valueOf(chartData.size()), 0, RoundingMode.HALF_UP);
+            response.put("averageDailyRevenue", avgDailyRevenue);
+        } else {
+            // Nếu không có dữ liệu, cung cấp giá trị mặc định
+            response.put("maxRevenueDay", null);
+            response.put("averageDailyRevenue", BigDecimal.ZERO);
+        }
+        
+        return response;
+    }
+
+    @Override
     public BigDecimal getTotalAmountOfDeliveredOrdersByQuarterAndYear(int quarter, int year) {
         return orderRepository.getTotalAmountOfDeliveredOrdersByQuarterAndYear(quarter, year);
     }
@@ -182,6 +235,11 @@ public class OrderServiceImpl implements OrderService {
 
         order.setOrderStatus(status);
         orderRepository.save(order);
+    }
+    
+    @Override
+    public Integer getNewOrdersCountByDateRange(String startDate, String endDate) {
+        return orderRepository.getNewOrdersCountByDateRange(startDate, endDate);
     }
 }
 

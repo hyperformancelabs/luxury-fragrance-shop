@@ -37,7 +37,9 @@ public class SecurityConfig {
                                 "/api/v1/auth/**",        // Đăng nhập, đăng ký
                                 "/api/v1/**",    // Public product APIs
                                 "/api/v1/cart/**",        // Giỏ hàng cho cả guest và user
-                                "/api/v1/payment/**"      // Thanh toán có thể không cần login
+                                "/api/v1/payment/**",      // Thanh toán có thể không cần login
+                                "/api/v1/orders/revenue-by-date-range",  // API doanh thu cho dashboard admin
+                                "/api/v1/orders/total-amount-of-delivered-orders-*" // Các endpoint thống kê doanh thu
                         ).permitAll()
 
                         // Các API còn lại yêu cầu JWT

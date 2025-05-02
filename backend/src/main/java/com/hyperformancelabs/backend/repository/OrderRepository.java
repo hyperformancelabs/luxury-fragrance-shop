@@ -98,6 +98,23 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     );
 
     @Query(value = """
+    SELECT 
+        CONVERT(VARCHAR, o.order_date, 103) AS date,
+        COALESCE(SUM(o.total_amount), 0) AS totalAmount,
+        COUNT(*) AS orderCount
+    FROM [Order] o
+    WHERE o.order_status = 'delivered'
+        AND o.order_date >= CONVERT(DATETIME, :startDate, 103)
+        AND o.order_date < DATEADD(DAY, 1, CONVERT(DATETIME, :endDate, 103))
+    GROUP BY CONVERT(VARCHAR, o.order_date, 103)
+    ORDER BY CONVERT(DATETIME, CONVERT(VARCHAR, o.order_date, 103), 103)
+    """, nativeQuery = true)
+    List<Object[]> getRevenueByDateRange(
+        @Param("startDate") String startDate,  // format: dd/MM/yyyy
+        @Param("endDate") String endDate       // format: dd/MM/yyyy
+    );
+
+    @Query(value = """
     SELECT COALESCE(SUM(o.total_amount), 0)
     FROM [Order] o
     WHERE o.order_status = 'delivered'
@@ -125,5 +142,16 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     BigDecimal getTotalAmountOfDeliveredOrdersByQuarterAndYear(
         @Param("quarter") int quarter,  // 1-4
         @Param("year") int year
+    );
+    
+    @Query(value = """
+    SELECT COUNT(*)
+    FROM [Order] o
+    WHERE o.order_date >= CONVERT(DATETIME, :startDate, 103)
+        AND o.order_date < DATEADD(DAY, 1, CONVERT(DATETIME, :endDate, 103))
+    """, nativeQuery = true)
+    Integer getNewOrdersCountByDateRange(
+        @Param("startDate") String startDate,  // format: dd/MM/yyyy
+        @Param("endDate") String endDate       // format: dd/MM/yyyy
     );
 }

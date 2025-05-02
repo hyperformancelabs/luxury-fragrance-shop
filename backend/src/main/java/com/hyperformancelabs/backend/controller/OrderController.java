@@ -18,6 +18,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/orders")
@@ -157,6 +159,66 @@ public class OrderController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
                     new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        }
+    }
+
+    @GetMapping("/revenue-by-date-range")
+    public ResponseEntity<ApiResponse<Object>> getRevenueDataByDateRange(
+            @RequestParam String startDate,  // format: dd/MM/yyyy
+            @RequestParam String endDate     // format: dd/MM/yyyy
+    ) {
+        try {
+            // Lấy tổng doanh thu
+            BigDecimal totalAmount = orderService.getTotalAmountOfDeliveredOrdersByDateRange(startDate, endDate);
+            
+            // Lấy doanh thu theo ngày trong khoảng thời gian (cho biểu đồ)
+            Map<String, Object> revenueData = orderService.getRevenueDataByDateRange(startDate, endDate);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalAmount", totalAmount);
+            // Trả về dữ liệu đã được xử lý thành đúng định dạng
+            response.putAll(revenueData);
+            
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.GET_SUCCESS_MESSAGE, response)
+            );
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
+                    "Error: " + e.getMessage(), null)
+            );
+        }
+    }
+    
+    @GetMapping("/new-orders-count-by-date-range")
+    public ResponseEntity<ApiResponse<Object>> getNewOrdersCountByDateRange(
+            @RequestParam String startDate,  // format: dd/MM/yyyy
+            @RequestParam String endDate     // format: dd/MM/yyyy
+    ) {
+        try {
+            // Lấy số lượng đơn hàng mới trong khoảng thời gian
+            Integer newOrdersCount = orderService.getNewOrdersCountByDateRange(startDate, endDate);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("newOrdersCount", newOrdersCount);
+            
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE, response)
+            );
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
+                    "Error: " + e.getMessage(), null)
             );
         }
     }

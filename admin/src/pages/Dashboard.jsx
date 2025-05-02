@@ -3,6 +3,8 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, isSameDay } from 'date-fns';
 import { TrendingUp, ShoppingCart, Users, Clock, Calendar, Package, AlertCircle, ChevronRight, ChevronDown, Truck, User, DollarSign, Activity } from 'lucide-react';
+import { revenueService } from '../services/revenueService';
+import { dashboardService } from '../services/dashboardService';
 
 // Quick select presets
 const presets = [
@@ -112,8 +114,115 @@ function DateRangeFilter({ onChange }) {
   );
 }
 
+// Thêm hàm nhóm dữ liệu theo năm
+const groupDataByYear = (chartData) => {
+  if (!chartData || chartData.length === 0) return [];
+
+  // Nhóm dữ liệu theo năm
+  const groupedByYear = {};
+  
+  chartData.forEach(item => {
+    // Lấy năm từ ngày (định dạng dd/MM/yyyy)
+    const year = item.date.split('/')[2];
+    
+    if (!groupedByYear[year]) {
+      groupedByYear[year] = [];
+    }
+    
+    groupedByYear[year].push(item);
+  });
+  
+  // Sắp xếp các năm
+  return Object.keys(groupedByYear)
+    .sort()
+    .map(year => ({
+      year,
+      data: groupedByYear[year]
+    }));
+};
+
 const Dashboard = () => {
   const [dateRange, setDateRange] = useState({ from: new Date(), to: new Date() });
+  const [revenueData, setRevenueData] = useState(null);
+  const [newOrdersData, setNewOrdersData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [error, setError] = useState(null);
+  const [ordersError, setOrdersError] = useState(null);
+
+  // Fetch revenue data when date range changes
+  useEffect(() => {
+    const fetchRevenueData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        console.log('Fetching revenue data for range:', dateRange);
+        const data = await revenueService.getRevenueByDateRange(dateRange.from, dateRange.to);
+        console.log('Revenue data received:', data);
+        
+        // Kiểm tra dữ liệu trả về - không coi doanh thu 0 là lỗi
+        if (data === null || data === undefined) {
+          throw new Error('Dữ liệu trả về không hợp lệ');
+        }
+        
+        setRevenueData(data);
+      } catch (err) {
+        console.error('Error fetching revenue data:', err);
+        setError(err.message || 'Không thể lấy dữ liệu doanh thu. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRevenueData();
+  }, [dateRange]);
+  
+  // Fetch new orders count data when date range changes
+  useEffect(() => {
+    const fetchNewOrdersData = async () => {
+      try {
+        setLoadingOrders(true);
+        setOrdersError(null);
+        console.log('Fetching new orders data for range:', dateRange);
+        const data = await dashboardService.getNewOrdersCountByDateRange(dateRange.from, dateRange.to);
+        console.log('New orders data received:', data);
+        
+        // Kiểm tra dữ liệu trả về
+        if (data === null || data === undefined) {
+          throw new Error('Dữ liệu đơn hàng trả về không hợp lệ');
+        }
+        
+        setNewOrdersData(data);
+      } catch (err) {
+        console.error('Error fetching new orders data:', err);
+        setOrdersError(err.message || 'Không thể lấy dữ liệu đơn hàng mới. Vui lòng thử lại sau.');
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+
+    fetchNewOrdersData();
+  }, [dateRange]);
+
+  // Format currency function
+  const formatCurrency = (amount) => {
+    if (!amount) return '₫0';
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  // Get date range display text
+  const getDateRangeText = () => {
+    const activePreset = presets.find(p =>
+      isSameDay(p.range[0], dateRange.from) && isSameDay(p.range[1], dateRange.to)
+    );
+    
+    if (activePreset) return activePreset.label.toLowerCase();
+    return `từ ${format(dateRange.from, 'dd/MM/yyyy')} đến ${format(dateRange.to, 'dd/MM/yyyy')}`;
+  };
 
   // Sample data for charts and widgets
   const salesData = [
@@ -163,7 +272,6 @@ const Dashboard = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Tổng quan</h2>
         <div className="flex items-center relative">
-          {/* Replace select with custom DateRangeFilter */}
           <DateRangeFilter onChange={setDateRange} />
           <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 ml-2">
             Xuất báo cáo
@@ -176,11 +284,25 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-500 text-sm mb-1">Doanh thu hôm nay</p>
-              <h3 className="text-2xl font-bold text-gray-800">₫2,543,000</h3>
-              <div className="flex items-center text-green-500 text-sm mt-2">
-                <TrendingUp size={16} className="mr-1" /> +15% so với hôm qua
+              <p className="text-gray-500 text-sm mb-1">Doanh thu {getDateRangeText()}</p>
+              <h3 className="text-2xl font-bold text-gray-800">
+                {loading ? (
+                  <span className="text-gray-500">Đang tải...</span>
+                ) : error ? (
+                  <div>
+                    <span className="text-red-500 text-sm">Lỗi khi tải dữ liệu</span>
+                    <span className="block text-xs text-gray-500 mt-1">{error}</span>
+                  </div>
+                ) : (
+                  formatCurrency(revenueData?.totalAmount || 0)
+                )}
+              </h3>
+              {!loading && !error && revenueData?.averageDailyRevenue && (
+                <div className="flex items-center text-blue-500 text-sm mt-2">
+                  <Activity size={16} className="mr-1" /> 
+                  TB: {formatCurrency(revenueData.averageDailyRevenue)}/ngày
               </div>
+              )}
             </div>
             <div className="bg-blue-50 p-3 rounded-lg">
               <DollarSign size={24} className="text-blue-600" />
@@ -191,11 +313,25 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-500 text-sm mb-1">Đơn hàng mới</p>
-              <h3 className="text-2xl font-bold text-gray-800">16</h3>
-              <div className="flex items-center text-green-500 text-sm mt-2">
-                <TrendingUp size={16} className="mr-1" /> +5% so với hôm qua
-              </div>
+              <p className="text-gray-500 text-sm mb-1">Đơn hàng mới {getDateRangeText()}</p>
+              <h3 className="text-2xl font-bold text-gray-800">
+                {loadingOrders ? (
+                  <span className="text-gray-500">Đang tải...</span>
+                ) : ordersError ? (
+                  <div>
+                    <span className="text-red-500 text-sm">Lỗi khi tải dữ liệu</span>
+                    <span className="block text-xs text-gray-500 mt-1">{ordersError}</span>
+                  </div>
+                ) : (
+                  newOrdersData?.newOrdersCount || 0
+                )}
+              </h3>
+              {!loadingOrders && !ordersError && newOrdersData?.newOrdersCount && (
+                <div className="flex items-center text-green-500 text-sm mt-2">
+                  <ShoppingCart size={16} className="mr-1" /> 
+                  Tổng số đơn hàng mới
+                </div>
+              )}
             </div>
             <div className="bg-purple-50 p-3 rounded-lg">
               <ShoppingCart size={24} className="text-purple-600" />
@@ -238,33 +374,109 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-lg text-gray-800">Doanh thu theo tháng</h3>
-            <div className="flex items-center text-sm text-gray-500">
-              <span className="mr-2">2025</span>
-              <ChevronDown size={16} />
+            <h3 className="font-semibold text-lg text-gray-800">Doanh thu {getDateRangeText()}</h3>
+            {!loading && !error && revenueData?.maxRevenueDay && (
+              <div className="text-sm text-gray-500">
+                Ngày cao nhất: {revenueData.maxRevenueDay.date} ({formatCurrency(revenueData.maxRevenueDay.amount)})
             </div>
+            )}
           </div>
-          <div className="h-64">
-            {/* Chart placeholder */}
-            <div className="w-full h-full bg-gray-50 flex items-center justify-center rounded-lg relative">
-              <div className="absolute inset-0">
-                <div className="flex h-full">
-                  {salesData.map((data, index) => (
-                    <div key={index} className="flex-1 flex flex-col justify-end px-2">
+          
+          {/* Phần hiển thị biểu đồ - tăng chiều cao để biểu đồ đẹp hơn */}
+          <div className="h-80">
+            {loading ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-gray-500">Đang tải dữ liệu biểu đồ...</span>
+              </div>
+            ) : error ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-red-500">Không thể tải dữ liệu biểu đồ</span>
+              </div>
+            ) : revenueData?.chartData && revenueData.chartData.length > 0 ? (
+              <div className="w-full h-full bg-gray-50 flex flex-col overflow-hidden rounded-lg">
+                {/* Container chính với thanh cuộn ngang */}
+                <div className="w-full flex-1 overflow-x-auto">
+                  <div className="h-full flex items-end p-4 pb-1 relative">
+                    {/* Nhóm dữ liệu theo năm và hiển thị */}
+                    {groupDataByYear(revenueData.chartData).map((yearGroup, groupIndex) => {
+                      // Tính toán chiều rộng dựa trên số lượng dữ liệu
+                      const widthPerItem = Math.max(30, Math.min(80, 1000 / revenueData.chartData.length));
+                      
+                      return (
+                        <div 
+                          key={yearGroup.year} 
+                          className="flex flex-col h-full min-w-fit relative"
+                          style={{ borderLeft: groupIndex > 0 ? '1px dashed #e5e7eb' : 'none' }}
+                        >
+                          {/* Nhãn năm */}
+                          <div className="sticky left-0 self-start px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded mb-2 shadow-sm z-10">
+                            {yearGroup.year}
+                          </div>
+                          
+                          {/* Dữ liệu năm */}
+                          <div className="flex flex-1 items-end">
+                            {yearGroup.data.map((item, index) => {
+                              // Tính chiều cao tương đối với giá trị cao nhất
+                              const height = Math.max(
+                                10, 
+                                (Number(item.amount) / (revenueData.maxRevenueDay?.amount || 1)) * 200
+                              );
+                              
+                              return (
+                                <div 
+                                  key={index} 
+                                  className="relative group mx-1 flex flex-col items-center"
+                                  style={{ width: `${widthPerItem}px` }}
+                                >
                       <div 
-                        className="bg-blue-500 hover:bg-blue-600 transition-all rounded-t-sm"
-                        style={{ height: `${(data.amount / 7200000) * 100}%` }}
-                      ></div>
-                      <div className="text-xs text-center mt-2 text-gray-600">{data.month}</div>
+                                    className="bg-blue-500 group-hover:bg-blue-600 hover:shadow-lg transition-all duration-200 w-full max-w-8 rounded-t-sm"
+                                    style={{ height: `${height}px` }}
+                                  >
+                                    {/* Hiển thị giá trị khi cột đủ cao */}
+                                    {height > 40 && (
+                                      <span className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full text-xs text-blue-700 opacity-0 group-hover:opacity-100">
+                                        {formatCurrency(item.amount).replace('₫', '')}
+                                      </span>
+                                    )}
+                                  </div>
+                                  
+                                  <span className="text-xs mt-1 text-gray-600 whitespace-nowrap truncate" style={{ maxWidth: `${widthPerItem}px` }}>
+                                    {item.date.substring(0, 5)}
+                                  </span>
+                                  
+                                  {/* Tooltip hiển thị khi hover */}
+                                  <div className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs rounded py-1 px-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap">
+                                    <div className="font-medium">{item.date}</div>
+                                    <div className="font-semibold">{formatCurrency(item.amount)}</div>
+                                    <div>{item.orderCount} đơn hàng</div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                {/* Legend */}
+                <div className="flex justify-between items-center p-2 border-t border-gray-200 bg-white text-xs text-gray-500">
+                  <div>
+                    <span className="w-2 h-2 inline-block bg-blue-500 rounded-full mr-1"></span>
+                    Doanh thu theo ngày
+                  </div>
+                  <div>
+                    {revenueData.chartData.length} ngày • Tổng: {formatCurrency(revenueData.totalAmount)}
                     </div>
-                  ))}
                 </div>
               </div>
-              {/* This text appears if no chart library is available */}
-              <div className="text-gray-400 text-sm z-10 bg-white px-3 py-1 rounded">
-                Biểu đồ doanh thu theo tháng
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 rounded-lg">
+                <span className="text-gray-500 mb-2">Không có dữ liệu doanh thu trong khoảng thời gian này</span>
+                <span className="text-sm text-gray-400">Vui lòng chọn khoảng thời gian khác hoặc kiểm tra lại dữ liệu</span>
               </div>
-            </div>
+            )}
           </div>
         </div>
         
