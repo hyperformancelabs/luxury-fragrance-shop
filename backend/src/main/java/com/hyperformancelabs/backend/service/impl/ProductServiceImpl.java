@@ -86,6 +86,31 @@ public class ProductServiceImpl implements ProductService {
                 .limit(limit)
                 .collect(Collectors.toList());
     }
+    
+    /**
+     * Get top K best-selling products within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @param category Optional category filter (suitable_gender)
+     * @param limit Number of top products to return
+     * @return List of top selling products with sales quantity
+     */
+    @Override
+    public List<TopSellingProductDTO> getTopSellingProductsByDateRange(String startDate, String endDate, String category, int limit) {
+        List<Object[]> results = productRepository.findTopSellingProductsByDateRange(startDate, endDate, category, limit);
+        return results.stream()
+                .map(result -> new TopSellingProductDTO(
+                        (Integer) result[0],            // productVariant.product_variant_id
+                        (String) result[1],             // p.product_name
+                        (String) result[2],             // b.brand_name
+                        (Integer) result[3],            // productVariant.volume
+                        (BigDecimal) result[4],         // productVariant.price
+                        (String) result[5],             // p.image_url
+                        ((Number) result[6]).intValue() // SUM(oi.quantity)
+                ))
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
 
     // Tìm sản phẩm theo tên (phân trang)
     @Override

@@ -2,12 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, isSameDay } from 'date-fns';
-import { TrendingUp, TrendingDown, ShoppingCart, Users, Clock, Calendar, Package, AlertCircle, ChevronRight, ChevronDown, Truck, User, DollarSign, Activity } from 'lucide-react';
+import { AlertCircle, TrendingUp, TrendingDown, ShoppingCart, Users, Clock, Calendar, Package, ChevronRight, ChevronDown, Truck, User, DollarSign, Activity } from 'lucide-react';
 import { revenueService } from '../services/revenueService';
 import { dashboardService } from '../services/dashboardService';
 
 // Quick select presets
 const presets = [
+  { label: 'Toàn bộ', range: [new Date('2004-07-08'), new Date()] },
   { label: 'Hôm nay', range: [new Date(), new Date()] },
   { label: 'Tuần này', range: [startOfWeek(new Date(), { weekStartsOn: 1 }), endOfWeek(new Date(), { weekStartsOn: 1 })] },
   { label: 'Tháng này', range: [startOfMonth(new Date()), endOfMonth(new Date())] },
@@ -16,7 +17,9 @@ const presets = [
 ];
 
 function DateRangeFilter({ onChange }) {
-  const [range, setRange] = useState({ from: new Date(), to: new Date() });
+  // Set default date range to "All time" (July 8, 2004 to today)
+  const defaultRange = { from: new Date('2004-07-08'), to: new Date() };
+  const [range, setRange] = useState(defaultRange);
   const [tempRange, setTempRange] = useState(range);
   const [menuOpen, setMenuOpen] = useState(false);
   const [customizing, setCustomizing] = useState(false);
@@ -35,6 +38,12 @@ function DateRangeFilter({ onChange }) {
     setMenuOpen(false);
     setCustomizing(false);
   };
+
+  // Trigger onChange with default range on mount
+  useEffect(() => {
+    onChange(defaultRange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Close menu on outside click, discard temp if customizing
   useEffect(() => {
@@ -142,7 +151,11 @@ const groupDataByYear = (chartData) => {
 };
 
 const Dashboard = () => {
-  const [dateRange, setDateRange] = useState({ from: new Date(), to: new Date() });
+  // Date range state - default to "All time" (July 8, 2004 to today)
+  const [dateRange, setDateRange] = useState({
+    from: new Date('2004-07-08'),
+    to: new Date()
+  });
   const [revenueData, setRevenueData] = useState(null);
   const [newOrdersData, setNewOrdersData] = useState(null);
   const [newCustomersData, setNewCustomersData] = useState(null);
@@ -294,12 +307,47 @@ const Dashboard = () => {
     { month: 'T6', amount: 6700000 }
   ];
   
-  // Top selling products
-  const topProducts = [
-    { id: 1, name: 'Chanel No.5', sold: 28, revenue: 7000000, stock: 12 },
-    { id: 2, name: 'Dior Sauvage', sold: 24, revenue: 6000000, stock: 8 },
-    { id: 3, name: 'YSL Black Opium', sold: 19, revenue: 4750000, stock: 15 }
-  ];
+  // State for top selling products
+  const [topProducts, setTopProducts] = useState([]);
+  const [loadingTopProducts, setLoadingTopProducts] = useState(false);
+  const [topProductsError, setTopProductsError] = useState(null);
+  
+  // Fetch top selling products when date range changes
+  useEffect(() => {
+    const fetchTopSellingProducts = async () => {
+      try {
+        setLoadingTopProducts(true);
+        setTopProductsError(null);
+        console.log('Fetching top selling products for range:', dateRange);
+        const data = await dashboardService.getTopSellingProductsByDateRange(dateRange.from, dateRange.to, 5);
+        console.log('Top selling products data received:', data);
+        
+        // Kiểm tra dữ liệu trả về
+        if (data === null || data === undefined || !Array.isArray(data)) {
+          throw new Error('Dữ liệu sản phẩm bán chạy trả về không hợp lệ');
+        }
+        
+        // Chuyển đổi dữ liệu API thành định dạng hiển thị
+        const formattedProducts = data.map(product => ({
+          id: product.productId,
+          name: `${product.brandName} ${product.productName} ${product.volume}ml`,
+          sold: product.totalQuantitySold,
+          revenue: product.price * product.totalQuantitySold,
+          stock: 0, // Thông tin này không có trong API, có thể bổ sung sau
+          imageUrl: product.imageUrl
+        }));
+        
+        setTopProducts(formattedProducts);
+      } catch (err) {
+        console.error('Error fetching top selling products:', err);
+        setTopProductsError(err.message || 'Không thể lấy dữ liệu sản phẩm bán chạy. Vui lòng thử lại sau.');
+      } finally {
+        setLoadingTopProducts(false);
+      }
+    };
+
+    fetchTopSellingProducts();
+  }, [dateRange]);
   
   // Recent orders
   const recentOrders = [
@@ -360,14 +408,20 @@ const Dashboard = () => {
                   formatCurrency(revenueData?.totalAmount || 0)
                 )}
               </h3>
-              {!loading && !error && revenueData?.previousPeriodChange && (
-                <div className={`flex items-center text-sm mt-2 ${revenueData.previousPeriodChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {revenueData.previousPeriodChange >= 0 ? (
+              {!loading && !error && revenueData?.previousPeriodChange !== undefined && (
+                <div className={`flex items-center text-sm mt-2 ${revenueData.previousPeriodChange > 0 ? 'text-green-500' : revenueData.previousPeriodChange < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                  {revenueData.previousPeriodChange > 0 ? (
                     <TrendingUp size={16} className="mr-1" />
-                  ) : (
+                  ) : revenueData.previousPeriodChange < 0 ? (
                     <TrendingDown size={16} className="mr-1" />
+                  ) : (
+                    <Activity size={16} className="mr-1" />
                   )}
-                  {revenueData.previousPeriodChange >= 0 ? 'Tăng' : 'Giảm'} {Math.abs(revenueData.previousPeriodChange)}% so với kỳ trước
+                  {revenueData.previousPeriodChange === 0 ? (
+                    'Bằng kỳ trước'
+                  ) : (
+                    `${revenueData.previousPeriodChange > 0 ? 'Tăng' : 'Giảm'} ${Math.abs(revenueData.previousPeriodChange)}% so với kỳ trước`
+                  )}
                 </div>
               )}
             </div>
@@ -393,14 +447,20 @@ const Dashboard = () => {
                   newOrdersData?.newOrdersCount || 0
                 )}
               </h3>
-              {!loadingOrders && !ordersError && newOrdersData?.previousPeriodChange && (
-                <div className={`flex items-center text-sm mt-2 ${newOrdersData.previousPeriodChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {newOrdersData.previousPeriodChange >= 0 ? (
+              {!loadingOrders && !ordersError && newOrdersData?.previousPeriodChange !== undefined && (
+                <div className={`flex items-center text-sm mt-2 ${newOrdersData.previousPeriodChange > 0 ? 'text-green-500' : newOrdersData.previousPeriodChange < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                  {newOrdersData.previousPeriodChange > 0 ? (
                     <TrendingUp size={16} className="mr-1" />
-                  ) : (
+                  ) : newOrdersData.previousPeriodChange < 0 ? (
                     <TrendingDown size={16} className="mr-1" />
+                  ) : (
+                    <Activity size={16} className="mr-1" />
                   )}
-                  {newOrdersData.previousPeriodChange >= 0 ? 'Tăng' : 'Giảm'} {Math.abs(newOrdersData.previousPeriodChange)}% so với kỳ trước
+                  {newOrdersData.previousPeriodChange === 0 ? (
+                    'Bằng kỳ trước'
+                  ) : (
+                    `${newOrdersData.previousPeriodChange > 0 ? 'Tăng' : 'Giảm'} ${Math.abs(newOrdersData.previousPeriodChange)}% so với kỳ trước`
+                  )}
                 </div>
               )}
             </div>
@@ -426,14 +486,20 @@ const Dashboard = () => {
                   newCustomersData?.newCustomersCount || 0
                 )}
               </h3>
-              {!loadingCustomers && !customersError && newCustomersData?.previousPeriodChange && (
-                <div className={`flex items-center text-sm mt-2 ${newCustomersData.previousPeriodChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {newCustomersData.previousPeriodChange >= 0 ? (
+              {!loadingCustomers && !customersError && newCustomersData?.previousPeriodChange !== undefined && (
+                <div className={`flex items-center text-sm mt-2 ${newCustomersData.previousPeriodChange > 0 ? 'text-green-500' : newCustomersData.previousPeriodChange < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                  {newCustomersData.previousPeriodChange > 0 ? (
                     <TrendingUp size={16} className="mr-1" />
-                  ) : (
+                  ) : newCustomersData.previousPeriodChange < 0 ? (
                     <TrendingDown size={16} className="mr-1" />
+                  ) : (
+                    <Activity size={16} className="mr-1" />
                   )}
-                  {newCustomersData.previousPeriodChange >= 0 ? 'Tăng' : 'Giảm'} {Math.abs(newCustomersData.previousPeriodChange)}% so với kỳ trước
+                  {newCustomersData.previousPeriodChange === 0 ? (
+                    'Bằng kỳ trước'
+                  ) : (
+                    `${newCustomersData.previousPeriodChange > 0 ? 'Tăng' : 'Giảm'} ${Math.abs(newCustomersData.previousPeriodChange)}% so với kỳ trước`
+                  )}
                 </div>
               )}
             </div>
@@ -588,22 +654,48 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="p-3">
-            {topProducts.map((product, index) => (
-              <div key={index} className="p-3 hover:bg-gray-50 rounded-lg">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-                    <Package size={20} className="text-gray-500" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-800">{product.name}</h4>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-sm text-gray-500">{product.sold} đã bán</span>
-                      <span className="text-sm font-medium text-blue-600">₫{(product.revenue / 1000000).toFixed(1)}tr</span>
+            {loadingTopProducts ? (
+              <div className="p-6 flex justify-center items-center">
+                <div className="text-gray-500 flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
+                  <span>Đang tải dữ liệu...</span>
+                </div>
+              </div>
+            ) : topProductsError ? (
+              <div className="p-6 text-center">
+                <div className="text-red-500 mb-2">
+                  <AlertCircle size={24} className="mx-auto mb-2" />
+                  <p>Không thể tải dữ liệu sản phẩm bán chạy</p>
+                </div>
+                <p className="text-sm text-gray-500">{topProductsError}</p>
+              </div>
+            ) : topProducts.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                <Package size={24} className="mx-auto mb-2" />
+                <p>Không có dữ liệu sản phẩm bán chạy trong khoảng thời gian này</p>
+              </div>
+            ) : (
+              topProducts.map((product, index) => (
+                <div key={index} className="p-3 hover:bg-gray-50 rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                      {product.imageUrl ? (
+                        <img src={product.imageUrl} alt={product.name} className="w-8 h-8 object-cover rounded" />
+                      ) : (
+                        <Package size={20} className="text-gray-500" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-800">{product.name}</h4>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-sm text-gray-500">{product.sold} đã bán</span>
+                        <span className="text-sm font-medium text-blue-600">{formatCurrency(product.revenue)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

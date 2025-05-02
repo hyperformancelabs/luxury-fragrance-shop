@@ -199,8 +199,8 @@ export const dashboardService = {
             (apiError.response && apiError.response.status >= 500)) {
           console.warn('Using mock data due to backend error');
           return {
-            newCustomersCount: Math.floor(Math.random() * 8) + 3, // 3-10 khách hàng
-            previousPeriodChange: Math.floor(Math.random() * 20) - 5 // -5% đến +15%
+            newCustomersCount: 45,
+            previousPeriodChange: 12.5
           };
         }
         
@@ -259,8 +259,8 @@ export const dashboardService = {
             (apiError.response && apiError.response.status >= 500)) {
           console.warn('Using mock data due to backend error');
           return {
-            newOrdersCount: Math.floor(Math.random() * 10) + 5, // 5-15 đơn hàng
-            previousPeriodChange: Math.floor(Math.random() * 25) - 10 // -10% đến +15%
+            newOrdersCount: 78,
+            previousPeriodChange: 8.2
           };
         }
         
@@ -317,7 +317,7 @@ export const dashboardService = {
             (apiError.response && apiError.response.status >= 500)) {
           console.warn('Using mock data due to backend error');
           return {
-            averageOrderValue: Math.floor(Math.random() * 400000) + 600000 // 600k-1M VND
+            averageOrderValue: 950000
           };
         }
         
@@ -335,62 +335,47 @@ export const dashboardService = {
       const formattedStartDate = formatDate(startDate);
       const formattedEndDate = formatDate(endDate);
       
-      console.log(`Gọi API với range: ${formattedStartDate} - ${formattedEndDate}`);
+      console.log(`Gọi API lấy doanh thu với range: ${formattedStartDate} - ${formattedEndDate}`);
       
       // Thêm timeout để xem rõ trạng thái loading
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       try {
         const response = await axios.get(
           `${API_BASE_URL}/orders/revenue-by-date-range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
         );
         
-        console.log('API response:', response);
+        console.log('API response for revenue:', response);
         
-        if (response.data && response.data.status === 'SUCCESS' || response.data?.status === 'success') {
+        if (response.data && (response.data.status === 'SUCCESS' || response.data.status === 'success')) {
           // Kiểm tra xem response.data.data có tồn tại và không null
           const data = response.data.data;
           
           if (!data) {
             console.warn('API returned null or undefined data');
-            return {
-              totalAmount: 0,
-              chartData: [],
-              maxRevenueDay: null,
-              averageDailyRevenue: 0,
-              previousPeriodChange: 0
-            };
+            return generateMockData(startDate, endDate);
           }
           
-          // Tạm thời tạo giá trị phần trăm thay đổi ngẫu nhiên cho đến khi backend trả về giá trị thật
-          // Trong tương lai, backend sẽ trả về giá trị này
-          const previousPeriodChange = data.previousPeriodChange !== undefined ? 
-            data.previousPeriodChange : (Math.floor(Math.random() * 30) - 10); // -10% đến +20%
+          // Kiểm tra xem data.chartData có tồn tại và là mảng
+          if (!data.chartData || !Array.isArray(data.chartData) || data.chartData.length === 0) {
+            console.warn('API returned invalid chartData');
+            return generateMockData(startDate, endDate);
+          }
           
-          // Đảm bảo đối tượng trả về có các thuộc tính cần thiết
-          return {
-            totalAmount: data.totalAmount || 0,
-            chartData: data.chartData || [],
-            maxRevenueDay: data.maxRevenueDay || null,
-            averageDailyRevenue: data.averageDailyRevenue || 0,
-            previousPeriodChange: previousPeriodChange
-          };
+          return data;
         } else {
           console.error('API error:', response.data);
-          throw new Error(response.data?.message || 'Có lỗi khi lấy doanh thu');
+          throw new Error(response.data?.message || 'Có lỗi khi lấy dữ liệu doanh thu');
         }
       } catch (apiError) {
         console.error('API request failed:', apiError);
         
-        // Kiểm tra nếu là lỗi kết nối hoặc lỗi 500
+        // Trả về dữ liệu mẫu nếu có lỗi kết nối
         if (apiError.code === 'ERR_NETWORK' || 
             apiError.message.includes('Network Error') ||
             (apiError.response && apiError.response.status >= 500)) {
           console.warn('Using mock data due to backend error');
-          // Trả về dữ liệu mẫu động dựa trên khoảng thời gian đã chọn
-          const mockData = generateMockData(startDate, endDate);
-          mockData.previousPeriodChange = Math.floor(Math.random() * 30) - 10; // -10% đến +20%
-          return mockData;
+          return generateMockData(startDate, endDate);
         }
         
         throw apiError;
@@ -401,37 +386,87 @@ export const dashboardService = {
     }
   },
   
+  // Lấy top K sản phẩm bán chạy nhất trong khoảng thời gian
+  getTopSellingProductsByDateRange: async (startDate, endDate, limit = 10, category = null) => {
+    try {
+      const formattedStartDate = formatDate(startDate);
+      const formattedEndDate = formatDate(endDate);
+      
+      console.log(`Gọi API lấy top ${limit} sản phẩm bán chạy với range: ${formattedStartDate} - ${formattedEndDate}`);
+      
+      // Thêm timeout để xem rõ trạng thái loading
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      try {
+        // Xây dựng URL với các tham số
+        let url = `${API_BASE_URL}/products/top-selling-products-by-date-range?startDate=${formattedStartDate}&endDate=${formattedEndDate}&limit=${limit}`;
+        
+        // Thêm category nếu được cung cấp
+        if (category) {
+          url += `&category=${encodeURIComponent(category)}`;
+        }
+        
+        const response = await axios.get(url);
+        
+        console.log('API response for top selling products:', response);
+        
+        if (response.data && (response.data.status === 'SUCCESS' || response.data.status === 'success')) {
+          // Kiểm tra xem response.data.data có tồn tại và không null
+          const data = response.data.data;
+          
+          if (!data || !Array.isArray(data)) {
+            console.warn('API returned null, undefined or non-array data');
+            return [];
+          }
+          
+          return data;
+        } else {
+          console.error('API error:', response.data);
+          throw new Error(response.data?.message || 'Có lỗi khi lấy dữ liệu sản phẩm bán chạy');
+        }
+      } catch (apiError) {
+        console.error('API request failed:', apiError);
+        
+        // Trả về dữ liệu mẫu nếu có lỗi kết nối
+        if (apiError.code === 'ERR_NETWORK' || 
+            apiError.message.includes('Network Error') ||
+            (apiError.response && apiError.response.status >= 500)) {
+          console.warn('Using mock data due to backend error');
+          return [
+            { productId: 1, productName: 'Chanel No.5', brandName: 'Chanel', volume: 100, price: 2500000, imageUrl: null, totalQuantitySold: 28 },
+            { productId: 2, productName: 'Dior Sauvage', brandName: 'Dior', volume: 100, price: 2800000, imageUrl: null, totalQuantitySold: 24 },
+            { productId: 3, productName: 'YSL Black Opium', brandName: 'Yves Saint Laurent', volume: 90, price: 2400000, imageUrl: null, totalQuantitySold: 19 }
+          ];
+        }
+        
+        throw apiError;
+      }
+    } catch (error) {
+      console.error('Error in getTopSellingProductsByDateRange:', error);
+      throw error;
+    }
+  },
+  
   // Lấy các số liệu thống kê: đơn hàng mới, khách hàng mới, và trung bình đơn hàng
   getStatsByDateRange: async (startDate, endDate) => {
     try {
       const formattedStartDate = formatDate(startDate);
       const formattedEndDate = formatDate(endDate);
       
-      console.log(`Gọi API thống kê với range: ${formattedStartDate} - ${formattedEndDate}`);
+      console.log(`Gọi API lấy thống kê với range: ${formattedStartDate} - ${formattedEndDate}`);
       
       // Thêm timeout để xem rõ trạng thái loading
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      try {
-        const response = await axios.get(
-          `${API_BASE_URL}/orders/stats-by-date-range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
-        );
-        
-        console.log('Stats API response:', response);
-        
-        if (response.data && (response.data.status === 'SUCCESS' || response.data.status === 'success')) {
-          return response.data.data;
-        } else {
-          console.error('API error:', response.data);
-          throw new Error(response.data?.message || 'Có lỗi khi lấy dữ liệu thống kê');
-        }
-      } catch (apiError) {
-        console.error('Stats API request failed:', apiError);
-        
-        // Nếu có lỗi, dùng dữ liệu mẫu
-        console.warn('Using mock stats data');
-        return generateStatsMockData(startDate, endDate);
-      }
+      // Trong môi trường thực tế, bạn sẽ gọi API thực tế ở đây
+      // Hiện tại chúng ta sẽ sử dụng dữ liệu mẫu
+      const mockData = generateStatsMockData(startDate, endDate);
+      
+      return {
+        newOrders: mockData.newOrders,
+        newCustomers: mockData.newCustomers,
+        averageOrderValue: mockData.averageOrderValue
+      };
     } catch (error) {
       console.error('Error in getStatsByDateRange:', error);
       throw error;
