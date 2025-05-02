@@ -37,7 +37,4 @@ public class Brand {
     @Pattern(regexp = "^(http://|https://|).*$", message = "Invalid website URL format")
     @Column(name = "website_url", length = 255)
     private String websiteUrl;
-
-    @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL)
-    private Set<Product> products = new HashSet<>();
 }

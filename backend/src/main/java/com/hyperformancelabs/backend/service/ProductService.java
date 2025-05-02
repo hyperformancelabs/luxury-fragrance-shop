@@ -1,22 +1,27 @@
 package com.hyperformancelabs.backend.service;
 
 import com.hyperformancelabs.backend.dto.ProductDTO;
-import com.hyperformancelabs.backend.dto.Random10Product;
-import com.hyperformancelabs.backend.dto.TopSellingProductDTO;
-import com.hyperformancelabs.backend.model.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
 import java.util.List;
 
 public interface ProductService {
-    Page<ProductDTO> getAllProducts(int page);
 
-    Page<ProductDTO> findByProductNameContainingIgnoreCase(String productName, Pageable pageable);
+    // Lấy tất cả sản phẩm với phân trang
+    Page<ProductDTO> getAllProducts(Pageable pageable);
 
-    Page<ProductDTO> getProductsByBrand(String brandName, int page);
+    // Tìm sản phẩm theo tên thương hiệu với phân trang
+    Page<ProductDTO> getProductsByBrandName(String brandName, Pageable pageable);
 
-    List<TopSellingProductDTO> getTopSellingProducts(String category, int limit);
-
-    List<Random10Product> getRandom10Product();
+    // Tìm sản phẩm theo tên sản phẩm với phân trang
+    Page<ProductDTO> getProductsByProductName(String productName, Pageable pageable);
+    
+    // Lấy sản phẩm theo ID
+    ProductDTO getProductById(Integer productId);
+    
+    // Lấy sản phẩm liên quan (cùng thương hiệu)
+    List<ProductDTO> getRelatedProducts(Integer productId, int limit);
+    
+    // Lấy top sản phẩm bán chạy
+    List<ProductDTO> getTopSellingProducts(int limit);
 }

@@ -66,24 +66,4 @@ public class Order {
     @Future(message = "Estimated delivery date must be in the future")
     @Column(name = "estimated_delivery_date")
     private LocalDate estimatedDeliveryDate;
-
-//    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Set<OrderItem> orderItems = new HashSet<>();
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> orderItems = new ArrayList<>();
-    public void addOrderItem(OrderItem item) {
-        this.orderItems.add(item);
-        item.setOrder(this); // Gắn lại order cho item
-    }
-
-
-
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Payment> payments = new HashSet<>();
-
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Shipment> shipments = new HashSet<>();
-
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<OrderPromotion> orderPromotions = new HashSet<>();
 }

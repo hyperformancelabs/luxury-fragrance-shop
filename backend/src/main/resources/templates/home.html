@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APH Perfume - Luxury Fragrance Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .hero-section {
+            background-image: url('/images/banner.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 100px 0;
+            margin-bottom: 40px;
+        }
+        .product-card {
+            transition: transform 0.3s;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .product-img {
+            height: 200px;
+            object-fit: contain;
+        }
+        .section-title {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 30px;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background-color: #000;
+        }
+        .brand-logo {
+            max-height: 60px;
+            filter: grayscale(100%);
+            opacity: 0.7;
+            transition: all 0.3s;
+        }
+        .brand-logo:hover {
+            filter: grayscale(0%);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="/">APH Perfume</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop">Shop</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop/top-selling">Best Sellers</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">About Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contact">Contact</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a href="/login" class="btn btn-outline-dark me-2">
+                        <i class="fas fa-user me-1"></i> Login
+                    </a>
+                    <a href="/cart" class="btn btn-dark">
+                        <i class="fas fa-shopping-cart me-1"></i> Cart
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold">Discover Luxury Fragrances</h1>
+            <p class="lead">Explore our collection of premium perfumes from top brands</p>
+            <a href="/shop" class="btn btn-light btn-lg mt-3">Shop Now</a>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="container mb-5">
+        <h2 class="section-title">Featured Products</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+            <div class="col" th:each="product : ${featuredProducts}">
+                <div class="card product-card h-100">
+                    <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${product.productName}">Product Name</h5>
+                        <p class="card-text text-truncate" th:text="${product.description}">Product description...</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a th:href="@{'/shop/product/' + ${product.productId}}" class="btn btn-sm btn-outline-dark">View Details</a>
+                            <button class="btn btn-sm btn-dark">
+                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- New Arrivals -->
+    <section class="container mb-5">
+        <h2 class="section-title">New Arrivals</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+            <div class="col" th:each="product : ${newProducts}">
+                <div class="card product-card h-100">
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge bg-danger">New</span>
+                    </div>
+                    <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${product.productName}">Product Name</h5>
+                        <p class="card-text text-truncate" th:text="${product.description}">Product description...</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a th:href="@{'/shop/product/' + ${product.productId}}" class="btn btn-sm btn-outline-dark">View Details</a>
+                            <button class="btn btn-sm btn-dark">
+                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Best Sellers -->
+    <section class="container mb-5">
+        <h2 class="section-title">Best Sellers</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+            <div class="col" th:each="product : ${bestSellingProducts}">
+                <div class="card product-card h-100">
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge bg-success">Best Seller</span>
+                    </div>
+                    <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${product.productName}">Product Name</h5>
+                        <p class="card-text text-truncate" th:text="${product.description}">Product description...</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a th:href="@{'/shop/product/' + ${product.productId}}" class="btn btn-sm btn-outline-dark">View Details</a>
+                            <button class="btn btn-sm btn-dark">
+                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/shop/top-selling" class="btn btn-outline-dark">View All Best Sellers</a>
+        </div>
+    </section>
+
+    <!-- Brands Section -->
+    <section class="bg-light py-5 mb-5">
+        <div class="container">
+            <h2 class="section-title text-center mb-4">Our Brands</h2>
+            <div class="row justify-content-center align-items-center">
+                <div class="col-6 col-md-2 text-center mb-4">
+                    <img src="/images/brands/chanel.png" alt="Chanel" class="img-fluid brand-logo">
+                </div>
+                <div class="col-6 col-md-2 text-center mb-4">
+                    <img src="/images/brands/dior.png" alt="Dior" class="img-fluid brand-logo">
+                </div>
+                <div class="col-6 col-md-2 text-center mb-4">
+                    <img src="/images/brands/gucci.png" alt="Gucci" class="img-fluid brand-logo">
+                </div>
+                <div class="col-6 col-md-2 text-center mb-4">
+                    <img src="/images/brands/versace.png" alt="Versace" class="img-fluid brand-logo">
+                </div>
+                <div class="col-6 col-md-2 text-center mb-4">
+                    <img src="/images/brands/ysl.png" alt="YSL" class="img-fluid brand-logo">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="container mb-5">
+        <div class="row align-items-center">
+            <div class="col-md-6 mb-4 mb-md-0">
+                <h2 class="section-title">About APH Perfume</h2>
+                <p>APH Perfume is a luxury fragrance shop dedicated to bringing you the finest perfumes from around the world. We carefully curate our collection to ensure that every bottle represents the pinnacle of perfumery art.</p>
+                <p>Our team of fragrance experts is passionate about helping you find the perfect scent that matches your personality and style.</p>
+                <a href="/about" class="btn btn-outline-dark">Learn More</a>
+            </div>
+            <div class="col-md-6">
+                <img src="/images/about-store.jpg" alt="Our Store" class="img-fluid rounded">
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5>APH Perfume</h5>
+                    <p>Your destination for luxury fragrances and premium perfumes.</p>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-white">Home</a></li>
+                        <li><a href="/shop" class="text-white">Shop</a></li>
+                        <li><a href="/about" class="text-white">About Us</a></li>
+                        <li><a href="/contact" class="text-white">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5>Customer Service</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white">FAQ</a></li>
+                        <li><a href="#" class="text-white">Shipping & Returns</a></li>
+                        <li><a href="#" class="text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="text-white">Terms & Conditions</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Connect With Us</h5>
+                    <div class="d-flex gap-3 fs-4 mb-3">
+                        <a href="#" class="text-white"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-pinterest"></i></a>
+                    </div>
+                    <p>Subscribe to our newsletter:</p>
+                    <form>
+                        <div class="input-group">
+                            <input type="email" class="form-control" placeholder="Your email">
+                            <button class="btn btn-light" type="submit">Subscribe</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 APH Perfume. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

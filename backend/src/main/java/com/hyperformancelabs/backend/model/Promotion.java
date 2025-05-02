@@ -34,8 +34,9 @@ public class Promotion {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Column(name = "discount_type", nullable = false, length = 20)
-    private String discountType;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private DiscountType discountType;
 
     @Column(name = "discount_value", precision = 10, scale = 2)
     private BigDecimal discountValue;
@@ -46,9 +47,7 @@ public class Promotion {
     @Column(name = "usage_limit")
     private Integer usageLimit;
 
-    @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ProductPromotion> productPromotions = new HashSet<>();
-
-    @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<OrderPromotion> orderPromotions = new HashSet<>();
+    public enum DiscountType {
+        PERCENTAGE, FIXED_AMOUNT, FREE_SHIPPING
+    }
 }

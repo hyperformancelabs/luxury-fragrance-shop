@@ -1,18 +1,25 @@
 package com.hyperformancelabs.backend.dto;
 
-import lombok.AllArgsConstructor;
+import java.math.BigDecimal;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
+import lombok.AllArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderItemDTO {
-    private String productName;
-    private Integer volume;
-    private String brandName;
+
+    private Integer orderItemId;
+
+    private Integer orderId;
+
+    private Integer productVariantId;
+
     private Integer quantity;
+
     private BigDecimal unitPrice;
+
+    private String note;
 }

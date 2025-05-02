@@ -11,27 +11,22 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ShipmentDTO {
-    private Integer shipmentId;
-    private Integer orderId;
-    private String shippingProvider;
-    private String trackingNumber;
-    private String shipmentStatus;
-    private BigDecimal shippingCost;
-    private LocalDate shippingDate;
-    private LocalDate estimatedDeliveryDate;
-    private LocalDate deliveryDate;
 
-    public static ShipmentDTO toDTO(com.hyperformancelabs.backend.model.Shipment shipment) {
-        return new ShipmentDTO(
-                shipment.getShipmentId(),
-                shipment.getOrder() != null ? shipment.getOrder().getOrderId() : null,
-                shipment.getShippingProvider(),
-                shipment.getTrackingNumber(),
-                shipment.getShipmentStatus(),
-                shipment.getShippingCost(),
-                shipment.getShippingDate(),
-                shipment.getEstimatedDeliveryDate(),
-                shipment.getDeliveryDate()
-        );
-    }
+    private Integer shipmentId;
+
+    private Integer orderId;
+
+    private String shippingProvider;
+
+    private String trackingNumber;
+
+    private String shipmentStatus;
+
+    private BigDecimal shippingCost;
+
+    private LocalDate shippingDate;
+
+    private LocalDate estimatedDeliveryDate;
+
+    private LocalDate deliveryDate;
 }

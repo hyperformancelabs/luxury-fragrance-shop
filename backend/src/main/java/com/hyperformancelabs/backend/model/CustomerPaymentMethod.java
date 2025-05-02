@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "CustomerPaymentMethod", uniqueConstraints = {
-    @UniqueConstraint(name = "UQ_CustomerPaymentMethod", columnNames = {"customer_id", "payment_method_id", "account_number"})
+        @UniqueConstraint(name = "UQ_CustomerPaymentMethod", columnNames = {"customer_id", "payment_method_id", "account_number"})
 })
 @Data
 @NoArgsConstructor

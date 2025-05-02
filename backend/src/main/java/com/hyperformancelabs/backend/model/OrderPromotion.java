@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "OrderPromotion", uniqueConstraints = {
-    @UniqueConstraint(name = "UQ_OrderPromotion", columnNames = {"order_id", "promotion_id"})
+        @UniqueConstraint(name = "UQ_OrderPromotion", columnNames = {"order_id", "promotion_id"})
 })
 @Data
 @NoArgsConstructor

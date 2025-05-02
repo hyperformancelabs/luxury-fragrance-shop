@@ -1,17 +1,15 @@
 package com.hyperformancelabs.backend.model;
 
+import com.hyperformancelabs.backend.model.Employee;
+import com.hyperformancelabs.backend.model.Role;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "EmployeeRole", uniqueConstraints = {
-    @UniqueConstraint(name = "UQ_EmployeeRole", columnNames = {"employee_id", "role_id"})
+        @UniqueConstraint(name = "UQ_EmployeeRole", columnNames = {"employee_id", "role_id"})
 })
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class EmployeeRole {
 
     @Id
@@ -19,14 +17,16 @@ public class EmployeeRole {
     @Column(name = "employee_role_id")
     private Integer employeeRoleId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "employee_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "employee_id", referencedColumnName = "employee_id", nullable = false)
     private Employee employee;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "role_id", referencedColumnName = "role_id", nullable = false)
     private Role role;
 
     @Column(name = "status", nullable = false, length = 20)
-    private String status;
+    private String status = "active";
+
+    // Getters and Setters
 }

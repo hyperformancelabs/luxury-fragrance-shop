@@ -51,4 +51,8 @@ public class InventoryTransaction {
 
     @Column(name = "cost_price", precision = 10, scale = 2)
     private BigDecimal costPrice;
+
+    public enum TransactionType {
+        IMPORT, EXPORT, ADJUST, SELL, COMBINE
+    }
 }

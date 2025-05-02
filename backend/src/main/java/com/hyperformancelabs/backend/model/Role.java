@@ -1,18 +1,11 @@
 package com.hyperformancelabs.backend.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
-@Table(name = "Role")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "Role")
 public class Role {
 
     @Id
@@ -20,21 +13,17 @@ public class Role {
     @Column(name = "role_id")
     private Integer roleId;
 
-    @Column(name = "role_name", nullable = false, length = 50, unique = true)
+    @Column(name = "role_name", nullable = false, unique = true, length = 50)
     private String roleName;
 
-    @Column(name = "role_description", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "role_description", columnDefinition = "TEXT")
     private String roleDescription;
 
     @Column(name = "is_default", nullable = false)
-    private Boolean isDefault;
+    private Boolean isDefault = false;
 
     @Column(name = "status", nullable = false, length = 20)
-    private String status;
+    private String status = "active";
 
-    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<EmployeeRole> employeeRoles = new HashSet<>();
-
-    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<RolePermission> rolePermissions = new HashSet<>();
+    // Getters and Setters
 }

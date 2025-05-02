@@ -13,7 +13,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "[ProductVariant]", uniqueConstraints = {
-    @UniqueConstraint(name = "UQ_ProductVariant", columnNames = {"product_id", "volume"})
+        @UniqueConstraint(name = "UQ_ProductVariant", columnNames = {"product_id", "volume"})
 })
 @Data
 @NoArgsConstructor
@@ -51,20 +51,4 @@ public class ProductVariant {
     @Min(value = 0, message = "Reorder level cannot be negative")
     @Column(name = "reorder_level")
     private Integer reorderLevel;
-
-    @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL)
-    @JsonIgnore
-    private Set<InventoryTransaction> inventoryTransactions = new HashSet<>();
-
-    @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL)
-    @JsonIgnore
-    private Set<CartItem> cartItems = new HashSet<>();
-
-    @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL)
-    @JsonIgnore
-    private Set<OrderItem> orderItems = new HashSet<>();
-
-    @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private Set<Wishlist> wishlists = new HashSet<>();
 }

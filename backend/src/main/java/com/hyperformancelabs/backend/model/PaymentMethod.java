@@ -25,7 +25,4 @@ public class PaymentMethod {
 
     @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
-
-    @OneToMany(mappedBy = "paymentMethod", cascade = CascadeType.ALL)
-    private Set<CustomerPaymentMethod> customerPaymentMethods = new HashSet<>();
 }

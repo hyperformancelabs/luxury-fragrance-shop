@@ -13,7 +13,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "[Product]", uniqueConstraints = {
-    @UniqueConstraint(name = "UQ_Product_Name_Brand", columnNames = {"product_name", "brand_id"})
+        @UniqueConstraint(name = "UQ_Product_Name_Brand", columnNames = {"product_name", "brand_id"})
 })
 @Data
 @NoArgsConstructor
@@ -38,14 +38,4 @@ public class Product {
 
     @Column(name = "image_url", length = 500)
     private String imageUrl;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ProductDetail> productDetails = new HashSet<>();
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ProductPromotion> productPromotions = new HashSet<>();
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private Set<ProductVariant> productVariants = new HashSet<>();
 }

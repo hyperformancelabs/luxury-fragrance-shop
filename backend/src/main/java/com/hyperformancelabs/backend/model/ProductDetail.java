@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "ProductDetail", uniqueConstraints = {
-    @UniqueConstraint(name = "UQ_ProductDetail", columnNames = {"product_id", "detail_name", "detail_value"})
+        @UniqueConstraint(name = "UQ_ProductDetail", columnNames = {"product_id", "detail_name", "detail_value"})
 })
 @Data
 @NoArgsConstructor
@@ -31,4 +31,8 @@ public class ProductDetail {
 
     @Column(name = "note", columnDefinition = "NVARCHAR(MAX)")
     private String note;
+
+    public enum DetailName {
+        TONE_SCENT, STYLE, TOP_NOTE, MIDDLE_NOTE, BASE_NOTE, LONGEVITY, PROJECTION, SEASON, TIME_OF_DAY, SUITABLE_AGE, SUITABLE_GENDER
+    }
 }
