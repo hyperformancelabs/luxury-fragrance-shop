@@ -37,4 +37,58 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     ORDER BY SUM(oi.quantity) DESC
     """, nativeQuery = true)
     List<Object[]> findTop10TopSellingProducts(@Param("category") String category);
+    
+    /**
+     * Find top K best-selling products within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @param category Optional category filter (suitable_gender)
+     * @param limit Number of top products to return
+     * @return List of product data with sales quantity
+     */
+    @Query(value = """
+    SELECT pv.product_variant_id, p.product_name, b.brand_name, pv.volume, pv.price, p.image_url, SUM(oi.quantity) as total_sold
+    FROM [OrderItem] oi
+    JOIN [ProductVariant] pv ON pv.product_variant_id = oi.product_variant_id
+    JOIN [Product] p ON p.product_id = pv.product_id
+    JOIN [Brand] b ON b.brand_id = p.brand_id
+    JOIN [Order] o ON o.order_id = oi.order_id
+    LEFT JOIN [ProductDetail] pd ON p.product_id = pd.product_id AND pd.detail_name = 'suitable_gender'
+    WHERE o.order_status = 'delivered'
+      AND (:category IS NULL OR pd.detail_value = :category)
+      AND o.order_date >= CONVERT(DATETIME, :startDate, 103)
+      AND o.order_date < DATEADD(DAY, 1, CONVERT(DATETIME, :endDate, 103))
+    GROUP BY pv.product_variant_id, p.product_name, b.brand_name, pv.volume, pv.price, p.image_url
+    ORDER BY total_sold DESC
+    """, nativeQuery = true)
+    List<Object[]> findTopSellingProductsByDateRange(
+        @Param("startDate") String startDate,  // format: dd/MM/yyyy
+        @Param("endDate") String endDate,      // format: dd/MM/yyyy
+        @Param("category") String category,
+        @Param("limit") int limit
+    );
+    
+    /**
+     * Find products with low stock levels (below or equal to reorder level)
+     * @param limit Number of products to return
+     * @return List of product data with low stock levels, sorted by stock level (ascending)
+     */
+    @Query(value = """
+    SELECT pv.product_variant_id, p.product_name, b.brand_name, pv.volume, pv.price, 
+           p.image_url, pv.quantity_in_stock, pv.reorder_level
+    FROM [ProductVariant] pv
+    JOIN [Product] p ON p.product_id = pv.product_id
+    JOIN [Brand] b ON b.brand_id = p.brand_id
+    WHERE pv.quantity_in_stock <= pv.reorder_level
+      AND pv.reorder_level IS NOT NULL
+      AND pv.reorder_level > 0
+    ORDER BY 
+      CASE 
+        WHEN pv.reorder_level = 0 THEN 0 
+        ELSE (pv.quantity_in_stock * 1.0 / pv.reorder_level) 
+      END ASC
+    OFFSET 0 ROWS
+    FETCH NEXT :limit ROWS ONLY
+    """, nativeQuery = true)
+    List<Object[]> findProductsWithLowStock(@Param("limit") int limit);
 }

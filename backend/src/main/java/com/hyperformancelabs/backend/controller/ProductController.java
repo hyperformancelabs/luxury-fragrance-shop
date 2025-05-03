@@ -125,6 +125,45 @@ public class ProductController {
             );
         }
     }
+    
+    /**
+     * Get top K best-selling products within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @param category Optional category filter (suitable_gender)
+     * @param limit Number of top products to return
+     * @return List of top selling products with sales quantity
+     */
+    @GetMapping("/top-selling-products-by-date-range")
+    public ResponseEntity<ApiResponse<List<TopSellingProductDTO>>> getTopSellingProductsByDateRange(
+            @RequestParam(value = "startDate") String startDate,
+            @RequestParam(value = "endDate") String endDate,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "limit", defaultValue = "10") int limit
+    ) {
+        try {
+            List<TopSellingProductDTO> topSellingProducts = productService.getTopSellingProductsByDateRange(
+                    startDate, endDate, category, limit);
+            
+            return ResponseEntity.ok(
+                new ApiResponse<>(
+                    ApiResponseStatus.SUCCESS_CODE,
+                    ApiResponseStatus.SUCCESS_STATUS,
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE,
+                    topSellingProducts
+                )
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                new ApiResponse<>(
+                    ApiResponseStatus.BAD_REQUEST_CODE,
+                    ApiResponseStatus.ERROR_STATUS,
+                    e.getMessage(),
+                    null
+                )
+            );
+        }
+    }
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<Map<String, Object>>> searchProductsByName(

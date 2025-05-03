@@ -16,9 +16,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -170,6 +175,54 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public Map<String, Object> getRevenueDataByDateRange(String startDate, String endDate) {
+        // Lấy dữ liệu doanh thu theo ngày
+        List<Object[]> revenueByDate = orderRepository.getRevenueByDateRange(startDate, endDate);
+        
+        // Chuyển đổi kết quả thành dạng dễ sử dụng
+        List<Map<String, Object>> chartData = new ArrayList<>();
+        
+        for (Object[] row : revenueByDate) {
+            Map<String, Object> dataPoint = new HashMap<>();
+            dataPoint.put("date", row[0]);  // Ngày (dd/MM/yyyy)
+            dataPoint.put("amount", row[1]); // Tổng doanh thu
+            dataPoint.put("orderCount", row[2]); // Số lượng đơn hàng
+            
+            chartData.add(dataPoint);
+        }
+        
+        // Tạo response
+        Map<String, Object> response = new HashMap<>();
+        response.put("chartData", chartData);
+        
+        // Tính toán thêm một số thống kê (nếu cần)
+        if (!chartData.isEmpty()) {
+            // Tìm ngày có doanh thu cao nhất
+            Map<String, Object> maxRevenueDay = chartData.stream()
+                .max(Comparator.comparing(day -> ((BigDecimal) day.get("amount"))))
+                .orElse(null);
+                
+            if (maxRevenueDay != null) {
+                response.put("maxRevenueDay", maxRevenueDay);
+            }
+            
+            // Tính doanh thu trung bình mỗi ngày
+            BigDecimal totalRevenue = chartData.stream()
+                .map(day -> (BigDecimal) day.get("amount"))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                
+            BigDecimal avgDailyRevenue = totalRevenue.divide(BigDecimal.valueOf(chartData.size()), 0, RoundingMode.HALF_UP);
+            response.put("averageDailyRevenue", avgDailyRevenue);
+        } else {
+            // Nếu không có dữ liệu, cung cấp giá trị mặc định
+            response.put("maxRevenueDay", null);
+            response.put("averageDailyRevenue", BigDecimal.ZERO);
+        }
+        
+        return response;
+    }
+
+    @Override
     public BigDecimal getTotalAmountOfDeliveredOrdersByQuarterAndYear(int quarter, int year) {
         return orderRepository.getTotalAmountOfDeliveredOrdersByQuarterAndYear(quarter, year);
     }
@@ -182,6 +235,85 @@ public class OrderServiceImpl implements OrderService {
 
         order.setOrderStatus(status);
         orderRepository.save(order);
+    }
+    
+    /**
+     * Get the count of new delivered orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Count of delivered orders in the date range
+     */
+    @Override
+    public Integer getNewOrdersCountByDateRange(String startDate, String endDate) {
+        return orderRepository.getNewOrdersCountByDateRange(startDate, endDate);
+    }
+    
+    /**
+     * Get the count of new delivered orders in previous period
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Count of delivered orders in the previous period
+     */
+    @Override
+    public Integer getNewOrdersCountInPreviousPeriod(String startDate, String endDate) {
+        return orderRepository.getNewOrdersCountInPreviousPeriod(startDate, endDate);
+    }
+    
+    /**
+     * Get the count of new delivered orders with percent change
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Map with count and percent change
+     */
+    @Override
+    public Map<String, Object> getNewOrdersCountWithPercentChange(String startDate, String endDate) {
+        // Lấy số lượng đơn hàng mới trong kỳ hiện tại
+        Integer currentPeriodCount = getNewOrdersCountByDateRange(startDate, endDate);
+        
+        // Lấy số lượng đơn hàng mới trong kỳ trước
+        Integer previousPeriodCount = getNewOrdersCountInPreviousPeriod(startDate, endDate);
+        
+        // Tính toán phần trăm thay đổi
+        double percentChange = 0.0;
+        if (previousPeriodCount > 0) {
+            percentChange = ((double) (currentPeriodCount - previousPeriodCount) / previousPeriodCount) * 100;
+        }
+        
+        // Làm tròn phần trăm thay đổi đến 1 chữ số thập phân
+        percentChange = Math.round(percentChange * 10) / 10.0;
+        
+        // Tạo kết quả trả về
+        Map<String, Object> result = new HashMap<>();
+        result.put("newOrdersCount", currentPeriodCount);
+        result.put("previousPeriodChange", percentChange);
+        
+        return result;
+    }
+    
+    /**
+     * Get the average value of delivered orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Average value of delivered orders in the date range
+     */
+    @Override
+    public BigDecimal getAverageOrderValueByDateRange(String startDate, String endDate) {
+        return orderRepository.getAverageOrderValueByDateRange(startDate, endDate);
+    }
+    
+    /**
+     * Get the top K recent orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @param limit Number of orders to retrieve (K)
+     * @return List of top K recent orders in the date range
+     */
+    @Override
+    public List<OrderDTO> getTopRecentOrdersByDateRange(String startDate, String endDate, int limit) {
+        List<Order> orders = orderRepository.findTopRecentOrdersByDateRange(startDate, endDate, limit);
+        return orders.stream()
+                .map(OrderDTO::toDTO)
+                .collect(Collectors.toList());
     }
 }
 

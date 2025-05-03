@@ -21,4 +21,23 @@ public interface CustomerService {
     Customer getCustomerByUsername(String username);
 
     void changePassword(String username, String oldPassword, String newPassword);
+    
+    // Phương thức mới để lấy số lượng khách hàng mới trong khoảng thời gian
+    Integer getNewCustomersCountByDateRange(String startDate, String endDate);
+    
+    /**
+     * Lấy số lượng khách hàng mới trong kỳ trước với cùng độ dài thời gian
+     * @param startDate Ngày bắt đầu của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @param endDate Ngày kết thúc của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @return Số lượng khách hàng mới trong kỳ trước
+     */
+    Integer getNewCustomersCountInPreviousPeriod(String startDate, String endDate);
+    
+    /**
+     * Lấy số lượng khách hàng mới và phần trăm thay đổi so với kỳ trước
+     * @param startDate Ngày bắt đầu của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @param endDate Ngày kết thúc của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @return Map chứa số lượng khách hàng mới và phần trăm thay đổi
+     */
+    java.util.Map<String, Object> getNewCustomersCountWithPercentChange(String startDate, String endDate);
 }

@@ -12,12 +12,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/orders")
@@ -161,6 +170,103 @@ public class OrderController {
         }
     }
 
+    @GetMapping("/revenue-by-date-range")
+    public ResponseEntity<ApiResponse<Object>> getRevenueDataByDateRange(
+            @RequestParam String startDate,  // format: dd/MM/yyyy
+            @RequestParam String endDate     // format: dd/MM/yyyy
+    ) {
+        try {
+            // Lấy tổng doanh thu
+            BigDecimal totalAmount = orderService.getTotalAmountOfDeliveredOrdersByDateRange(startDate, endDate);
+            
+            // Lấy doanh thu theo ngày trong khoảng thời gian (cho biểu đồ)
+            Map<String, Object> revenueData = orderService.getRevenueDataByDateRange(startDate, endDate);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalAmount", totalAmount);
+            // Trả về dữ liệu đã được xử lý thành đúng định dạng
+            response.putAll(revenueData);
+            
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, ApiResponseStatus.GET_SUCCESS_MESSAGE, response)
+            );
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
+                    "Error: " + e.getMessage(), null)
+            );
+        }
+    }
+    
+    /**
+     * Get the count of new delivered orders within a date range with percent change
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Count of delivered orders in the date range and percent change
+     */
+    @GetMapping("/new-orders-count-by-date-range")
+    public ResponseEntity<ApiResponse<Object>> getNewOrdersCountByDateRange(
+            @RequestParam String startDate,  // format: dd/MM/yyyy
+            @RequestParam String endDate     // format: dd/MM/yyyy
+    ) {
+        try {
+            // Lấy số lượng đơn hàng mới và phần trăm thay đổi
+            Map<String, Object> result = orderService.getNewOrdersCountWithPercentChange(startDate, endDate);
+            
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE, result)
+            );
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
+                    "Error: " + e.getMessage(), null)
+            );
+        }
+    }
+    
+    /**
+     * Get the average value of delivered orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Average value of delivered orders in the date range
+     */
+    @GetMapping("/average-order-value-by-date-range")
+    public ResponseEntity<ApiResponse<Object>> getAverageOrderValueByDateRange(
+            @RequestParam String startDate,  // format: dd/MM/yyyy
+            @RequestParam String endDate     // format: dd/MM/yyyy
+    ) {
+        try {
+            // Lấy giá trị trung bình đơn hàng trong khoảng thời gian
+            BigDecimal averageOrderValue = orderService.getAverageOrderValueByDateRange(startDate, endDate);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("averageOrderValue", averageOrderValue);
+            
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE, response)
+            );
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, 
+                    "Error: " + e.getMessage(), null)
+            );
+        }
+    }
+
     @GetMapping("/total-amount-of-delivered-orders-by-quarter-and-year")
     public ResponseEntity<ApiResponse<String>> getTotalAmountOfDeliveredOrdersByQuarterAndYear(
             @RequestParam int quarter,
@@ -220,6 +326,42 @@ public class OrderController {
             e.printStackTrace(pw);
             String stackTrace = sw.toString();
 
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(
+                        ApiResponseStatus.BAD_REQUEST_CODE, 
+                        ApiResponseStatus.ERROR_STATUS, 
+                        "Error: " + e.getMessage() + "\nStack trace: " + stackTrace,
+                        null
+                    )
+            );
+        }
+    }
+    
+    /**
+     * Get the top K recent orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @param limit Number of orders to retrieve (K)
+     * @return List of top K recent orders in the date range
+     */
+    @GetMapping("/recent-orders-by-date-range")
+    public ResponseEntity<ApiResponse<List<OrderDTO>>> getTopRecentOrdersByDateRange(
+            @RequestParam String startDate,  // format: dd/MM/yyyy
+            @RequestParam String endDate,     // format: dd/MM/yyyy
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        try {
+            List<OrderDTO> orders = orderService.getTopRecentOrdersByDateRange(startDate, endDate, limit);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, 
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE, orders)
+            );
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            String stackTrace = sw.toString();
+            
             return ResponseEntity.badRequest().body(
                     new ApiResponse<>(
                         ApiResponseStatus.BAD_REQUEST_CODE, 

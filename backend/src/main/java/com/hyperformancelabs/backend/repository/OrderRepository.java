@@ -98,6 +98,23 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     );
 
     @Query(value = """
+    SELECT 
+        CONVERT(VARCHAR, o.order_date, 103) AS date,
+        COALESCE(SUM(o.total_amount), 0) AS totalAmount,
+        COUNT(*) AS orderCount
+    FROM [Order] o
+    WHERE o.order_status = 'delivered'
+        AND o.order_date >= CONVERT(DATETIME, :startDate, 103)
+        AND o.order_date < DATEADD(DAY, 1, CONVERT(DATETIME, :endDate, 103))
+    GROUP BY CONVERT(VARCHAR, o.order_date, 103)
+    ORDER BY CONVERT(DATETIME, CONVERT(VARCHAR, o.order_date, 103), 103)
+    """, nativeQuery = true)
+    List<Object[]> getRevenueByDateRange(
+        @Param("startDate") String startDate,  // format: dd/MM/yyyy
+        @Param("endDate") String endDate       // format: dd/MM/yyyy
+    );
+
+    @Query(value = """
     SELECT COALESCE(SUM(o.total_amount), 0)
     FROM [Order] o
     WHERE o.order_status = 'delivered'
@@ -125,5 +142,87 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     BigDecimal getTotalAmountOfDeliveredOrdersByQuarterAndYear(
         @Param("quarter") int quarter,  // 1-4
         @Param("year") int year
+    );
+    
+    @Query(value = """
+    SELECT COUNT(*)
+    FROM [Order] o
+    WHERE o.order_date >= CONVERT(DATETIME, :startDate, 103)
+        AND o.order_date < DATEADD(DAY, 1, CONVERT(DATETIME, :endDate, 103))
+        AND o.order_status = 'delivered'
+    """, nativeQuery = true)
+    Integer getNewOrdersCountByDateRange(
+        @Param("startDate") String startDate,  // format: dd/MM/yyyy
+        @Param("endDate") String endDate       // format: dd/MM/yyyy
+    );
+    
+    /**
+     * Lấy số lượng đơn hàng mới trong kỳ trước với cùng độ dài thời gian
+     * @param startDate Ngày bắt đầu của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @param endDate Ngày kết thúc của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @return Số lượng đơn hàng mới trong kỳ trước
+     */
+    @Query(value = """
+    SELECT COUNT(*)
+    FROM [Order] o
+    WHERE o.order_date >= CONVERT(DATETIME, :startDate, 103) - DATEDIFF(DAY, CONVERT(DATETIME, :startDate, 103), CONVERT(DATETIME, :endDate, 103))
+        AND o.order_date < CONVERT(DATETIME, :startDate, 103)
+        AND o.order_status = 'delivered'
+    """, nativeQuery = true)
+    Integer getNewOrdersCountInPreviousPeriod(
+        @Param("startDate") String startDate,  // format: dd/MM/yyyy
+        @Param("endDate") String endDate       // format: dd/MM/yyyy
+    );
+    
+    @Query(value = """
+    SELECT COALESCE(AVG(o.total_amount), 0)
+    FROM [Order] o
+    WHERE o.order_date >= CONVERT(DATETIME, :startDate, 103)
+        AND o.order_date < DATEADD(DAY, 1, CONVERT(DATETIME, :endDate, 103))
+        AND o.order_status = 'delivered'
+    """, nativeQuery = true)
+    BigDecimal getAverageOrderValueByDateRange(
+        @Param("startDate") String startDate,  // format: dd/MM/yyyy
+        @Param("endDate") String endDate       // format: dd/MM/yyyy
+    );
+
+    /**
+     * Lấy doanh thu của kỳ trước với cùng độ dài thời gian
+     * @param startDate Ngày bắt đầu của kỳ trước (định dạng dd/MM/yyyy)
+     * @param endDate Ngày kết thúc của kỳ trước (định dạng dd/MM/yyyy)
+     * @return Tổng doanh thu của kỳ trước
+     */
+    @Query(value = """
+    SELECT COALESCE(SUM(o.total_amount), 0)
+    FROM [Order] o
+    WHERE o.order_date >= DATEADD(DAY, -DATEDIFF(DAY, :startDate, :endDate), :startDate)
+        AND o.order_date < DATEADD(DAY, 1, DATEADD(DAY, -DATEDIFF(DAY, :startDate, :endDate), :endDate))
+        AND o.order_status = 'delivered'
+    """, nativeQuery = true)
+    BigDecimal getTotalAmountOfPreviousPeriod(
+        @Param("startDate") String startDate,
+        @Param("endDate") String endDate
+    );
+    
+    /**
+     * Get the top K recent orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @param limit Number of orders to retrieve (K)
+     * @return List of top K recent orders in the date range
+     */
+    @Query(value = """
+    SELECT o.*
+    FROM [Order] o
+    WHERE o.order_date >= CONVERT(DATETIME, :startDate, 103)
+        AND o.order_date < DATEADD(DAY, 1, CONVERT(DATETIME, :endDate, 103))
+    ORDER BY o.order_date DESC
+    OFFSET 0 ROWS
+    FETCH NEXT :limit ROWS ONLY
+    """, nativeQuery = true)
+    List<Order> findTopRecentOrdersByDateRange(
+        @Param("startDate") String startDate,
+        @Param("endDate") String endDate,
+        @Param("limit") int limit
     );
 }

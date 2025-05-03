@@ -69,4 +69,39 @@ public class CustomerController {
                 )
         );
     }
+    
+    /**
+     * Lấy số lượng khách hàng mới và phần trăm thay đổi so với kỳ trước
+     * @param startDate Ngày bắt đầu của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @param endDate Ngày kết thúc của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @return Số lượng khách hàng mới và phần trăm thay đổi
+     */
+    @GetMapping("/new-customers-count-by-date-range")
+    public ResponseEntity<ApiResponse<Object>> getNewCustomersCountByDateRange(
+            @RequestParam String startDate,  // format: dd/MM/yyyy
+            @RequestParam String endDate     // format: dd/MM/yyyy
+    ) {
+        try {
+            // Lấy số lượng khách hàng mới và phần trăm thay đổi
+            java.util.Map<String, Object> result = customerService.getNewCustomersCountWithPercentChange(startDate, endDate);
+            
+            return ResponseEntity.ok(
+                    new ApiResponse<>(
+                            ApiResponseStatus.SUCCESS_CODE,
+                            ApiResponseStatus.SUCCESS_STATUS, 
+                            ApiResponseStatus.GET_SUCCESS_MESSAGE,
+                            result
+                    )
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse<>(
+                            ApiResponseStatus.BAD_REQUEST_CODE, 
+                            ApiResponseStatus.ERROR_STATUS, 
+                            "Error: " + e.getMessage(), 
+                            null
+                    )
+            );
+        }
+    }
 }

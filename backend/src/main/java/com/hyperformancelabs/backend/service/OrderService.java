@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface OrderService {
@@ -24,4 +25,50 @@ public interface OrderService {
     BigDecimal getTotalAmountOfDeliveredOrdersByDateRange(String startDate, String endDate);
     BigDecimal getTotalAmountOfDeliveredOrdersByQuarterAndYear(int quarter, int year);
     void UpdateOrderStatus(Integer orderId, String status);
+    
+    // Phương thức mới để lấy dữ liệu doanh thu chi tiết theo khoảng thời gian
+    Map<String, Object> getRevenueDataByDateRange(String startDate, String endDate);
+    
+    // Phương thức mới để lấy số lượng đơn hàng mới trong khoảng thời gian
+    /**
+     * Get the count of new delivered orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Count of delivered orders in the date range
+     */
+    Integer getNewOrdersCountByDateRange(String startDate, String endDate);
+    
+    /**
+     * Lấy số lượng đơn hàng mới trong kỳ trước với cùng độ dài thời gian
+     * @param startDate Ngày bắt đầu của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @param endDate Ngày kết thúc của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @return Số lượng đơn hàng mới trong kỳ trước
+     */
+    Integer getNewOrdersCountInPreviousPeriod(String startDate, String endDate);
+    
+    /**
+     * Lấy số lượng đơn hàng mới và phần trăm thay đổi so với kỳ trước
+     * @param startDate Ngày bắt đầu của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @param endDate Ngày kết thúc của kỳ hiện tại (định dạng dd/MM/yyyy)
+     * @return Map chứa số lượng đơn hàng mới và phần trăm thay đổi
+     */
+    Map<String, Object> getNewOrdersCountWithPercentChange(String startDate, String endDate);
+    
+    // Phương thức mới để lấy giá trị trung bình đơn hàng trong khoảng thời gian
+    /**
+     * Get the average value of delivered orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @return Average value of delivered orders in the date range
+     */
+    BigDecimal getAverageOrderValueByDateRange(String startDate, String endDate);
+    
+    /**
+     * Get the top K recent orders within a date range
+     * @param startDate Start date in format dd/MM/yyyy
+     * @param endDate End date in format dd/MM/yyyy
+     * @param limit Number of orders to retrieve (K)
+     * @return List of top K recent orders in the date range
+     */
+    List<OrderDTO> getTopRecentOrdersByDateRange(String startDate, String endDate, int limit);
 }
