@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, BarChart2, Package, Tag, ShoppingBag, TrendingUp, DollarSign, Users, Settings, X, Menu, LogOut, User2 } from 'lucide-react';
 
-const Sidebar = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
 
   const navItems = [
@@ -16,16 +15,13 @@ const Sidebar = () => {
     { icon: <TrendingUp size={20} />, label: 'Marketing', path: '/marketings' },
     { icon: <User2 size={20} />, label: 'Nhân viên' , path: '/staffs'},
 
-
   ];
-
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   return (
     <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white shadow-md transition-all duration-300 fixed h-full z-10`}>
       <div className="flex items-center justify-between p-4 border-b">
         <div className={`font-bold text-blue-900 ${sidebarOpen ? 'block' : 'hidden'}`}>APH PERFUME</div>
-        <button onClick={toggleSidebar} className="p-1 rounded-full hover:bg-gray-100">
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 rounded-full hover:bg-gray-100">
           {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>

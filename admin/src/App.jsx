@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Sidebar from './Components/Sidebar';
-import Header from './Components/Header';
+import Sidebar from './components/Sidebar';
+import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
 import Statistics from './pages/Statistics';
 import Orders from './pages/Orders';
 import Products from './pages/Products';
-import DefaultContent from './Components/DeafaultContent';
+import DefaultContent from './components/DeafaultContent';
 import Customer from './pages/Customer';
 import Materials from './pages/Materials';
 import Marketing from './pages/Marketing';
@@ -14,11 +14,12 @@ import Staff from './pages/Staff';
 import Login from './pages/Login';
 
 const AppLayout = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   return (
     <div className="flex bg-gray-50 min-h-screen">
-      <Sidebar />
-      <div className="flex-1 ml-64 transition-all duration-300">
-        <Header />
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <div className={`flex-1 transition-all duration-300 pt-16 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
+        <Header sidebarOpen={sidebarOpen} />
         <main>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" />} />
