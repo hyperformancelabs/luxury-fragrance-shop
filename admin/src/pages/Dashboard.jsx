@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, isSameDay } from 'date-fns';
-import { AlertCircle, TrendingUp, TrendingDown, ShoppingCart, Users, Clock, Calendar, Package, ChevronRight, ChevronDown, Truck, User, DollarSign, Activity } from 'lucide-react';
+import { AlertCircle, TrendingUp, TrendingDown, ShoppingCart, Users, Clock, Calendar, Package, ChevronRight, ChevronDown, Truck, User, DollarSign, Activity, Award, Star } from 'lucide-react';
 import { revenueService } from '../services/revenueService';
 import { dashboardService } from '../services/dashboardService';
 
@@ -162,18 +162,21 @@ const Dashboard = () => {
   const [avgOrderValueData, setAvgOrderValueData] = useState(null);
   const [apiRecentOrders, setApiRecentOrders] = useState([]);
   const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [topEmployees, setTopEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [loadingAvgOrderValue, setLoadingAvgOrderValue] = useState(false);
   const [loadingRecentOrders, setLoadingRecentOrders] = useState(false);
   const [loadingLowStock, setLoadingLowStock] = useState(false);
+  const [loadingTopEmployees, setLoadingTopEmployees] = useState(false);
   const [error, setError] = useState(null);
   const [ordersError, setOrdersError] = useState(null);
   const [customersError, setCustomersError] = useState(null);
   const [avgOrderValueError, setAvgOrderValueError] = useState(null);
   const [recentOrdersError, setRecentOrdersError] = useState(null);
   const [lowStockError, setLowStockError] = useState(null);
+  const [topEmployeesError, setTopEmployeesError] = useState(null);
 
   // Fetch revenue data when date range changes
   useEffect(() => {
@@ -336,6 +339,33 @@ const Dashboard = () => {
 
     fetchLowStockProducts();
   }, []);
+  
+  // Fetch top performing employees
+  useEffect(() => {
+    const fetchTopEmployees = async () => {
+      try {
+        setLoadingTopEmployees(true);
+        setTopEmployeesError(null);
+        console.log('Fetching top performing employees for range:', dateRange);
+        const data = await dashboardService.getTopPerformingEmployees(dateRange.from, dateRange.to, 5);
+        console.log('Top employees data received:', data);
+        
+        // Kiểm tra dữ liệu trả về
+        if (data === null || data === undefined) {
+          throw new Error('Dữ liệu nhân viên xuất sắc trả về không hợp lệ');
+        }
+        
+        setTopEmployees(data);
+      } catch (err) {
+        console.error('Error fetching top employees:', err);
+        setTopEmployeesError(err.message || 'Không thể lấy dữ liệu nhân viên xuất sắc. Vui lòng thử lại sau.');
+      } finally {
+        setLoadingTopEmployees(false);
+      }
+    };
+
+    fetchTopEmployees();
+  }, [dateRange]);
 
   // Format currency function
   const formatCurrency = (amount) => {
@@ -427,12 +457,6 @@ const Dashboard = () => {
   const marketingCampaigns = [
     { id: 1, name: 'Khuyến mãi mùa hè', startDate: '01/05/2025', endDate: '15/05/2025', status: 'Sắp diễn ra' },
     { id: 2, name: 'Giảm giá cuối tuần', startDate: '16/04/2025', endDate: '18/04/2025', status: 'Sắp diễn ra' }
-  ];
-  
-  // Staff performance
-  const staffPerformance = [
-    { id: 1, name: 'Nguyễn Thị D', salesAmount: 15400000, target: 15000000, performance: 102.7 },
-    { id: 2, name: 'Trần Văn E', salesAmount: 12600000, target: 15000000, performance: 84 }
   ];
   
   return (
@@ -937,91 +961,91 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {/* Staff Performance */}
-      <div className="grid grid-cols-1 gap-6">
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-lg text-gray-800">Hiệu suất nhân viên</h3>
-              <button className="text-blue-600 text-sm flex items-center">
-                Xem tất cả <ChevronRight size={16} />
-              </button>
-            </div>
+      {/* Top Performing Employees */}
+      <div className="bg-white rounded-lg shadow mb-6">
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-lg text-gray-800">Nhân viên xuất sắc</h3>
+            <button className="text-blue-600 text-sm flex items-center">
+              Xem tất cả <ChevronRight size={16} />
+            </button>
           </div>
-          <div className="p-3">
-            {staffPerformance.map((staff, index) => (
-              <div key={index} className="p-3 hover:bg-gray-50 rounded-lg">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
-                    <User size={20} className="text-indigo-500" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <h4 className="font-medium text-gray-800">{staff.name}</h4>
-                      <span className={`text-sm ${staff.performance >= 100 ? 'text-green-600' : 'text-orange-600'}`}>
-                        {staff.performance}% mục tiêu
-                      </span>
+        </div>
+        <div className="p-3">
+          {loadingTopEmployees ? (
+            <div className="p-6 flex justify-center items-center">
+              <div className="text-gray-500 flex flex-col items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
+                <span>Đang tải dữ liệu...</span>
+              </div>
+            </div>
+          ) : topEmployeesError ? (
+            <div className="p-6 text-center">
+              <div className="text-red-500 mb-2">
+                <AlertCircle size={24} className="mx-auto mb-2" />
+                <p>Không thể tải dữ liệu nhân viên xuất sắc</p>
+              </div>
+              <p className="text-sm text-gray-500">{topEmployeesError}</p>
+            </div>
+          ) : topEmployees.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">
+              <Users size={24} className="mx-auto mb-2" />
+              <p>Không có dữ liệu nhân viên xuất sắc trong khoảng thời gian này</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 p-3">
+              {topEmployees.map((employee, index) => (
+                <div key={employee.employeeId} className="bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col items-center">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-blue-500 mb-3">
+                      {employee.profilePictureUrl ? (
+                        <img 
+                          src={employee.profilePictureUrl} 
+                          alt={employee.fullName} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <User size={32} className="text-gray-400" />
+                        </div>
+                      )}
                     </div>
-                    <div className="mt-2">
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div 
-                          className={`h-2.5 rounded-full ${staff.performance >= 100 ? 'bg-green-600' : 'bg-orange-500'}`}
-                          style={{ width: `${Math.min(staff.performance, 100)}%` }}
-                        ></div>
+                    {index < 3 && (
+                      <div className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center ${index === 0 ? 'bg-yellow-400' : index === 1 ? 'bg-gray-300' : 'bg-amber-600'}`}>
+                        <Award size={16} className="text-white" />
                       </div>
-                    </div>
-                    <div className="flex justify-between mt-1">
-                      <span className="text-sm text-gray-500">₫{(staff.salesAmount / 1000000).toFixed(1)}tr</span>
-                      <span className="text-sm text-gray-500">Mục tiêu: ₫{(staff.target / 1000000).toFixed(1)}tr</span>
-                    </div>
+                    )}
+                  </div>
+                  <h4 className="font-medium text-gray-800 text-center">{employee.fullName}</h4>
+                  <p className="text-sm text-gray-500 mb-2">@{employee.username}</p>
+                  <div className="w-full bg-gray-100 rounded-full h-2.5 mb-2">
+                    <div 
+                      className="bg-blue-600 h-2.5 rounded-full" 
+                      style={{ width: `${Math.min(100, employee.performanceScore)}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex items-center justify-between w-full text-xs text-gray-500">
+                    <span className="flex items-center">
+                      <ShoppingCart size={12} className="mr-1" />
+                      {employee.processedOrdersCount}
+                    </span>
+                    <span className="flex items-center">
+                      <Package size={12} className="mr-1" />
+                      {employee.inventoryOperationsCount}
+                    </span>
+                    <span className="flex items-center">
+                      <Users size={12} className="mr-1" />
+                      {employee.customerSupportCount}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center">
+                    <Star size={14} className="text-yellow-400 mr-1" />
+                    <span className="font-semibold">{employee.performanceScore.toFixed(1)}</span>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      
-      {/* Footer Stats */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-4 flex items-center">
-          <div className="p-3 rounded-full bg-blue-100 mr-4">
-            <Truck size={20} className="text-blue-600" />
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm">Đơn hàng đang giao</p>
-            <p className="font-bold text-lg">8</p>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow p-4 flex items-center">
-          <div className="p-3 rounded-full bg-purple-100 mr-4">
-            <Clock size={20} className="text-purple-600" />
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm">Chờ xử lý</p>
-            <p className="font-bold text-lg">5</p>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow p-4 flex items-center">
-          <div className="p-3 rounded-full bg-green-100 mr-4">
-            <Package size={20} className="text-green-600" />
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm">Tổng sản phẩm</p>
-            <p className="font-bold text-lg">124</p>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow p-4 flex items-center">
-          <div className="p-3 rounded-full bg-yellow-100 mr-4">
-            <Users size={20} className="text-yellow-600" />
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm">Khách hàng thành viên</p>
-            <p className="font-bold text-lg">328</p>
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
