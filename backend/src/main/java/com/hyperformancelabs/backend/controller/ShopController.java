@@ -1,7 +1,12 @@
 package com.hyperformancelabs.backend.controller;
 
 import com.hyperformancelabs.backend.dto.ProductDTO;
+import com.hyperformancelabs.backend.dto.ProductVariantDTO;
 import com.hyperformancelabs.backend.service.ProductService;
+import com.hyperformancelabs.backend.service.ProductVariantService;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,6 +59,9 @@ public class ShopController {
         return "shop/product-list";
     }
 
+    @Autowired
+    private ProductVariantService productVariantService;
+
     @GetMapping("/product/{id}")
     public String showProductDetail(@PathVariable Integer id, Model model) {
         ProductDTO product = productService.getProductById(id);
@@ -63,22 +71,30 @@ public class ShopController {
 
         List<ProductDTO> relatedProducts = productService.getRelatedProducts(id, 4);
 
-        // Thêm dữ liệu mẫu cho các thuộc tính khác của sản phẩm
-        // Trong thực tế, bạn sẽ lấy dữ liệu này từ cơ sở dữ liệu
+        // Lấy danh sách biến thể sản phẩm (kích thước, giá)
+        List<ProductVariantDTO> productVariants = productVariantService.getProductVariantsByProductId(id);
+
+        // Nếu không có biến thể nào, tạo dữ liệu mẫu
+//        if (productVariants.isEmpty()) {
+//            productVariants = new ArrayList<>();
+//            productVariants.add(new ProductVariantDTO(1, id, 50, new BigDecimal(500000)));
+//            productVariants.add(new ProductVariantDTO(2, id, 75, new BigDecimal(1250000)));
+//            productVariants.add(new ProductVariantDTO(3, id, 100, new BigDecimal(2500000)));
+//        }
+
+        // Lấy giá của biến thể đầu tiên làm giá mặc định
+        BigDecimal defaultPrice = productVariants.get(0).getPrice();
+        BigDecimal originalPrice = defaultPrice.multiply(new BigDecimal("1.2")).setScale(0, RoundingMode.HALF_UP);
+
+        // Thêm dữ liệu vào model
         model.addAttribute("product", product);
         model.addAttribute("relatedProducts", relatedProducts);
+        model.addAttribute("productVariants", productVariants);
         model.addAttribute("rating", 4.5);
         model.addAttribute("reviewCount", 125);
         model.addAttribute("availability", "Còn hàng");
-        model.addAttribute("originalPrice", 3500000);
-        model.addAttribute("salePrice", 2400000);
-
-        // Thêm dữ liệu mẫu cho các kích thước sản phẩm
-        List<Map<String, Object>> sizes = new ArrayList<>();
-        sizes.add(Map.of("value", "50ml", "label", "50ml", "price", 500000));
-        sizes.add(Map.of("value", "75ml", "label", "75ml", "price", 1250000));
-        sizes.add(Map.of("value", "105ml", "label", "105ml", "price", 2500000));
-        model.addAttribute("sizes", sizes);
+        model.addAttribute("originalPrice", originalPrice);
+        model.addAttribute("salePrice", defaultPrice);
 
         // Thêm dữ liệu mẫu cho các hình ảnh sản phẩm
         List<String> images = new ArrayList<>();

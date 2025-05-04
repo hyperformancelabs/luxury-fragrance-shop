@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.service.impl;
 
+import com.hyperformancelabs.backend.dto.FlashSaleProductDTO;
 import com.hyperformancelabs.backend.dto.ProductDTO;
 import com.hyperformancelabs.backend.model.Product;
 import com.hyperformancelabs.backend.repository.ProductRepository;
@@ -11,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -69,6 +72,14 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<FlashSaleProductDTO> getFlashSaleProducts() {
+        return productRepository.findActiveFlashSaleProducts()
+                .stream()
+                .map(this::mapToFlashSaleProductDTO)
+                .collect(Collectors.toList());
+    }
+
     private ProductDTO convertToProductDTO(Product product) {
         return new ProductDTO(
                 product.getProductId(),
@@ -76,6 +87,40 @@ public class ProductServiceImpl implements ProductService {
                 product.getProductName(),
                 product.getDescription(),
                 product.getImageUrl()
+        );
+    }
+
+    private FlashSaleProductDTO mapToFlashSaleProductDTO(Object[] product) {
+        Object startDateObj = product[9];
+        Object endDateObj = product[10];
+
+        LocalDateTime startDate = null;
+        LocalDateTime endDate = null;
+
+        if (startDateObj instanceof java.sql.Timestamp) {
+            startDate = ((java.sql.Timestamp) startDateObj).toLocalDateTime();
+        } else if (startDateObj instanceof java.sql.Date) {
+            startDate = ((java.sql.Date) startDateObj).toLocalDate().atStartOfDay();
+        }
+
+        if (endDateObj instanceof java.sql.Timestamp) {
+            endDate = ((java.sql.Timestamp) endDateObj).toLocalDateTime();
+        } else if (endDateObj instanceof java.sql.Date) {
+            endDate = ((java.sql.Date) endDateObj).toLocalDate().atStartOfDay();
+        }
+
+        return new FlashSaleProductDTO(
+                (Integer) product[0],
+                (String) product[1],
+                (Integer) product[2],
+                (BigDecimal) product[3],
+                (String) product[4],
+                (String) product[5],
+                (String) product[6],
+                (BigDecimal) product[7],
+                (Integer) product[8],
+                startDate,
+                endDate
         );
     }
 }

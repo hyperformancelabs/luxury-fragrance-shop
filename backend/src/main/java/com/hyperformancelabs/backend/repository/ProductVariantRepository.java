@@ -17,6 +17,12 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
 
     // Tìm biến thể theo ID
     ProductVariant findByProductVariantId(Integer productVariantId);
+
+    // Tìm biến thể đầu tiên của một sản phẩm
+    @Query("SELECT pv FROM ProductVariant pv " +
+           "WHERE pv.product.productId = :productId " +
+           "ORDER BY pv.productVariantId ASC")
+    Optional<ProductVariant> findFirstByProduct_ProductId(@Param("productId") Integer productId);
     
     // Tìm biến thể theo sản phẩm và dung tích
     Optional<ProductVariant> findByProduct_ProductIdAndVolume(Integer productId, Integer volume);

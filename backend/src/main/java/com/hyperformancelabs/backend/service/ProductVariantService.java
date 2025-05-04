@@ -7,8 +7,17 @@ import java.util.List;
 
 public interface ProductVariantService {
     // Tìm tất cả biến thể của một sản phẩm
-    List<ProductVariantDTO> findByProduct_ProductId(Integer productId);
+    List<ProductVariantDTO> getProductVariantsByProductId(Integer productId);
 
     // Tìm biến thể theo ID
-    ProductVariantDTO findByProductVariantId(Integer productVariantId);
+    ProductVariantDTO getProductVariantById(Integer productVariantId);
+
+    // Tìm biến thể đầu tiên của một sản phẩm
+    ProductVariantDTO findFirstByProduct_ProductId(Integer productId);
+
+//    // Lấy danh sách biến thể của một sản phẩm
+//    List<ProductVariantDTO> getProductVariantsByProductId(Integer productId);
+
+//    // Lấy biến thể theo ID
+//    ProductVariantDTO getProductVariantById(Integer productVariantId);
 }

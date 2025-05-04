@@ -17,7 +17,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     private ProductVariantRepository productVariantRepository;
 
     @Override
-    public List<ProductVariantDTO> findByProduct_ProductId(Integer productId) {
+    public List<ProductVariantDTO> getProductVariantsByProductId(Integer productId) {
         return productVariantRepository.findByProduct_ProductId(productId)
                 .stream()
                 .map(this::convertToProductVariantDTO)
@@ -25,10 +25,16 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     }
 
     @Override
-    public ProductVariantDTO findByProductVariantId(Integer productVariantId) {
+    public ProductVariantDTO getProductVariantById(Integer productVariantId) {
         return productVariantRepository.findById(productVariantId)
                 .map(this::convertToProductVariantDTO)
                 .orElse(null);
+    }
+
+    @Override
+    public ProductVariantDTO findFirstByProduct_ProductId(Integer productId) {
+        List<ProductVariantDTO> variants = getProductVariantsByProductId(productId);
+        return variants.isEmpty() ? null : variants.get(0);
     }
 
     private ProductVariantDTO convertToProductVariantDTO(ProductVariant productVariant) {

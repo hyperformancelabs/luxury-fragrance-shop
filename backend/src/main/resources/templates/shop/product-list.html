@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="fragments/head :: head(${currentBrand != null ? currentBrand : (currentSearch != null ? 'Tìm kiếm: ' + currentSearch : 'Danh sách sản phẩm')}, ~{::link})">
     <link rel="stylesheet" href="/css/product-list.css">
+    <link rel="stylesheet" href="/css/quickview.css">
 </head>
 <body class="bg-light">
     <!-- Navigation -->
@@ -333,6 +334,7 @@
 
     <th:block th:replace="fragments/scripts :: scripts(~{::script})">
         <script src="/js/product-list.js"></script>
+        <script src="/js/quickview.js"></script>
     </th:block>
 </body>
 </html>

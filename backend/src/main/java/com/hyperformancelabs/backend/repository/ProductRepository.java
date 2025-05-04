@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.repository;
 
+import com.hyperformancelabs.backend.dto.FlashSaleProductDTO;
 import com.hyperformancelabs.backend.model.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,4 +38,18 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     default List<Product> findTopSellingProducts(int limit) {
         return findTopSellingProducts(PageRequest.of(0, limit));
     }
+
+    // Lấy danh sách sản phẩm đang trong flash sale
+    @Query(value = "SELECT p.product_id, p.product_name, " +
+            "pp.product_promotion_id, pp.max_discount_amount, pp.condition_json, " +
+            "pr.promotion_name, pr.discount_type, pr.discount_value, pr.usage_limit, " +
+            "pp.start_date, pp.end_date " +
+            "FROM ProductPromotion pp " +
+            "JOIN Product p ON pp.product_id = p.product_id " +
+            "JOIN Promotion pr ON pp.promotion_id = pr.promotion_id " +
+            "WHERE pp.status = 'active' " +
+            "AND GETDATE() BETWEEN pp.start_date AND ISNULL(pp.end_date, '9999-12-31') " +
+            "AND pr.status = 'active'",
+            nativeQuery = true)
+    List<Object[]> findActiveFlashSaleProducts();
 }

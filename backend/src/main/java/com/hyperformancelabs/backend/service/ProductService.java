@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.service;
 
+import com.hyperformancelabs.backend.dto.FlashSaleProductDTO;
 import com.hyperformancelabs.backend.dto.ProductDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,4 +25,7 @@ public interface ProductService {
     
     // Lấy top sản phẩm bán chạy
     List<ProductDTO> getTopSellingProducts(int limit);
+
+    // Lấy danh sách sản phẩm trong flash sale
+    List<FlashSaleProductDTO> getFlashSaleProducts();
 }

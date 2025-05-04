@@ -23,6 +23,13 @@ public class BrandServiceImpl implements BrandService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public BrandDTO getBrandById(Integer brandId) {
+        return brandRepository.findById(brandId)
+                .map(this::convertToBrandDTO)
+                .orElse(null);
+    }
+
     private BrandDTO convertToBrandDTO(Brand brand) {
         return new BrandDTO(
                 brand.getBrandId(),
