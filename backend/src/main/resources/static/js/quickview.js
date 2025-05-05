@@ -289,9 +289,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // Lấy thông tin cơ bản của sản phẩm
-                const productName = productCard.querySelector('.product-name')?.textContent || 'Sản phẩm';
+                const productName = productCard.querySelector('.product-name, .card-title')?.textContent || 'Sản phẩm';
                 const brandName = productCard.querySelector('.product-brand')?.textContent || 'Thương hiệu';
-                const imageUrl = productCard.querySelector('.product-image')?.src || '/images/placeholder.jpg';
+                const imageUrl = productCard.querySelector('.product-image, .product-img')?.src || '/images/placeholder.jpg';
                 const description = productCard.getAttribute('data-description') || 'Mô tả sản phẩm';
 
                 // Lấy thông tin giá
@@ -613,9 +613,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // Lấy thông tin cơ bản của sản phẩm từ phần tử HTML
-                const productName = productCard.querySelector('.product-name')?.textContent || 'Sản phẩm';
+                const productName = productCard.querySelector('.product-name, .card-title')?.textContent || 'Sản phẩm';
                 const brandName = productCard.querySelector('.product-brand')?.textContent || 'Thương hiệu';
-                const imageUrl = productCard.querySelector('.product-image')?.src || '/images/placeholder.jpg';
+                const imageUrl = productCard.querySelector('.product-image, .product-img')?.src || '/images/placeholder.jpg';
                 const description = productCard.getAttribute('data-description') || 'Mô tả sản phẩm';
                 const originalPrice = parseFloat(productCard.getAttribute('data-original-price') || '0');
                 const salePrice = parseFloat(productCard.getAttribute('data-sale-price') || originalPrice.toString());
