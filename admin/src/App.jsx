@@ -12,6 +12,7 @@ import Materials from './pages/Materials';
 import Marketing from './pages/Marketing';
 import Staff from './pages/Staff';
 import Login from './pages/Login';
+import EmployeeProfile from './pages/EmployeeProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -33,6 +34,7 @@ const AppLayout = () => {
             <Route path="/materials" element={<Materials />} />
             <Route path="/marketings" element={<Marketing />} />
             <Route path="/staffs" element={<Staff />} />
+            <Route path="/profile" element={<EmployeeProfile />} />
             <Route path="*" element={<DefaultContent title="Trang không tồn tại" />} />
           </Routes>
         </main>

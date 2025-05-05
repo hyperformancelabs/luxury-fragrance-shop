@@ -10,13 +10,17 @@ const login = async (username, password) => {
       password
     });
     
+    console.log('API login response:', response.data);
+    
     if (response.data.data) {
       // Store user details in localStorage
       localStorage.setItem('user', JSON.stringify(response.data.data));
+      console.log('User data stored in localStorage:', response.data.data);
     }
     
     return response.data;
   } catch (error) {
+    console.error('Login API error:', error);
     throw error.response?.data || { message: 'Lỗi kết nối đến máy chủ' };
   }
 };

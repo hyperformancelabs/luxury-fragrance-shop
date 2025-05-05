@@ -2,9 +2,12 @@ package com.hyperformancelabs.backend.service.impl;
 
 import com.hyperformancelabs.backend.dto.EmployeeRegisterRequest;
 import com.hyperformancelabs.backend.dto.EmployeeLoginRequest;
+import com.hyperformancelabs.backend.dto.EmployeeProfileResponse;
+import com.hyperformancelabs.backend.dto.EmployeeUpdateRequest;
 import com.hyperformancelabs.backend.dto.LoginResponse;
 import com.hyperformancelabs.backend.exception.DuplicateResourceException;
 import com.hyperformancelabs.backend.exception.InvalidRequestException;
+import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
 import com.hyperformancelabs.backend.model.Employee;
 import com.hyperformancelabs.backend.repository.EmployeeRepository;
 import com.hyperformancelabs.backend.service.EmployeeService;
@@ -107,6 +110,87 @@ public class EmployeeServiceImpl implements EmployeeService {
         var roles = emp.getEmployeeRoles().stream()
             .map(er -> er.getRole().getRoleName())
             .collect(Collectors.toList());
-        return new LoginResponse(token, emp.getEmployeeId().longValue(), emp.getUsername(), emp.getEmail(), roles);
+        
+        // Sử dụng constructor đầy đủ để trả về tất cả thông tin nhân viên
+        return new LoginResponse(
+            token, 
+            emp.getEmployeeId().longValue(), 
+            emp.getUsername(), 
+            emp.getFullName(),
+            emp.getPhoneNumber(),
+            emp.getEmail(), 
+            emp.getAddress(),
+            emp.getStatus(),
+            emp.getStartDate(),
+            emp.getLastLogin(),
+            emp.getDateOfBirth(),
+            emp.getProfilePictureUrl(),
+            roles
+        );
+    }
+    
+    @Override
+    public EmployeeProfileResponse getEmployeeProfile(String username) {
+        Employee employee = employeeRepository.findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("Employee not found with username: " + username));
+        
+        return mapEmployeeToProfileResponse(employee);
+    }
+    
+    @Override
+    @Transactional
+    public EmployeeProfileResponse updateEmployeeProfile(String username, EmployeeUpdateRequest request) {
+        Employee employee = employeeRepository.findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("Employee not found with username: " + username));
+        
+        // Validate email if changed
+        if (StringUtils.hasText(request.getEmail()) && !request.getEmail().equals(employee.getEmail())) {
+            if (employeeRepository.existsByEmail(request.getEmail())) {
+                throw new DuplicateResourceException("Email already exists");
+            }
+        }
+        
+        // Update password if provided
+        if (StringUtils.hasText(request.getCurrentPassword()) && StringUtils.hasText(request.getNewPassword())) {
+            if (!passwordEncoder.matches(request.getCurrentPassword(), employee.getPassword())) {
+                throw new InvalidRequestException("Current password is incorrect");
+            }
+            employee.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        }
+        
+        // Update other fields
+        employee.setFullName(request.getFullName());
+        employee.setPhoneNumber(request.getPhoneNumber());
+        employee.setEmail(request.getEmail());
+        employee.setAddress(request.getAddress());
+        employee.setDateOfBirth(request.getDateOfBirth());
+        
+        // Cập nhật URL ảnh đại diện ngay cả khi nó là null
+        // Điều này cho phép xóa ảnh đại diện nếu cần
+        employee.setProfilePictureUrl(request.getProfilePictureUrl());
+        
+        Employee updatedEmployee = employeeRepository.save(employee);
+        return mapEmployeeToProfileResponse(updatedEmployee);
+    }
+    
+    private EmployeeProfileResponse mapEmployeeToProfileResponse(Employee employee) {
+        var roles = employee.getEmployeeRoles().stream()
+            .map(er -> er.getRole().getRoleName())
+            .collect(Collectors.toList());
+            
+        return new EmployeeProfileResponse(
+            employee.getEmployeeId().longValue(),
+            employee.getUsername(),
+            employee.getFullName(),
+            employee.getPhoneNumber(),
+            employee.getEmail(),
+            employee.getAddress(),
+            employee.getStatus(),
+            employee.getStartDate(),
+            employee.getLastLogin(),
+            employee.getDateOfBirth(),
+            employee.getProfilePictureUrl(),
+            roles
+        );
     }
 }

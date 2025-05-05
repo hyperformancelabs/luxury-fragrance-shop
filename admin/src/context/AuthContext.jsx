@@ -22,9 +22,16 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       const response = await authService.login(username, password);
-      setUser(response.data);
+      console.log('Login response:', response);
+      
+      // Đảm bảo lưu đúng dữ liệu người dùng
+      if (response.data) {
+        setUser(response.data);
+      }
+      
       return response;
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
@@ -38,6 +45,7 @@ export const AuthProvider = ({ children }) => {
   // Context value
   const value = {
     user,
+    setUser, // Cho phép cập nhật user từ bên ngoài (ví dụ: sau khi cập nhật profile)
     loading,
     login,
     logout,
@@ -52,10 +60,4 @@ export const AuthProvider = ({ children }) => {
 };
 
 // Custom hook to use auth context
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);

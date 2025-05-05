@@ -35,12 +35,20 @@ public class SecurityConfig {
                         // Các API không cần xác thực
                         .requestMatchers(
                                 "/api/v1/auth/**",        // Đăng nhập, đăng ký
-                                "/api/v1/**",    // Public product APIs
+                                "/api/v1/products/**",    // Public product APIs
+                                "/api/v1/categories/**",  // Public category APIs
+                                "/api/v1/brands/**",      // Public brand APIs
                                 "/api/v1/cart/**",        // Giỏ hàng cho cả guest và user
-                                "/api/v1/payment/**",      // Thanh toán có thể không cần login
+                                "/api/v1/payment/**",     // Thanh toán có thể không cần login
                                 "/api/v1/orders/revenue-by-date-range",  // API doanh thu cho dashboard admin
                                 "/api/v1/orders/total-amount-of-delivered-orders-*", // Các endpoint thống kê doanh thu
-                                "/employee-performance/**" // API xếp hạng nhân viên
+                                "/api/v1/orders/new-orders-count-by-date-range", // Đơn hàng mới
+                                "/api/v1/orders/average-order-value-by-date-range", // Giá trị trung bình đơn hàng
+                                "/api/v1/orders/top-recent-orders-by-date-range", // Đơn hàng gần đây
+                                "/api/v1/orders/recent-orders-by-date-range", // Đơn hàng gần đây (endpoint thực tế)
+                                "/api/v1/customers/new-customers-count-by-date-range", // Khách hàng mới
+                                "/api/v1/inventory/**", // API cảnh báo tồn kho
+                                "/api/v1/employee-performance/**" // API xếp hạng nhân viên
                         ).permitAll()
 
                         // Các API còn lại yêu cầu JWT
