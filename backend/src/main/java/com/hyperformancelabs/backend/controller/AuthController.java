@@ -1,15 +1,16 @@
 package com.hyperformancelabs.backend.controller;
 
 import com.hyperformancelabs.backend.dto.CustomerResponseDTO;
+import com.hyperformancelabs.backend.dto.EmployeeLoginRequest;
 import com.hyperformancelabs.backend.dto.EmployeeRegisterRequest;
 import com.hyperformancelabs.backend.dto.LoginRequest;
+import com.hyperformancelabs.backend.dto.LoginResponse;
 import com.hyperformancelabs.backend.dto.RegisterRequest;
 import com.hyperformancelabs.backend.payload.ApiResponse;
 import com.hyperformancelabs.backend.payload.ApiResponseStatus;
 import com.hyperformancelabs.backend.service.CustomerService;
 import com.hyperformancelabs.backend.service.EmployeeService;
 
-import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -85,5 +86,29 @@ public class AuthController {
                         null
                 )
         );
+    }
+
+    @PostMapping("/emp/login")
+    public ResponseEntity<ApiResponse<LoginResponse>> loginEmployee(@Valid @RequestBody EmployeeLoginRequest request) {
+        try {
+            LoginResponse response = employeeService.login(request);
+            return ResponseEntity.ok(
+                new ApiResponse<>(
+                    ApiResponseStatus.SUCCESS_CODE,
+                    ApiResponseStatus.SUCCESS_STATUS,
+                    "Đăng nhập thành công",
+                    response
+                )
+            );
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(
+                new ApiResponse<>(
+                    ApiResponseStatus.BAD_REQUEST_CODE,
+                    ApiResponseStatus.ERROR_STATUS,
+                    e.getMessage(),
+                    null
+                )
+            );
+        }
     }
 }

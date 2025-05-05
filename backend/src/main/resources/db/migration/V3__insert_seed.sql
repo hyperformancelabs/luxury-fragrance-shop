@@ -13026,7 +13026,7 @@ VALUES
 (100, 3, 'import', '2024-03-10 09:00:00', 40, 100, 140, N'Nhập hàng gấp', N'PO#2403-100', 310000.00); -- New cost
 
 
--- 11. Insert data into ProductDetail table
+-- 12. Insert data into ProductDetail table
 -- Batch 1/38
 INSERT INTO ProductDetail (product_id, detail_name, detail_value, note)
 VALUES
