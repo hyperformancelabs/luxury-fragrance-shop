@@ -12,6 +12,8 @@ import Materials from './pages/Materials';
 import Marketing from './pages/Marketing';
 import Staff from './pages/Staff';
 import Login from './pages/Login';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
 
 const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -41,10 +43,16 @@ const AppLayout = () => {
 
 const App = () => {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/*" element={<AppLayout />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/*" element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        } />
+      </Routes>
+    </AuthProvider>
   );
 };
 

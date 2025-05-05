@@ -1,7 +1,20 @@
 import React from 'react'
-import { Bell, Search } from 'lucide-react'
+import { Bell, Search, LogOut } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 
-const Header = ({ sidebarOpen }) => (
+const Header = ({ sidebarOpen }) => {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  
+  const handleLogout = () => {
+    logout()
+    toast.success('Đăng xuất thành công')
+    navigate('/login')
+  }
+  
+  return (
   <header className={`fixed top-0 ${sidebarOpen ? 'left-64' : 'left-20'} right-0 h-16 bg-white shadow-sm z-20 flex justify-between items-center px-4`}>
     <h1 className="text-xl font-semibold text-gray-800">Bảng điều khiển</h1>
     
@@ -21,14 +34,26 @@ const Header = ({ sidebarOpen }) => (
       </button>
       
       <div className="flex items-center space-x-3">
-        <img src="/avt.jpg" alt="Avatar" className="w-8 h-8 rounded-full" />
+        <img 
+          src={user?.profilePictureUrl || "/empavt.jpg"} 
+          alt="Avatar" 
+          className="w-8 h-8 rounded-full object-cover" 
+        />
         <div className="hidden md:block">
-          <div className="font-medium">Quốc Huy</div>
-          <div className="text-xs text-gray-500">Admin</div>
+          <div className="font-medium">{user?.username || 'Không xác định'}</div>
+          <div className="text-xs text-gray-500">{user?.roles?.join(', ') || 'Không có vai trò'}</div>
         </div>
+        <button 
+          onClick={handleLogout}
+          className="p-2 rounded-full hover:bg-gray-200 text-gray-600"
+          title="Đăng xuất"
+        >
+          <LogOut size={18} />
+        </button>
       </div>
     </div>
   </header>
-)
+  )
+}
 
 export default Header
