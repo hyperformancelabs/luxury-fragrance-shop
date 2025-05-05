@@ -154,22 +154,39 @@ public class HomeController {
         // Get best selling products
         List<ProductDTO> bestSellingProducts = productService.getTopSellingProducts(6);
 
-        // Tạo map chứa danh sách biến thể cho mỗi sản phẩm bán chạy nhất
+        Map<Integer, List<ProductVariantDTO>> bestSellingProductVariantMap = bestSellingProducts.stream()
+                .map(product -> productVariantService.getProductVariantsByProductId(product.getProductId()))
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .collect(Collectors.groupingBy(ProductVariantDTO::getProductId));
+
+        Map<Integer, BigDecimal[]> bestSellingProductPriceRangeMap = new HashMap<>();
         Map<Integer, String> bestSellingProductVariants = new HashMap<>();
-        for (ProductDTO product : bestSellingProducts) {
-            if (!productVariantsMap.containsKey(product.getProductId())) {
-                List<ProductVariantDTO> variants = productVariantService.getProductVariantsByProductId(product.getProductId());
-                if (!variants.isEmpty()) {
-                    productFirstVariantMap.put(product.getProductId(), variants.get(0).getProductVariantId());
-                    bestSellingProductVariants.put(product.getProductId(), convertVariantsToJson(variants));
-                    productVariantsMap.put(product.getProductId(), convertVariantsToJson(variants));
+
+        for (Map.Entry<Integer, List<ProductVariantDTO>> entry : bestSellingProductVariantMap.entrySet()) {
+            List<ProductVariantDTO> variants = entry.getValue();
+
+            if (variants != null && !variants.isEmpty()) {
+                // Tính toán giá thấp nhất và cao nhất
+                Optional<BigDecimal> min = variants.stream().map(ProductVariantDTO::getPrice).min(Comparator.naturalOrder());
+                Optional<BigDecimal> max = variants.stream().map(ProductVariantDTO::getPrice).max(Comparator.naturalOrder());
+
+                max.ifPresent(bigDecimal -> bestSellingProductPriceRangeMap.put(entry.getKey(), new BigDecimal[]{min.get(), bigDecimal}));
+
+                // Thêm biến thể vào map
+                if (!productVariantsMap.containsKey(entry.getKey())) {
+                    productFirstVariantMap.put(entry.getKey(), variants.get(0).getProductVariantId());
+                    String variantsJson = convertVariantsToJson(variants);
+                    bestSellingProductVariants.put(entry.getKey(), variantsJson);
+                    productVariantsMap.put(entry.getKey(), variantsJson);
+                } else {
+                    bestSellingProductVariants.put(entry.getKey(), productVariantsMap.get(entry.getKey()));
                 }
-            } else {
-                bestSellingProductVariants.put(product.getProductId(), productVariantsMap.get(product.getProductId()));
             }
         }
 
         model.addAttribute("bestSellingProducts", bestSellingProducts);
+        model.addAttribute("bestSellingProductPriceRangeMap", bestSellingProductPriceRangeMap);
         model.addAttribute("bestSellingProductVariants", bestSellingProductVariants);
 
         // Get top search products

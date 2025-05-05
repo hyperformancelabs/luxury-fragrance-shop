@@ -300,8 +300,8 @@
                 <div class="card product-card h-100"
                      th:data-product-id="${product.productId}"
                      th:data-variants="${bestSellingProductVariants.containsKey(product.productId) ? bestSellingProductVariants.get(product.productId) : '[]'}"
-                     th:data-original-price="${productPriceRangeMap.containsKey(product.productId) ? productPriceRangeMap.get(product.productId)[0] : '0'}"
-                     th:data-sale-price="${productPriceRangeMap.containsKey(product.productId) ? productPriceRangeMap.get(product.productId)[1] : '0'}">
+                     th:data-original-price="${bestSellingProductPriceRangeMap.containsKey(product.productId) ? bestSellingProductPriceRangeMap.get(product.productId)[0] : '0'}"
+                     th:data-sale-price="${bestSellingProductPriceRangeMap.containsKey(product.productId) ? bestSellingProductPriceRangeMap.get(product.productId)[1] : '0'}">
                     <div class="position-absolute top-0 start-0 m-2">
                         <span class="badge bg-success">Bán chạy</span>
                     </div>
@@ -327,15 +327,15 @@
                         <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
                         <div class="product-price">
                             <!-- Single price if product has only one variant -->
-                            <span class="sale-price" th:if="${productPriceRangeMap != null && productPriceRangeMap.containsKey(product.productId) &&
-                                  productPriceRangeMap.get(product.productId)[0].equals(productPriceRangeMap.get(product.productId)[1])}"
-                                  th:text="${#numbers.formatDecimal(productPriceRangeMap.get(product.productId)[0], 0, 'COMMA', 0, 'POINT') + 'đ'}">2.150.000đ</span>
+                            <span class="sale-price" th:if="${bestSellingProductPriceRangeMap != null && bestSellingProductPriceRangeMap.containsKey(product.productId) &&
+                                  bestSellingProductPriceRangeMap.get(product.productId)[0].equals(bestSellingProductPriceRangeMap.get(product.productId)[1])}"
+                                  th:text="${#numbers.formatDecimal(bestSellingProductPriceRangeMap.get(product.productId)[0], 0, 'COMMA', 0, 'POINT') + 'đ'}">2.150.000đ</span>
 
                             <!-- Price range if product has multiple variants with different prices -->
-                            <span class="sale-price" th:if="${productPriceRangeMap != null && productPriceRangeMap.containsKey(product.productId) &&
-                                  !productPriceRangeMap.get(product.productId)[0].equals(productPriceRangeMap.get(product.productId)[1])}"
-                                  th:text="${#numbers.formatDecimal(productPriceRangeMap.get(product.productId)[0], 0, 'COMMA', 0, 'POINT') + 'đ - ' +
-                                  #numbers.formatDecimal(productPriceRangeMap.get(product.productId)[1], 0, 'COMMA', 0, 'POINT') + 'đ'}">1.950.000đ - 2.950.000đ</span>
+                            <span class="sale-price" th:if="${bestSellingProductPriceRangeMap != null && bestSellingProductPriceRangeMap.containsKey(product.productId) &&
+                                  !bestSellingProductPriceRangeMap.get(product.productId)[0].equals(bestSellingProductPriceRangeMap.get(product.productId)[1])}"
+                                  th:text="${#numbers.formatDecimal(bestSellingProductPriceRangeMap.get(product.productId)[0], 0, 'COMMA', 0, 'POINT') + 'đ - ' +
+                                  #numbers.formatDecimal(bestSellingProductPriceRangeMap.get(product.productId)[1], 0, 'COMMA', 0, 'POINT') + 'đ'}">1.950.000đ - 2.950.000đ</span>
                         </div>
                         <form th:action="@{/cart/add}" method="post" class="add-to-cart-form">
                             <input type="hidden" name="productVariantId" th:value="${productFirstVariantMap.containsKey(product.productId) ? productFirstVariantMap.get(product.productId) : ''}">
