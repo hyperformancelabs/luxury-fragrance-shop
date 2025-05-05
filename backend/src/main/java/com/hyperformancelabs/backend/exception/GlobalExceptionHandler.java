@@ -8,6 +8,11 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -39,6 +44,49 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE)
                 .body(new ApiResponse<>(
                         ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE,
+                        ApiResponseStatus.ERROR_STATUS,
+                        ex.getMessage(),
+                        null
+                ));
+    }
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex) {
+        String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+                .map(FieldError::getDefaultMessage)
+                .collect(Collectors.joining(", "));
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(
+                        ApiResponseStatus.BAD_REQUEST_CODE,
+                        ApiResponseStatus.ERROR_STATUS,
+                        errorMessage,
+                        null
+                ));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleConstraintViolation(
+            ConstraintViolationException ex) {
+        String errorMessage = ex.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .collect(Collectors.joining(", "));
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(
+                        ApiResponseStatus.BAD_REQUEST_CODE,
+                        ApiResponseStatus.ERROR_STATUS,
+                        errorMessage,
+                        null
+                ));
+    }
+
+    @ExceptionHandler({DuplicateResourceException.class, InvalidRequestException.class})
+    public ResponseEntity<ApiResponse<Object>> handleCustomExceptions(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(
+                        ApiResponseStatus.BAD_REQUEST_CODE,
                         ApiResponseStatus.ERROR_STATUS,
                         ex.getMessage(),
                         null
