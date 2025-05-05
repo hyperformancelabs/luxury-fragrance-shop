@@ -82,7 +82,8 @@
                          th:data-product-id="${product.productId}"
                          th:data-variants="${flashSaleProductVariants.containsKey(product.productId) ? flashSaleProductVariants.get(product.productId) : '[]'}"
                          th:data-original-price="${flashSaleProductPriceRangeMap.containsKey(product.productId) ? flashSaleProductPriceRangeMap.get(product.productId)[0] : '0'}"
-                         th:data-sale-price="${flashSaleProductPriceRangeMap.containsKey(product.productId) ? flashSaleProductPriceRangeMap.get(product.productId)[1] : '0'}">
+                         th:data-sale-price="${flashSaleProductPriceRangeMap.containsKey(product.productId) ? flashSaleProductPriceRangeMap.get(product.productId)[1] : '0'}"
+                         th:data-brand="${product.brandName}">
                         <div class="position-absolute top-0 start-0 m-2">
                             <span class="badge bg-danger">-30%</span>
                         </div>
@@ -105,6 +106,7 @@
                                 <i class="fas fa-star"></i>
                                 <i class="fas fa-star-half-alt"></i>
                             </div>
+                            <p class="product-brand mb-1" th:text="${product.brandName}">Thương hiệu</p>
                             <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
                             <div class="product-price">
                                 <!-- Original price -->
@@ -146,7 +148,8 @@
                      th:data-product-id="${product.productId}"
                      th:data-variants="${productVariantsMap.containsKey(product.productId) ? productVariantsMap.get(product.productId) : '[]'}"
                      th:data-original-price="${productPriceRangeMap.containsKey(product.productId) ? productPriceRangeMap.get(product.productId)[0] : '0'}"
-                     th:data-sale-price="${productPriceRangeMap.containsKey(product.productId) ? productPriceRangeMap.get(product.productId)[1] : '0'}">
+                     th:data-sale-price="${productPriceRangeMap.containsKey(product.productId) ? productPriceRangeMap.get(product.productId)[1] : '0'}"
+                     th:data-brand="${product.brandName}">
                     <div class="product-actions">
                         <button class="action-btn" title="Yêu thích">
                             <i class="far fa-heart"></i>
@@ -166,6 +169,7 @@
                             <i class="fas fa-star"></i>
                             <i class="fas fa-star-half-alt"></i>
                         </div>
+                        <p class="product-brand mb-1" th:text="${product.brandName}">Thương hiệu</p>
                         <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
                         <div class="product-price">
                             <!-- Single price if product has only one variant -->
@@ -217,7 +221,8 @@
                      th:data-product-id="${product.productId}"
                      th:data-variants="${newProductVariants.containsKey(product.productId) ? newProductVariants.get(product.productId) : '[]'}"
                      th:data-original-price="${productPriceRangeMap.containsKey(product.productId) ? productPriceRangeMap.get(product.productId)[0] : '0'}"
-                     th:data-sale-price="${productPriceRangeMap.containsKey(product.productId) ? productPriceRangeMap.get(product.productId)[1] : '0'}">
+                     th:data-sale-price="${productPriceRangeMap.containsKey(product.productId) ? productPriceRangeMap.get(product.productId)[1] : '0'}"
+                     th:data-brand="${product.brandName}">
                     <div class="position-absolute top-0 start-0 m-2">
                         <span class="badge bg-danger">Mới</span>
                     </div>
@@ -240,6 +245,7 @@
                             <i class="fas fa-star"></i>
                             <i class="fas fa-star"></i>
                         </div>
+                        <p class="product-brand mb-1" th:text="${product.brandName}">Thương hiệu</p>
                         <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
                         <div class="product-price"
                              th:if="${productPriceRangeMap.containsKey(product.productId)}"
@@ -301,7 +307,8 @@
                      th:data-product-id="${product.productId}"
                      th:data-variants="${bestSellingProductVariants.containsKey(product.productId) ? bestSellingProductVariants.get(product.productId) : '[]'}"
                      th:data-original-price="${bestSellingProductPriceRangeMap.containsKey(product.productId) ? bestSellingProductPriceRangeMap.get(product.productId)[0] : '0'}"
-                     th:data-sale-price="${bestSellingProductPriceRangeMap.containsKey(product.productId) ? bestSellingProductPriceRangeMap.get(product.productId)[1] : '0'}">
+                     th:data-sale-price="${bestSellingProductPriceRangeMap.containsKey(product.productId) ? bestSellingProductPriceRangeMap.get(product.productId)[1] : '0'}"
+                     th:data-brand="${product.brandName}">
                     <div class="position-absolute top-0 start-0 m-2">
                         <span class="badge bg-success">Bán chạy</span>
                     </div>
@@ -324,6 +331,7 @@
                             <i class="fas fa-star"></i>
                             <i class="fas fa-star"></i>
                         </div>
+                        <p class="product-brand mb-1" th:text="${product.brandName}">Thương hiệu</p>
                         <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
                         <div class="product-price">
                             <!-- Single price if product has only one variant -->
@@ -364,7 +372,8 @@
                          th:data-product-id="${product.productId}"
                          th:data-variants="${topSearchProductVariants.containsKey(product.productId) ? topSearchProductVariants.get(product.productId) : '[]'}"
                          th:data-original-price="${productPriceRangeMap.containsKey(product.productId) ? productPriceRangeMap.get(product.productId)[0] : '0'}"
-                         th:data-sale-price="${productPriceRangeMap.containsKey(product.productId) ? productPriceRangeMap.get(product.productId)[1] : '0'}">
+                         th:data-sale-price="${productPriceRangeMap.containsKey(product.productId) ? productPriceRangeMap.get(product.productId)[1] : '0'}"
+                         th:data-brand="${product.brandName}">
                         <div class="product-actions">
                             <button class="action-btn" title="Yêu thích">
                                 <i class="far fa-heart"></i>
@@ -384,6 +393,7 @@
                                 <i class="fas fa-star"></i>
                                 <i class="fas fa-star"></i>
                             </div>
+                            <p class="product-brand mb-1" th:text="${product.brandName}">Thương hiệu</p>
                             <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
                             <div class="product-price">
                                 <!-- Single price if product has only one variant -->

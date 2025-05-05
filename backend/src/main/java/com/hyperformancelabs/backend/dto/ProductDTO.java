@@ -11,7 +11,7 @@ public class ProductDTO {
 
     private Integer productId;
 
-    private Integer brandId;
+    private String brandName;
 
     private String productName;
 

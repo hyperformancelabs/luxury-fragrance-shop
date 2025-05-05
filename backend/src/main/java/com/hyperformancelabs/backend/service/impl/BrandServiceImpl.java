@@ -30,6 +30,13 @@ public class BrandServiceImpl implements BrandService {
                 .orElse(null);
     }
 
+    @Override
+    public BrandDTO getBrandByBrandName(String brandName) {
+        return brandRepository.findByBrandName(brandName)
+                .map(this::convertToBrandDTO)
+                .orElse(null);
+    }
+
     private BrandDTO convertToBrandDTO(Brand brand) {
         return new BrandDTO(
                 brand.getBrandId(),

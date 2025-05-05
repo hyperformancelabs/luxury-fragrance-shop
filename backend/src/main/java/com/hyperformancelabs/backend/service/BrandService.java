@@ -11,4 +11,6 @@ public interface BrandService {
 
     // Lấy thương hiệu theo ID
     BrandDTO getBrandById(Integer brandId);
+
+    BrandDTO getBrandByBrandName(String brandName);
 }

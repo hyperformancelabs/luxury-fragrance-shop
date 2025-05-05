@@ -176,6 +176,15 @@
     margin-bottom: 5px;
 }
 
+/* Brand name */
+.product-brand {
+    color: #6c757d;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
 /* Quick view and wishlist buttons */
 .product-actions {
     position: absolute;

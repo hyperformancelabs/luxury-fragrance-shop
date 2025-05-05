@@ -65,7 +65,7 @@ public class CartController {
                     ProductDTO product = productService.getProductById(productVariant.getProductId());
 
                     // Truy vấn thông tin Brand
-                    BrandDTO brand = brandService.getBrandById(product.getBrandId());
+                    BrandDTO brand = brandService.getBrandByBrandName(product.getBrandName());
 
                     // Tạo CartItemDisplayDTO từ CartItemDTO, ProductVariantDTO và ProductDTO
                     CartItemDisplayDTO displayDTO = new CartItemDisplayDTO();
