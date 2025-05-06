@@ -75,9 +75,34 @@ public class HomeController {
             }
         }
 
+        Map<Integer, Boolean> flashSaleProductHasStockMap = new HashMap<>();
+        for (Map.Entry<Integer, List<ProductVariantDTO>> entry : flashSaleProductVariantMap.entrySet()) {
+            Integer productId = entry.getKey();
+            List<ProductVariantDTO> variants = entry.getValue();
+
+            boolean hasStock = variants.stream().anyMatch(v -> v.getQuantityInStock() > 0);
+            flashSaleProductHasStockMap.put(productId, hasStock);
+        }
+
+        Map<Integer, Integer> flashSaleFirstVariantMap = new HashMap<>();
+        for (Map.Entry<Integer, List<ProductVariantDTO>> entry : flashSaleProductVariantMap.entrySet()) {
+            Integer productId = entry.getKey();
+            List<ProductVariantDTO> variants = entry.getValue();
+
+            Optional<ProductVariantDTO> firstInStock = variants.stream()
+                    .filter(v -> v.getQuantityInStock() > 0)
+                    .findFirst();
+
+            flashSaleFirstVariantMap.put(productId, firstInStock.map(ProductVariantDTO::getProductVariantId).orElse(null));
+        }
+
         model.addAttribute("flashDealProducts", flashSaleProducts);
         model.addAttribute("flashSaleProductPriceRangeMap", flashSaleProductPriceRangeMap);
         model.addAttribute("flashSaleProductVariants", flashSaleProductVariants);
+        model.addAttribute("flashSaleProductVariantMap", flashSaleProductVariantMap);
+        model.addAttribute("flashSaleProductHasStockMap", flashSaleProductHasStockMap);
+        model.addAttribute("flashSaleFirstVariantMap", flashSaleFirstVariantMap);
+
 
 
         // Tạo map chứa danh sách biến thể cho mỗi sản phẩm

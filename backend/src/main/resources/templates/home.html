@@ -124,12 +124,19 @@
                                       th:text="${#numbers.formatDecimal(flashSaleProductPriceRangeMap.get(product.productId)[0], 0, 'COMMA', 0, 'POINT') + 'đ - ' +
                                       #numbers.formatDecimal(flashSaleProductPriceRangeMap.get(product.productId)[1], 0, 'COMMA', 0, 'POINT') + 'đ'}">1.950.000đ - 2.950.000đ</span>
                             </div>
-                            <form th:action="@{/cart/add}" method="post" class="add-to-cart-form">
-                                <input type="hidden" name="productVariantId" th:value="${productFirstVariantMap.containsKey(product.productId) ? productFirstVariantMap.get(product.productId) : ''}">
+                            <form th:action="@{/cart/add}" method="post" class="add-to-cart-form"
+                                  th:with="firstVariantId=${flashSaleFirstVariantMap[product.productId]},
+                                           hasStock=${flashSaleProductHasStockMap[product.productId]}">
+
+                                <input type="hidden" name="productVariantId" th:value="${firstVariantId}">
                                 <input type="hidden" name="quantity" value="1">
                                 <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}">
-                                <button type="submit" class="btn btn-sm btn-dark mt-2 w-100" th:disabled="${!productFirstVariantMap.containsKey(product.productId)}">
-                                    <i class="fas fa-shopping-cart me-1"></i> Thêm vào giỏ
+
+                                <button type="submit" class="btn btn-sm btn-dark mt-2 w-100"
+                                        th:disabled="${!hasStock or firstVariantId == null}">
+                                    <i class="fas fa-shopping-cart me-1"></i>
+                                    <span th:if="${!hasStock or firstVariantId == null}">Hết hàng</span>
+                                    <span th:unless="${!hasStock or firstVariantId == null}">Thêm vào giỏ</span>
                                 </button>
                             </form>
                         </div>
