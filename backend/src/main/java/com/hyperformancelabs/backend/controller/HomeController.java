@@ -38,7 +38,7 @@ public class HomeController {
         List<ProductDTO> featuredProducts = productService.getTopSellingProducts(8);
         model.addAttribute("featuredProducts", featuredProducts);
 
-        // Get flash deal products
+        // ------------------- Get flash deal products ----------------------------------------
         List<ProductDTO> flashSaleProducts = new ArrayList<>();
         List<FlashSaleProductDTO> flashDealProducts = productService.getFlashSaleProducts();
         for(FlashSaleProductDTO flashDealProduct : flashDealProducts) {
@@ -99,7 +99,6 @@ public class HomeController {
         model.addAttribute("flashDealProducts", flashSaleProducts);
         model.addAttribute("flashSaleProductPriceRangeMap", flashSaleProductPriceRangeMap);
         model.addAttribute("flashSaleProductVariants", flashSaleProductVariants);
-        model.addAttribute("flashSaleProductVariantMap", flashSaleProductVariantMap);
         model.addAttribute("flashSaleProductHasStockMap", flashSaleProductHasStockMap);
         model.addAttribute("flashSaleFirstVariantMap", flashSaleFirstVariantMap);
 
@@ -134,49 +133,59 @@ public class HomeController {
         model.addAttribute("productVariantsMap", productVariantsMap);
 
 
-        // Get new products
+        // ---------------------------------- Get new products -------------------------------------------------------------------
         List<InventoryTransactionDTO> inventoryTransactions = inventoryTransactionService.findTop6ImportTransactionsNative();
 
-        Map<Integer, List<ProductVariantDTO>> productVariantMap = inventoryTransactions.stream()
+        Map<Integer, List<ProductVariantDTO>> newProductVariantMap = inventoryTransactions.stream()
                 .map(inventoryTransaction -> productVariantService.getProductVariantById(inventoryTransaction.getProductVariantId()))
                 .filter(Objects::nonNull)
-                .collect(Collectors.groupingBy(productVariantDTO -> productVariantDTO.getProductId()));
+                .collect(Collectors.groupingBy(ProductVariantDTO::getProductId));
 
-        List<ProductDTO> newProducts = productVariantMap.keySet().stream()
+        List<ProductDTO> newProducts = newProductVariantMap.keySet().stream()
                 .map(productService::getProductById)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
         Map<Integer, BigDecimal[]> newProductPriceRangeMap = new HashMap<>();
         Map<Integer, String> newProductVariants = new HashMap<>();
+        Map<Integer, Integer> newFirstVariantMap = new HashMap<>();
+        Map<Integer, Boolean> newProductHasStockMap = new HashMap<>();
 
-        for (Map.Entry<Integer, List<ProductVariantDTO>> entry : productVariantMap.entrySet()) {
+        for (Map.Entry<Integer, List<ProductVariantDTO>> entry : newProductVariantMap.entrySet()) {
+            Integer productId = entry.getKey();
             List<ProductVariantDTO> variants = entry.getValue();
 
             if (variants != null && !variants.isEmpty()) {
-                // Tính toán giá thấp nhất và cao nhất
+                // Giá min - max
                 Optional<BigDecimal> min = variants.stream().map(ProductVariantDTO::getPrice).min(Comparator.naturalOrder());
                 Optional<BigDecimal> max = variants.stream().map(ProductVariantDTO::getPrice).max(Comparator.naturalOrder());
 
-                max.ifPresent(bigDecimal -> newProductPriceRangeMap.put(entry.getKey(), new BigDecimal[]{min.get(), bigDecimal}));
+                min.ifPresent(bigDecimal -> newProductPriceRangeMap.put(productId, new BigDecimal[]{bigDecimal, max.get()}));
 
-                // Thêm biến thể vào map
-                if (!productVariantsMap.containsKey(entry.getKey())) {
-                    productFirstVariantMap.put(entry.getKey(), variants.get(0).getProductVariantId());
-                    String variantsJson = convertVariantsToJson(variants);
-                    newProductVariants.put(entry.getKey(), variantsJson);
-                    productVariantsMap.put(entry.getKey(), variantsJson);
-                } else {
-                    newProductVariants.put(entry.getKey(), productVariantsMap.get(entry.getKey()));
-                }
+                // JSON biến thể
+                String variantsJson = convertVariantsToJson(variants);
+                newProductVariants.put(productId, variantsJson);
+
+                // Biến thể đầu tiên còn hàng
+                Optional<ProductVariantDTO> firstInStock = variants.stream()
+                        .filter(v -> v.getQuantityInStock() > 0)
+                        .findFirst();
+
+                newFirstVariantMap.put(productId, firstInStock.map(ProductVariantDTO::getProductVariantId).orElse(null));
+
+                // Cờ còn hàng
+                newProductHasStockMap.put(productId, firstInStock.isPresent());
             }
         }
 
-        model.addAttribute("productPriceRangeMap", newProductPriceRangeMap);
         model.addAttribute("newProducts", newProducts);
+        model.addAttribute("newProductPriceRangeMap", newProductPriceRangeMap);
         model.addAttribute("newProductVariants", newProductVariants);
+        model.addAttribute("newFirstVariantMap", newFirstVariantMap);
+        model.addAttribute("newProductHasStockMap", newProductHasStockMap);
 
-        // Get best selling products
+
+        // --------------------------------------------- Get best selling ----------------------------------------------------
         List<ProductDTO> bestSellingProducts = productService.getTopSellingProducts(6);
 
         Map<Integer, List<ProductVariantDTO>> bestSellingProductVariantMap = bestSellingProducts.stream()
@@ -187,53 +196,63 @@ public class HomeController {
 
         Map<Integer, BigDecimal[]> bestSellingProductPriceRangeMap = new HashMap<>();
         Map<Integer, String> bestSellingProductVariants = new HashMap<>();
+        Map<Integer, Integer> bestSellingFirstVariantMap = new HashMap<>();
+        Map<Integer, Boolean> bestSellingProductHasStockMap = new HashMap<>();
 
         for (Map.Entry<Integer, List<ProductVariantDTO>> entry : bestSellingProductVariantMap.entrySet()) {
+            Integer productId = entry.getKey();
             List<ProductVariantDTO> variants = entry.getValue();
 
             if (variants != null && !variants.isEmpty()) {
-                // Tính toán giá thấp nhất và cao nhất
+                // Tính giá min-max
                 Optional<BigDecimal> min = variants.stream().map(ProductVariantDTO::getPrice).min(Comparator.naturalOrder());
                 Optional<BigDecimal> max = variants.stream().map(ProductVariantDTO::getPrice).max(Comparator.naturalOrder());
 
-                max.ifPresent(bigDecimal -> bestSellingProductPriceRangeMap.put(entry.getKey(), new BigDecimal[]{min.get(), bigDecimal}));
+                min.ifPresent(minPrice -> bestSellingProductPriceRangeMap.put(productId, new BigDecimal[]{minPrice, max.get()}));
 
-                // Thêm biến thể vào map
-                if (!productVariantsMap.containsKey(entry.getKey())) {
-                    productFirstVariantMap.put(entry.getKey(), variants.get(0).getProductVariantId());
-                    String variantsJson = convertVariantsToJson(variants);
-                    bestSellingProductVariants.put(entry.getKey(), variantsJson);
-                    productVariantsMap.put(entry.getKey(), variantsJson);
-                } else {
-                    bestSellingProductVariants.put(entry.getKey(), productVariantsMap.get(entry.getKey()));
-                }
+                // Convert variants to JSON string
+                String variantsJson = convertVariantsToJson(variants);
+                bestSellingProductVariants.put(productId, variantsJson);
+
+                // Tìm biến thể đầu tiên còn hàng
+                Optional<ProductVariantDTO> firstInStock = variants.stream()
+                        .filter(v -> v.getQuantityInStock() > 0)
+                        .findFirst();
+
+                bestSellingFirstVariantMap.put(productId, firstInStock.map(ProductVariantDTO::getProductVariantId).orElse(null));
+
+                // Cờ còn hàng
+                bestSellingProductHasStockMap.put(productId, firstInStock.isPresent());
             }
         }
 
         model.addAttribute("bestSellingProducts", bestSellingProducts);
         model.addAttribute("bestSellingProductPriceRangeMap", bestSellingProductPriceRangeMap);
         model.addAttribute("bestSellingProductVariants", bestSellingProductVariants);
+        model.addAttribute("bestSellingFirstVariantMap", bestSellingFirstVariantMap);
+        model.addAttribute("bestSellingProductHasStockMap", bestSellingProductHasStockMap);
+
 
         // Get top search products
-        List<ProductDTO> topSearchProducts = productService.getTopSellingProducts(6);
-
-        // Tạo map chứa danh sách biến thể cho mỗi sản phẩm tìm kiếm nhiều nhất
-        Map<Integer, String> topSearchProductVariants = new HashMap<>();
-        for (ProductDTO product : topSearchProducts) {
-            if (!productVariantsMap.containsKey(product.getProductId())) {
-                List<ProductVariantDTO> variants = productVariantService.getProductVariantsByProductId(product.getProductId());
-                if (!variants.isEmpty()) {
-                    productFirstVariantMap.put(product.getProductId(), variants.get(0).getProductVariantId());
-                    topSearchProductVariants.put(product.getProductId(), convertVariantsToJson(variants));
-                    productVariantsMap.put(product.getProductId(), convertVariantsToJson(variants));
-                }
-            } else {
-                topSearchProductVariants.put(product.getProductId(), productVariantsMap.get(product.getProductId()));
-            }
-        }
-
-        model.addAttribute("topSearchProducts", topSearchProducts);
-        model.addAttribute("topSearchProductVariants", topSearchProductVariants);
+//        List<ProductDTO> topSearchProducts = productService.getTopSellingProducts(6);
+//
+//        // Tạo map chứa danh sách biến thể cho mỗi sản phẩm tìm kiếm nhiều nhất
+//        Map<Integer, String> topSearchProductVariants = new HashMap<>();
+//        for (ProductDTO product : topSearchProducts) {
+//            if (!productVariantsMap.containsKey(product.getProductId())) {
+//                List<ProductVariantDTO> variants = productVariantService.getProductVariantsByProductId(product.getProductId());
+//                if (!variants.isEmpty()) {
+//                    productFirstVariantMap.put(product.getProductId(), variants.get(0).getProductVariantId());
+//                    topSearchProductVariants.put(product.getProductId(), convertVariantsToJson(variants));
+//                    productVariantsMap.put(product.getProductId(), convertVariantsToJson(variants));
+//                }
+//            } else {
+//                topSearchProductVariants.put(product.getProductId(), productVariantsMap.get(product.getProductId()));
+//            }
+//        }
+//
+//        model.addAttribute("topSearchProducts", topSearchProducts);
+//        model.addAttribute("topSearchProductVariants", topSearchProductVariants);
 
         // Add brand data - Lấy 12 brand đầu tiên
         List<BrandDTO> allBrands = brandService.getAllBrands();
