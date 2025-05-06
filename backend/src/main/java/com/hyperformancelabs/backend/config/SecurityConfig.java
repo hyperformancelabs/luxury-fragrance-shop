@@ -40,6 +40,7 @@ public class SecurityConfig {
                                 "/api/v1/brands/**",      // Public brand APIs
                                 "/api/v1/cart/**",        // Giỏ hàng cho cả guest và user
                                 "/api/v1/payment/**",     // Thanh toán có thể không cần login
+                                "/api/v1/emp/**",         // Quản lý nhân viên
                                 "/api/v1/orders/revenue-by-date-range",  // API doanh thu cho dashboard admin
                                 "/api/v1/orders/total-amount-of-delivered-orders-*", // Các endpoint thống kê doanh thu
                                 "/api/v1/orders/new-orders-count-by-date-range", // Đơn hàng mới

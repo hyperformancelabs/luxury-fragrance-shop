@@ -70,4 +70,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
      */
     @Query("SELECT e FROM Employee e WHERE e.status = 'active'")
     List<Employee> findAllActiveEmployees();
+    
+    /**
+     * Get role names for an employee
+     */
+    @Query("SELECT r.roleName FROM Role r JOIN r.employeeRoles er WHERE er.employee.employeeId = :employeeId AND er.status = 'active'")
+    List<String> findRoleNamesByEmployeeId(@Param("employeeId") Integer employeeId);
 }
