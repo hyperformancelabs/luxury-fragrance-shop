@@ -7,13 +7,15 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class OrderItemDetail {
+@AllArgsConstructor
+public class WishListItemResponse {
+    private Integer wishlistId;
+    private Integer productVariantId;
     private String productName;
-    private String volume;
-    private Integer quantity;
-    private BigDecimal unitPrice;
+    private Integer volume;
+    private BigDecimal price;
+    private String brandName;
     private String imageUrl;
-    private String note;
+    private String countryOfOrigin;
 }

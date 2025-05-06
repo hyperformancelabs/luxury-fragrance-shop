@@ -1,6 +1,9 @@
 package com.hyperformancelabs.backend.service.impl;
 
+
 import com.hyperformancelabs.backend.dto.*;
+import com.hyperformancelabs.backend.exception.BadRequestException;
+import com.hyperformancelabs.backend.exception.NotFoundException;
 import com.hyperformancelabs.backend.model.*;
 import com.hyperformancelabs.backend.repository.*;
 import com.hyperformancelabs.backend.service.OrderService;
@@ -16,10 +19,10 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.time.ZoneOffset;
+import java.util.*;
+
+import static com.hyperformancelabs.backend.exception.ErrorMessage.*;
 
 @Service
 @RequiredArgsConstructor
@@ -44,15 +47,16 @@ public class OrderServiceImpl implements OrderService {
     public Object createOrderFromCart(CreateOrderFromCartRequest request, HttpServletRequest servletRequest) {
         String token = servletRequest.getHeader("Authorization").substring(7);
         String username = jwtUtil.getUsernameFromToken(token);
+
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
+                .orElseThrow(() -> new NotFoundException(CUSTOMER_NOT_FOUND));
 
         Cart cart = cartRepository.findByCustomerAndStatus(customer, "active")
-                .orElseThrow(() -> new IllegalArgumentException("No active cart found"));
+                .orElseThrow(() -> new NotFoundException(NO_ACTIVE_CART));
 
         List<CartItem> selectedItems = cartItemRepository.findByCartAndIsSelectedTrue(cart);
         if (selectedItems.isEmpty()) {
-            throw new IllegalStateException("No selected items in the cart to place an order");
+            throw new BadRequestException(NO_SELECTED_ITEMS);
         }
 
         Order order = new Order();
@@ -78,14 +82,33 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setTotalAmount(totalAmount);
-
-        if (request.getPaymentMethodId() == 4) {
-            order.setOrderStatus("waitPayment");
-        } else {
-            order.setOrderStatus("cod");
-        }
+        order.setOrderStatus(request.getPaymentMethodId() == 4 ? "pending" : "processing");
 
         orderRepository.save(order);
+
+        Shipment shipment = new Shipment();
+        shipment.setOrder(order);
+        shipment.setShippingProvider(order.getShippingOption());
+        shipment.setShipmentStatus("pending");
+        shipment.setShippingCost(order.getShippingFee());
+        shipment.setEstimatedDeliveryDate(order.getEstimatedDeliveryDate());
+        shipmentRepository.save(shipment);
+
+        if (request.getPaymentMethodId() != 4) {
+            Payment payment = new Payment();
+            payment.setOrder(order);
+            payment.setAmount(order.getTotalAmount());
+            payment.setPaymentMethodId(request.getPaymentMethodId());
+//            payment.setPaymentDate(LocalDateTime.now());
+//            payment.setPaymentDate(LocalDateTime.now(ZoneOffset.UTC).minusSeconds(10));
+            payment.setPaymentStatus("pending"); // hoặc "cod_pending"
+            payment.setCurrency("VND");
+            paymentRepository.save(payment);
+        }
+
+
+        cartItemRepository.deleteAll(selectedItems);
+
 
         if (request.getPaymentMethodId() == 4) {
             String vnpUrl = vnPayService.createVnPayPaymentURL(order, servletRequest);
@@ -97,16 +120,17 @@ public class OrderServiceImpl implements OrderService {
 
         return order;
     }
+
     @Override
     @Transactional
     public Object createOrderFromAnonymous(CreateAnonymousOrderRequest request, HttpServletRequest servletRequest) {
         if (request.getOrderItems() == null || request.getOrderItems().isEmpty()) {
-            throw new IllegalArgumentException("Không có sản phẩm nào trong đơn hàng");
+            throw new BadRequestException(EMPTY_ORDER);
         }
 
         if (customerRepository.existsByEmail(request.getEmail()) ||
                 customerRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new IllegalArgumentException("Email hoặc số điện thoại đã được sử dụng. Vui lòng đăng nhập.");
+            throw new BadRequestException(EMAIL_PHONE_IN_USE);
         }
 
         Customer customer = new Customer();
@@ -141,7 +165,7 @@ public class OrderServiceImpl implements OrderService {
 
         for (OrderItemRequest item : request.getOrderItems()) {
             ProductVariant variant = productVariantRepository.findById(item.getProductVariantId())
-                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm: " + item.getProductVariantId()));
+                    .orElseThrow(() -> new NotFoundException(PRODUCT_NOT_FOUND + item.getProductVariantId()));
 
             OrderItem orderItem = new OrderItem();
             orderItem.setProductVariant(variant);
@@ -155,14 +179,30 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setTotalAmount(totalAmount);
-
-        if (request.getPaymentMethodId() == 4) {
-            order.setOrderStatus("waitPayment");
-        } else {
-            order.setOrderStatus("cod");
-        }
+        order.setOrderStatus(request.getPaymentMethodId() == 4 ? "pending" : "processing");
 
         orderRepository.save(order);
+
+        Shipment shipment = new Shipment();
+        shipment.setOrder(order);
+        shipment.setShippingProvider(order.getShippingOption());
+        shipment.setShipmentStatus("pending");
+        shipment.setShippingCost(order.getShippingFee());
+        shipment.setEstimatedDeliveryDate(order.getEstimatedDeliveryDate());
+        shipmentRepository.save(shipment);
+
+        if (request.getPaymentMethodId() != 4) {
+            Payment payment = new Payment();
+            payment.setOrder(order);
+            payment.setAmount(order.getTotalAmount());
+            payment.setPaymentMethodId(request.getPaymentMethodId());
+//            payment.setPaymentDate(LocalDateTime.now().minusMinutes(1));
+            payment.setPaymentStatus("pending");
+            payment.setCurrency("VND");
+            paymentRepository.save(payment);
+        }
+
+
 
         if (request.getPaymentMethodId() == 4) {
             String vnpUrl = vnPayService.createVnPayPaymentURL(order, servletRequest);
@@ -175,22 +215,24 @@ public class OrderServiceImpl implements OrderService {
         return order;
     }
 
-
     @Override
     @Transactional
     public OrderDetailFullResponse getFullOrderDetail(Integer orderId) {
         try {
             Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với ID = " + orderId));
+                    .orElseThrow(() -> new NotFoundException(ORDER_NOT_FOUND + orderId));
 
             Customer customer = order.getCustomer();
             if (customer == null) {
-                throw new RuntimeException("Đơn hàng không có thông tin khách hàng.");
+                throw new NotFoundException(CUSTOMER_INFO_MISSING);
             }
 
-            // Lấy chi tiết sản phẩm
             List<OrderItemDetail> itemDetails = order.getOrderItems().stream().map(item -> {
                 ProductVariant variant = item.getProductVariant();
+                String imageUrl = (variant != null && variant.getProduct() != null)
+                        ? variant.getProduct().getImageUrl()
+                        : null;
+
                 String productName = (variant != null && variant.getProduct() != null)
                         ? variant.getProduct().getProductName()
                         : "Không rõ sản phẩm";
@@ -199,15 +241,8 @@ public class OrderServiceImpl implements OrderService {
                         ? variant.getVolume() + "ml"
                         : "N/A";
 
-                return new OrderItemDetail(
-                        productName,
-                        volume,
-                        item.getQuantity(),
-                        item.getUnitPrice(),
-                        item.getNote()
-                );
+                return new OrderItemDetail(productName, volume, item.getQuantity(), item.getUnitPrice(),imageUrl, item.getNote());
             }).toList();
-
 
             CustomerInfo customerInfo = new CustomerInfo(
                     customer.getName(),
@@ -215,7 +250,6 @@ public class OrderServiceImpl implements OrderService {
                     customer.getEmail(),
                     order.getShippingAddress()
             );
-
 
             ShipmentInfo shipmentInfo = null;
             List<Shipment> shipments = shipmentRepository.findByOrder(order);
@@ -230,7 +264,6 @@ public class OrderServiceImpl implements OrderService {
                         shipment.getShippingCost()
                 );
             }
-
 
             PaymentInfo paymentInfo = null;
             List<Payment> payments = paymentRepository.findByOrder(order);
@@ -264,9 +297,8 @@ public class OrderServiceImpl implements OrderService {
             );
 
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi lấy chi tiết đơn hàng: " + e.toString(), e);
+            throw new RuntimeException(ORDER_DETAIL_ERROR + e.getMessage(), e);
         }
     }
-
 
 }

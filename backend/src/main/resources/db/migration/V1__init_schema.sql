@@ -288,7 +288,7 @@ GO
 CREATE TABLE [Wishlist] (
     [wishlist_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [customer_id] INT NOT NULL,
-    [product_variant_id] INT NOT NULL,
+    [product_variant_id] INT NULL,
     [added_date] DATETIME NOT NULL DEFAULT (GETDATE()), -- Ngày thêm vào wishlist
 
     CONSTRAINT [FK_Wishlist_Customer] FOREIGN KEY ([customer_id]) REFERENCES [Customer]([customer_id])
@@ -312,7 +312,7 @@ CREATE TABLE [Order] (
     [shipping_fee] DECIMAL(10,2) NULL,
     [order_status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Order_Status] DEFAULT 'pending'
-        CONSTRAINT [CK_Order_Status] CHECK ([order_status] IN ('pending','processing','shipping','delivered','cancelled','waitPayment', 'paid','cod')),
+        CONSTRAINT [CK_Order_Status] CHECK ([order_status] IN ('pending','processing','shipping','delivered','cancelled')),
     [shipping_address] NVARCHAR(255) NOT NULL,
     [shipping_option] NVARCHAR(50) NOT NULL,
     [note] NVARCHAR(MAX) NULL,
@@ -350,7 +350,7 @@ CREATE TABLE [Payment] (
     [payment_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     [payment_method_id] INT NOT NULL,
     [order_id] INT NOT NULL,
-    [payment_date] DATETIME NOT NULL,
+    [payment_date] DATETIME ,
     [amount] DECIMAL(10,2) NOT NULL,
     [payment_status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_Payment_Status] DEFAULT 'pending'

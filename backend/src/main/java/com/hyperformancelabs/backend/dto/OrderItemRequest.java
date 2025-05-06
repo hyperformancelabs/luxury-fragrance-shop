@@ -19,6 +19,8 @@ public class OrderItemRequest {
     @Positive(message = "Quantity must be positive")
     private Integer quantity;
 
+//    private String imageUrl;
+
     @NotNull(message = "Unit price cannot be empty")
     @DecimalMin(value = "0.0", inclusive = true, message = "Unit price cannot be negative")
     private BigDecimal unitPrice;

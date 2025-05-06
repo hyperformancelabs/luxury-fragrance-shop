@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 @Data
 public class CartItemRequest {
-    private Integer productVariantId; // đổi thành productVariantId
+    private Integer productVariantId;
     private Integer quantity;
     private BigDecimal price;
 

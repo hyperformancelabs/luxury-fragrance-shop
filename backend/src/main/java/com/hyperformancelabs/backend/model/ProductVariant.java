@@ -66,7 +66,7 @@ public class ProductVariant {
 
     @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private Set<Wishlist> wishlists = new HashSet<>();
+    private Set<WishList> wishlists = new HashSet<>();
 
     public ProductVariant(Integer productVariantId) {
         this.productVariantId = productVariantId;

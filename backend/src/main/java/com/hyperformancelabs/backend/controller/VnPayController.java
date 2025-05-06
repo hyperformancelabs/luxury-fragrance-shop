@@ -94,7 +94,7 @@ public class VnPayController {
 
             if ("00".equals(vnpResponseCode)) {
                 payment.setPaymentStatus("completed");
-                order.setOrderStatus("paid");
+                order.setOrderStatus("processing");
                 orderRepository.save(order);
             } else {
                 payment.setPaymentStatus("failed");

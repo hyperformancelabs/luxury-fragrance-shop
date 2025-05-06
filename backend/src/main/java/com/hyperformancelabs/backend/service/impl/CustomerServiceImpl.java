@@ -7,8 +7,10 @@ import com.hyperformancelabs.backend.dto.LoginRequest;
 import com.hyperformancelabs.backend.dto.RegisterRequest;
 import com.hyperformancelabs.backend.model.Cart;
 import com.hyperformancelabs.backend.model.Customer;
+import com.hyperformancelabs.backend.model.WishList;
 import com.hyperformancelabs.backend.repository.CartRepository;
 import com.hyperformancelabs.backend.repository.CustomerRepository;
+import com.hyperformancelabs.backend.repository.WishListRepository;
 import com.hyperformancelabs.backend.service.CustomerService;
 import com.hyperformancelabs.backend.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
@@ -29,6 +32,9 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private WishListRepository wishListRepository;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -63,6 +69,11 @@ public class CustomerServiceImpl implements CustomerService {
         cart.setStatus("active");
         cart.setTotalAmount(BigDecimal.ZERO);
         cartRepository.save(cart);
+
+        WishList wishlist = new WishList();
+        wishlist.setCustomer(savedCustomer);
+//        wishlist.setAddedDate(LocalDateTime.now(ZoneOffset.UTC));
+        wishListRepository.save(wishlist);
 
         return new CustomerResponseDTO(
                 savedCustomer.getCustomerId(),
