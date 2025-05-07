@@ -24,4 +24,6 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
         )
     """)
     List<ProductVariant> findByProductGender(@Param("gender") String gender);
+
+    Optional<ProductVariant> findById(Integer productVariantId);
 }

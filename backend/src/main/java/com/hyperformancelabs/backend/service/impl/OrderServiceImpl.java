@@ -301,4 +301,84 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    @Override
+    public List<OrderDetailFullResponse> getAllOrdersOfCustomer(String token) {
+        String username = jwtUtil.getUsernameFromToken(token);
+
+        Customer customer = customerRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("Customer không tồn tại"));
+
+        List<Order> orders = orderRepository.findByCustomerOrderByOrderDateDesc(customer);
+
+        return orders.stream().map(order -> {
+            // Lấy chi tiết sản phẩm
+            List<OrderItemDetail> itemDetails = order.getOrderItems().stream().map(item -> {
+                ProductVariant variant = item.getProductVariant();
+                Product product = variant.getProduct();
+                return new OrderItemDetail(
+                        product.getProductName(),
+                        variant.getVolume() + "ml",
+                        item.getQuantity(),
+                        item.getUnitPrice(),
+                        product.getImageUrl(),
+                        item.getNote()
+                );
+            }).toList();
+
+            // Xử lý Shipment
+            ShipmentInfo shipmentInfo = null;
+            List<Shipment> shipments = shipmentRepository.findByOrder(order);
+            if (!shipments.isEmpty()) {
+                Shipment shipment = shipments.get(0);
+                shipmentInfo = new ShipmentInfo(
+                        shipment.getShippingProvider(),
+                        shipment.getTrackingNumber(),
+                        shipment.getShipmentStatus(),
+                        shipment.getShippingDate(),
+                        shipment.getDeliveryDate(),
+                        shipment.getShippingCost()
+                );
+            }
+
+            // Xử lý Payment
+            PaymentInfo paymentInfo = null;
+            List<Payment> payments = paymentRepository.findByOrder(order);
+            if (!payments.isEmpty()) {
+                Payment payment = payments.get(0);
+                String methodName = paymentMethodRepository.findById(payment.getPaymentMethodId())
+                        .map(PaymentMethod::getMethodName)
+                        .orElse("Không rõ");
+
+                paymentInfo = new PaymentInfo(
+                        methodName,
+                        payment.getPaymentStatus(),
+                        payment.getAmount(),
+                        payment.getPaymentDate(),
+                        payment.getTransactionId(),
+                        payment.getCurrency()
+                );
+            }
+
+            // Trả về OrderDetailFullResponse
+            return new OrderDetailFullResponse(
+                    order.getOrderId(),
+                    order.getOrderStatus(),
+                    order.getOrderDate(),
+                    order.getEstimatedDeliveryDate(),
+                    order.getShippingFee(),
+                    order.getTotalAmount(),
+                    new CustomerInfo(
+                            customer.getName(),
+                            customer.getPhoneNumber(),
+                            customer.getEmail(),
+                            order.getShippingAddress()
+                    ),
+                    itemDetails,
+                    shipmentInfo,
+                    paymentInfo
+            );
+        }).toList();
+    }
+
+
 }

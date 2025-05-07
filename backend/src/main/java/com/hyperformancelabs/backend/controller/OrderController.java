@@ -111,11 +111,21 @@ public class OrderController {
         try {
             OrderDetailFullResponse detail = orderService.getFullOrderDetail(orderId);
             return ResponseEntity.ok(
-                    new ApiResponse<>(200, "success", "Chi tiết đơn hàng đầy đủ", detail)
+                    new ApiResponse<>(
+                            ApiResponseStatus.SUCCESS_CODE,
+                            ApiResponseStatus.SUCCESS_STATUS,
+                            "Chi tiết đơn hàng đầy đủ",
+                            detail
+                    )
             );
         } catch (RuntimeException e) {
-            return ResponseEntity.status(500).body(
-                    new ApiResponse<>(500, "error", e.getMessage(), null)
+            return ResponseEntity.status(ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE).body(
+                    new ApiResponse<>(
+                            ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseStatus.ERROR_STATUS,
+                            e.getMessage(),
+                            null
+                    )
             );
         }
     }
@@ -123,29 +133,76 @@ public class OrderController {
 
     @GetMapping("/{orderId}/status")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getOrderStatus(@PathVariable Integer orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        try {
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        Map<String, Object> status = new HashMap<>();
-        status.put("orderId", order.getOrderId());
-        status.put("orderStatus", order.getOrderStatus());
+            Map<String, Object> status = new HashMap<>();
+            status.put("orderId", order.getOrderId());
+            status.put("orderStatus", order.getOrderStatus());
 
-        // Lấy payment đầu tiên (nếu có)
-        List<Payment> payments = paymentRepository.findByOrder(order);
-        if (!payments.isEmpty()) {
-            status.put("paymentStatus", payments.get(0).getPaymentStatus());
-        } else {
-            status.put("paymentStatus", "pending");
+            // Lấy payment đầu tiên (nếu có)
+            List<Payment> payments = paymentRepository.findByOrder(order);
+            if (!payments.isEmpty()) {
+                status.put("paymentStatus", payments.get(0).getPaymentStatus());
+            } else {
+                status.put("paymentStatus", "pending");
+            }
+
+            return ResponseEntity.ok(new ApiResponse<>(
+                    ApiResponseStatus.SUCCESS_CODE,
+                    ApiResponseStatus.SUCCESS_STATUS,
+                    "Order status fetched",
+                    status
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(ApiResponseStatus.NOT_FOUND_CODE).body(
+                    new ApiResponse<>(
+                            ApiResponseStatus.NOT_FOUND_CODE,
+                            ApiResponseStatus.ERROR_STATUS,
+                            e.getMessage(),
+                            null
+                    )
+            );
         }
-
-        return ResponseEntity.ok(new ApiResponse<>(
-                200,
-                "success",
-                "Order status fetched",
-                status
-        ));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<List<OrderDetailFullResponse>>> getAllOrdersOfCustomer(HttpServletRequest request) {
+        try {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(ApiResponseStatus.UNAUTHORIZED_CODE).body(
+                        new ApiResponse<>(
+                                ApiResponseStatus.UNAUTHORIZED_CODE,
+                                ApiResponseStatus.ERROR_STATUS,
+                                ApiResponseStatus.UNAUTHORIZED_MESSAGE,
+                                null
+                        )
+                );
+            }
 
+            String token = authHeader.substring(7); // Bỏ "Bearer " ra
+            List<OrderDetailFullResponse> orders = orderService.getAllOrdersOfCustomer(token);
+            
+            return ResponseEntity.ok(
+                    new ApiResponse<>(
+                            ApiResponseStatus.SUCCESS_CODE,
+                            ApiResponseStatus.SUCCESS_STATUS,
+                            "Lấy danh sách đơn hàng thành công",
+                            orders
+                    )
+            );
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE).body(
+                    new ApiResponse<>(
+                            ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseStatus.ERROR_STATUS,
+                            e.getMessage(),
+                            null
+                    )
+            );
+        }
+    }
 
 }

@@ -15,5 +15,9 @@ public interface WishListService {
 
     void moveAllToCart(String token);
 
+    void removeFromWishlist(String token, Integer productVariantId);
+
+    void clearWishlist(String token);
+
 }
 

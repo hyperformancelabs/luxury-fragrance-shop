@@ -131,5 +131,33 @@ public class WishListServiceImpl implements WishListService {
         wishlistRepository.deleteAll(wishlists);
     }
 
+    @Override
+    @Transactional
+    public void removeFromWishlist(String token, Integer productVariantId) {
+        String username = jwtUtil.getUsernameFromToken(token);
+        Customer customer = customerRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("Customer not found"));
+
+        ProductVariant variant = productVariantRepository.findById(productVariantId)
+                .orElseThrow(() -> new NotFoundException("Product variant not found"));
+
+        Optional<WishList> wishlistItem = wishlistRepository.findByCustomerAndProductVariant(customer, variant);
+        wishlistItem.ifPresent(wishlistRepository::delete);
+    }
+
+
+    @Override
+    @Transactional
+    public void clearWishlist(String token) {
+        String username = jwtUtil.getUsernameFromToken(token);
+        Customer customer = customerRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("Customer not found"));
+
+        List<WishList> wishlists = wishlistRepository.findByCustomer(customer);
+        wishlistRepository.deleteAll(wishlists);
+    }
+
+
+
 
 }

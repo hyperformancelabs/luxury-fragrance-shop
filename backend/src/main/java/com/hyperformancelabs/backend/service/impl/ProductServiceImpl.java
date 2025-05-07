@@ -158,7 +158,9 @@ public class ProductServiceImpl implements ProductService {
                     productId,
                     product.getProductName(),
                     product.getImageUrl(),
-                    volumePriceList
+                    volumePriceList,
+                    product.getBrand().getBrandName(),
+                    product.getBrand().getCountryOfOrigin()
             );
 
             response.add(productResponse);
@@ -201,7 +203,9 @@ public class ProductServiceImpl implements ProductService {
                     productId,
                     product.getProductName(),
                     product.getImageUrl(),
-                    volumePriceList
+                    volumePriceList,
+                    product.getBrand().getBrandName(),
+                    product.getBrand().getCountryOfOrigin()
             );
 
             productCards.add(productResponse);
@@ -250,7 +254,9 @@ public class ProductServiceImpl implements ProductService {
                     product.getProductId(),
                     product.getProductName(),
                     product.getImageUrl(),
-                    volumePrices
+                    volumePrices,
+                    product.getBrand().getBrandName(),
+                    product.getBrand().getCountryOfOrigin()
             );
 
             response.add(card);
@@ -339,13 +345,15 @@ public class ProductServiceImpl implements ProductService {
                     productId,
                     product.getProductName(),
                     product.getImageUrl(),
-                    volumePriceList
+                    volumePriceList,
+                    product.getBrand().getBrandName(),
+                    product.getBrand().getCountryOfOrigin()
             );
 
             productCards.add(productResponse);
         }
 
-        // 📦 Phân trang kết quả
+
         int totalItems = productCards.size();
         int fromIndex = pageNumber * pageSize;
         int toIndex = Math.min(fromIndex + pageSize, totalItems);

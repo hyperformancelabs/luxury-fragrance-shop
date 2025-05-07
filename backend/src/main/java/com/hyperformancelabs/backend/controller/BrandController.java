@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -39,6 +40,30 @@ public class BrandController {
                     ApiResponseStatus.SUCCESS_STATUS,
                     ApiResponseStatus.GET_SUCCESS_MESSAGE,
                     data
+                )
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                new ApiResponse<>(
+                    ApiResponseStatus.BAD_REQUEST_CODE,
+                    ApiResponseStatus.ERROR_STATUS,
+                    e.getMessage(),
+                    null
+                )
+            );
+        }
+    }
+
+    @GetMapping("name")
+    public ResponseEntity<ApiResponse<List<String>>> getAllBrandName() {
+        try {
+            List<String> brandName = brandService.getAllBrandName();
+            return ResponseEntity.ok(
+                new ApiResponse<>(
+                    ApiResponseStatus.SUCCESS_CODE,
+                    ApiResponseStatus.SUCCESS_STATUS,
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE,
+                    brandName
                 )
             );
         } catch (Exception e) {

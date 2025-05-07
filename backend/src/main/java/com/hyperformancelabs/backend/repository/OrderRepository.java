@@ -24,4 +24,5 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 """)
     Optional<Order> findByIdWithItems(@Param("orderId") Integer orderId);
 
+    List<Order> findByCustomerOrderByOrderDateDesc(Customer customer);
 }

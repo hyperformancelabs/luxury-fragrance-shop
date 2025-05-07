@@ -10,6 +10,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class BrandServiceImpl implements BrandService {
 
@@ -30,5 +33,10 @@ public class BrandServiceImpl implements BrandService {
                 brand.getBrandName(),
                 brand.getLogoUrl()
         ));
+    }
+    public List<String> getAllBrandName() {
+        return brandRepository.findAll().stream()
+                .map(Brand::getBrandName)
+                .collect(Collectors.toList());
     }
 }

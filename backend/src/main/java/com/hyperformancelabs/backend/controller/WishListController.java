@@ -54,5 +54,18 @@ public class WishListController {
         return ResponseEntity.ok("Moved all items from wishlist to cart");
     }
 
+    @DeleteMapping("/{productVariantId}")
+    public ResponseEntity<?> removeFromWishlist(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Integer productVariantId) {
+        wishListService.removeFromWishlist(token.substring(7), productVariantId);
+        return ResponseEntity.ok().build();
+    }
 
+    @DeleteMapping
+    public ResponseEntity<?> clearWishlist(
+            @RequestHeader("Authorization") String token) {
+        wishListService.clearWishlist(token.substring(7));
+        return ResponseEntity.ok().build();
+    }
 }
