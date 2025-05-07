@@ -15,6 +15,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     Optional<Employee> findByUsername(String username);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
+    Optional<Employee> findByEmail(String email);
     
     /**
      * Count the number of orders processed by an employee within a date range

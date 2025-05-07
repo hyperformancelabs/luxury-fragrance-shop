@@ -2,7 +2,6 @@ package com.hyperformancelabs.backend.controller;
 
 import com.hyperformancelabs.backend.dto.CustomerResponseDTO;
 import com.hyperformancelabs.backend.dto.EmployeeLoginRequest;
-import com.hyperformancelabs.backend.dto.EmployeeRegisterRequest;
 import com.hyperformancelabs.backend.dto.LoginRequest;
 import com.hyperformancelabs.backend.dto.LoginResponse;
 import com.hyperformancelabs.backend.dto.RegisterRequest;
@@ -74,19 +73,7 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/emp/register")
-    public ResponseEntity<ApiResponse<String>> registerEmployee(
-            @Valid @RequestBody EmployeeRegisterRequest request) {
-        employeeService.registerEmployee(request);
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        ApiResponseStatus.SUCCESS_CODE,
-                        ApiResponseStatus.SUCCESS_STATUS,
-                        "Đăng ký nhân viên thành công",
-                        null
-                )
-        );
-    }
+    // Employee registration endpoint has been moved to EmployeeManagementController
 
     @PostMapping("/emp/login")
     public ResponseEntity<ApiResponse<LoginResponse>> loginEmployee(@Valid @RequestBody EmployeeLoginRequest request) {

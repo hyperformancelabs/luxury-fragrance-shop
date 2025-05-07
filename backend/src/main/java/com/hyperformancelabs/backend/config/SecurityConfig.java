@@ -35,6 +35,7 @@ public class SecurityConfig {
                         // Các API không cần xác thực
                         .requestMatchers(
                                 "/api/v1/auth/**",        // Đăng nhập, đăng ký
+                                "/api/v1/verification/**", // Xác thực qua email
                                 "/api/v1/products/**",    // Public product APIs
                                 "/api/v1/categories/**",  // Public category APIs
                                 "/api/v1/brands/**",      // Public brand APIs

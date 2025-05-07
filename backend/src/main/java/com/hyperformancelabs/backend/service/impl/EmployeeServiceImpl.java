@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -96,20 +98,32 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional
     public LoginResponse login(EmployeeLoginRequest request) {
+        // Tìm nhân viên theo username
         Employee emp = employeeRepository.findByUsername(request.getUsername())
             .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên"));
+        
+        // Kiểm tra mật khẩu
         if (!passwordEncoder.matches(request.getPassword(), emp.getPassword())) {
             throw new RuntimeException("Invalid username or password");
         }
+        
+        // Kiểm tra trạng thái tài khoản
         if (!"active".equalsIgnoreCase(emp.getStatus())) {
             throw new RuntimeException("Tài khoản không hoạt động");
         }
+        
+        // Cập nhật thời gian đăng nhập cuối cùng
         emp.setLastLogin(LocalDateTime.now());
         employeeRepository.save(emp);
+        
+        // Tạo token
         String token = jwtUtil.generateToken(request.getUsername());
-        var roles = emp.getEmployeeRoles().stream()
-            .map(er -> er.getRole().getRoleName())
-            .collect(Collectors.toList());
+        
+        // Lấy danh sách vai trò từ repository thay vì từ entity
+        List<String> roles = employeeRepository.findRoleNamesByEmployeeId(emp.getEmployeeId());
+        if (roles == null) {
+            roles = new ArrayList<>();
+        }
         
         // Sử dụng constructor đầy đủ để trả về tất cả thông tin nhân viên
         return new LoginResponse(

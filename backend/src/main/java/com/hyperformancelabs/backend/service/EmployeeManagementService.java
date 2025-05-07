@@ -2,6 +2,8 @@ package com.hyperformancelabs.backend.service;
 
 import java.util.Map;
 import com.hyperformancelabs.backend.dto.EmployeeListResponse;
+import com.hyperformancelabs.backend.dto.EmployeeRegisterRequest;
+import com.hyperformancelabs.backend.dto.EmployeeUpdateRequest;
 
 public interface EmployeeManagementService {
     /**
@@ -16,4 +18,28 @@ public interface EmployeeManagementService {
      */
     Map<String, Object> getEmployees(int page, int size, String status, String search, Integer roleId);
     EmployeeListResponse getEmployeeById(Long employeeId);
+    
+    /**
+     * Tạo mới nhân viên
+     * 
+     * @param request Thông tin nhân viên cần tạo
+     * @return ID của nhân viên vừa tạo
+     */
+    Integer createEmployee(EmployeeRegisterRequest request);
+    
+    /**
+     * Cập nhật thông tin nhân viên
+     * 
+     * @param employeeId ID của nhân viên cần cập nhật
+     * @param request Thông tin cập nhật (bao gồm cả trạng thái nếu muốn thay đổi)
+     */
+    void updateEmployee(Long employeeId, EmployeeUpdateRequest request);
+    
+    /**
+     * Xóa nhân viên vĩnh viễn khỏi cơ sở dữ liệu (hard delete)
+     * 
+     * @param employeeId ID của nhân viên cần xóa vĩnh viễn
+     * @param force Nếu true, bắt buộc xóa ngay cả khi có dữ liệu liên quan
+     */
+    void permanentDeleteEmployee(Long employeeId, boolean force);
 }

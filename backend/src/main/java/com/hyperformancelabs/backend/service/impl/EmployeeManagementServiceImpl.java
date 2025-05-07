@@ -1,6 +1,10 @@
 package com.hyperformancelabs.backend.service.impl;
 
 import com.hyperformancelabs.backend.dto.EmployeeListResponse;
+import com.hyperformancelabs.backend.dto.EmployeeRegisterRequest;
+import com.hyperformancelabs.backend.dto.EmployeeUpdateRequest;
+import com.hyperformancelabs.backend.exception.DuplicateResourceException;
+import com.hyperformancelabs.backend.exception.InvalidRequestException;
 import com.hyperformancelabs.backend.model.Employee;
 import com.hyperformancelabs.backend.repository.EmployeeRepository;
 import com.hyperformancelabs.backend.service.EmployeeManagementService;
@@ -9,17 +13,22 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-
-import java.util.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
 public class EmployeeManagementServiceImpl implements EmployeeManagementService {
 
     private final EmployeeRepository employeeRepository;
+    private final PasswordEncoder passwordEncoder;
     
     @PersistenceContext
     private EntityManager entityManager;
@@ -133,6 +142,167 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
             e.printStackTrace();
             throw e;
         }
+    }
+    
+    @Override
+    @Transactional
+    public Integer createEmployee(EmployeeRegisterRequest request) {
+        // Validate request
+        validateEmployeeRequest(request);
+
+        // Create new Employee
+        Employee employee = new Employee();
+        mapRegisterRequestToEntity(request, employee);
+        employee.setStatus("active"); // Default is active
+
+        // Save to database
+        Employee savedEmployee = employeeRepository.save(employee);
+        return savedEmployee.getEmployeeId();
+    }
+    
+    @Override
+    @Transactional
+    public void updateEmployee(Long employeeId, EmployeeUpdateRequest request) {
+        Employee employee = employeeRepository.findById(employeeId.intValue())
+            .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + employeeId));
+        
+        // Update employee information
+        if (StringUtils.hasText(request.getFullName())) {
+            employee.setFullName(request.getFullName());
+        }
+        
+        if (StringUtils.hasText(request.getPhoneNumber())) {
+            employee.setPhoneNumber(request.getPhoneNumber());
+        }
+        
+        if (request.getEmail() != null) {
+            // Check if email already exists for another employee
+            if (StringUtils.hasText(request.getEmail()) && 
+                !request.getEmail().equals(employee.getEmail()) && 
+                employeeRepository.existsByEmail(request.getEmail())) {
+                throw new DuplicateResourceException("Email already exists");
+            }
+            employee.setEmail(StringUtils.hasText(request.getEmail()) ? request.getEmail() : null);
+        }
+        
+        if (StringUtils.hasText(request.getAddress())) {
+            employee.setAddress(request.getAddress());
+        }
+        
+        if (request.getDateOfBirth() != null) {
+            employee.setDateOfBirth(request.getDateOfBirth());
+        }
+        
+        if (request.getProfilePictureUrl() != null) {
+            employee.setProfilePictureUrl(StringUtils.hasText(request.getProfilePictureUrl()) ? 
+                                        request.getProfilePictureUrl() : null);
+        }
+        
+        // Cập nhật trạng thái nếu được cung cấp
+        if (StringUtils.hasText(request.getStatus())) {
+            // Kiểm tra trạng thái hợp lệ
+            if (!"active".equals(request.getStatus()) && 
+                !"inactive".equals(request.getStatus()) && 
+                !"on_leave".equals(request.getStatus())) {
+                throw new InvalidRequestException("Trạng thái không hợp lệ. Các giá trị hợp lệ: active, inactive, on_leave");
+            }
+            employee.setStatus(request.getStatus());
+        }
+        
+        // Handle password change if requested
+        if (StringUtils.hasText(request.getCurrentPassword()) && StringUtils.hasText(request.getNewPassword())) {
+            if (!passwordEncoder.matches(request.getCurrentPassword(), employee.getPassword())) {
+                throw new InvalidRequestException("Current password is incorrect");
+            }
+            employee.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        }
+        
+        // Save updated employee
+        employeeRepository.save(employee);
+    }
+    
+    // Các phương thức deactivateEmployee và reactivateEmployee đã được gộp vào phương thức updateEmployee
+    // Sử dụng trường status trong EmployeeUpdateRequest để thay đổi trạng thái nhân viên
+    
+    @Override
+    @Transactional
+    public void permanentDeleteEmployee(Long employeeId, boolean force) {
+        Employee employee = employeeRepository.findById(employeeId.intValue())
+            .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + employeeId));
+        
+        // Check for related data that would be affected by deletion
+        if (!force) {
+            // Check for orders associated with this employee
+            if (!employee.getOrders().isEmpty()) {
+                throw new InvalidRequestException("Cannot delete employee with associated orders. Use force=true to override or deactivate instead.");
+            }
+            
+            // Check for inventory transactions associated with this employee
+            if (!employee.getInventoryTransactions().isEmpty()) {
+                throw new InvalidRequestException("Cannot delete employee with associated inventory transactions. Use force=true to override or deactivate instead.");
+            }
+            
+            // Check for material transactions associated with this employee
+            if (!employee.getMaterialTransactions().isEmpty()) {
+                throw new InvalidRequestException("Cannot delete employee with associated material transactions. Use force=true to override or deactivate instead.");
+            }
+        }
+        
+        // Delete employee roles first (cascade would handle this, but doing it explicitly for clarity)
+        if (employee.getEmployeeRoles() != null && !employee.getEmployeeRoles().isEmpty()) {
+            System.out.println("Deleting " + employee.getEmployeeRoles().size() + " employee roles for employee ID " + employeeId);
+        }
+        
+        // Perform the actual deletion
+        employeeRepository.delete(employee);
+        System.out.println("Employee with ID " + employeeId + " has been permanently deleted");
+    }
+    
+    private void validateEmployeeRequest(EmployeeRegisterRequest request) {
+        // Check required fields
+        if (!StringUtils.hasText(request.getUsername())) {
+            throw new InvalidRequestException("Username is required");
+        }
+        if (!StringUtils.hasText(request.getPassword())) {
+            throw new InvalidRequestException("Password is required");
+        }
+        if (!StringUtils.hasText(request.getFullName())) {
+            throw new InvalidRequestException("Full name is required");
+        }
+        if (!StringUtils.hasText(request.getPhoneNumber())) {
+            throw new InvalidRequestException("Phone number is required");
+        }
+        if (!StringUtils.hasText(request.getAddress())) {
+            throw new InvalidRequestException("Address is required");
+        }
+
+        // Validate email format if provided
+        if (StringUtils.hasText(request.getEmail()) && !request.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new InvalidRequestException("Invalid email format");
+        }
+
+        // Check if username already exists
+        if (employeeRepository.existsByUsername(request.getUsername())) {
+            throw new DuplicateResourceException("Username already exists");
+        }
+
+        // Check if email already exists if provided
+        if (StringUtils.hasText(request.getEmail()) && employeeRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateResourceException("Email already exists");
+        }
+    }
+
+    private void mapRegisterRequestToEntity(EmployeeRegisterRequest request, Employee employee) {
+        employee.setUsername(request.getUsername());
+        employee.setPassword(passwordEncoder.encode(request.getPassword()));
+        employee.setFullName(request.getFullName());
+        employee.setPhoneNumber(request.getPhoneNumber());
+        employee.setEmail(StringUtils.hasText(request.getEmail()) ? request.getEmail() : null);
+        employee.setAddress(request.getAddress());
+        employee.setStartDate(request.getStartDate() != null ? request.getStartDate() : LocalDate.now());
+        employee.setDateOfBirth(request.getDateOfBirth());
+        employee.setProfilePictureUrl(StringUtils.hasText(request.getProfilePictureUrl()) ? 
+                                    request.getProfilePictureUrl() : null);
     }
     
     private EmployeeListResponse mapToEmployeeListResponse(Employee employee) {

@@ -26,6 +26,9 @@ public class EmployeeUpdateRequest {
     
     private String profilePictureUrl;
     
+    // Trạng thái nhân viên (active, inactive, on_leave)
+    private String status;
+    
     // Optional field for changing password
     private String currentPassword;
     private String newPassword;
