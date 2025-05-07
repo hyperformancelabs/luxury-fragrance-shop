@@ -39,4 +39,5 @@ public interface ProductService {
     ProductDetailDTO getProductDetailById(Integer productId);
 
     PagedResponse<ProductCard> getProductVariantsByGenderPaged(String gender, int pageNumber);
-    }
+    List<ProductCard> filterProducts(FilterRequestDTO request);
+}

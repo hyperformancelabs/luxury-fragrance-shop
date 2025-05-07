@@ -2,10 +2,10 @@ package com.hyperformancelabs.backend.controller;
 
 import com.hyperformancelabs.backend.dto.*;
 import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
-import com.hyperformancelabs.backend.model.Product;
 import com.hyperformancelabs.backend.payload.ApiResponse;
 import com.hyperformancelabs.backend.payload.ApiResponseStatus;
 import com.hyperformancelabs.backend.payload.PagedResponse;
+import com.hyperformancelabs.backend.service.ProductDetailService;
 import com.hyperformancelabs.backend.service.impl.ProductServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,9 @@ public class ProductController {
 
     @Autowired
     private ProductServiceImpl productService;
+    
+    @Autowired
+    private ProductDetailService productDetailService;
 
     private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
@@ -224,8 +228,67 @@ public ResponseEntity<ApiResponse<Map<String, Object>>> getProductsByBrandPaged(
         return ResponseEntity.ok(result);
     }
 
-
-
+    @PostMapping("/filter")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> filterProducts(
+            @RequestBody FilterRequestDTO request,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "price") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+        // Validate price range
+        if (request.getMinPrice() != null && request.getMaxPrice() != null
+                && request.getMinPrice().compareTo(request.getMaxPrice()) > 0) {
+            return ResponseEntity.badRequest().body(
+                new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS,
+                        "minPrice cannot be greater than maxPrice", null)
+            );
+        }
+        // Validate pagination
+        if (page < 0 || size <= 0) {
+            return ResponseEntity.badRequest().body(
+                new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS,
+                        "Invalid pagination parameters", null)
+            );
+        }
+        List<ProductCard> cards = productService.filterProducts(request);
+        // Sorting
+        if ("price".equalsIgnoreCase(sortBy)) {
+            cards.sort((a, b) -> {
+                BigDecimal aMin = a.getVolumePrices().stream()
+                        .map(VolumePriceDTO::getPrice)
+                        .reduce(BigDecimal::min)
+                        .orElse(BigDecimal.ZERO);
+                BigDecimal bMin = b.getVolumePrices().stream()
+                        .map(VolumePriceDTO::getPrice)
+                        .reduce(BigDecimal::min)
+                        .orElse(BigDecimal.ZERO);
+                return sortDir.equalsIgnoreCase("asc")
+                        ? aMin.compareTo(bMin)
+                        : bMin.compareTo(aMin);
+            });
+        } else if ("name".equalsIgnoreCase(sortBy)) {
+            cards.sort((a, b) -> sortDir.equalsIgnoreCase("asc")
+                    ? a.getProductName().compareToIgnoreCase(b.getProductName())
+                    : b.getProductName().compareToIgnoreCase(a.getProductName()));
+        }
+        // Pagination
+        int totalItems = cards.size();
+        int from = page * size;
+        int toIndex = Math.min(from + size, totalItems);
+        List<ProductCard> pageItems = (from >= totalItems)
+                ? Collections.emptyList()
+                : cards.subList(from, toIndex);
+        Map<String, Object> data = new HashMap<>();
+        data.put("items", pageItems);
+        data.put("currentPage", page);
+        data.put("totalItems", totalItems);
+        data.put("totalPages", (int) Math.ceil((double) totalItems / size));
+        return ResponseEntity.ok(
+            new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS,
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE, data)
+        );
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ProductDetailDTO>> getProductDetail(@PathVariable Integer id) {
@@ -318,5 +381,29 @@ public ResponseEntity<ApiResponse<Map<String, Object>>> getProductsByBrandPaged(
         if (input == null || input.isEmpty()) return input;
         return input.substring(0, 1).toUpperCase() + input.substring(1);
     }
-
+    
+    @GetMapping("/filter-options")
+    public ResponseEntity<ApiResponse<FilterOptionDTO>> getFilterOptions() {
+        try {
+            FilterOptionDTO filterOptions = productDetailService.getFilterOptions();
+            return ResponseEntity.ok(
+                new ApiResponse<>(
+                    ApiResponseStatus.SUCCESS_CODE,
+                    ApiResponseStatus.SUCCESS_STATUS,
+                    ApiResponseStatus.GET_SUCCESS_MESSAGE,
+                    filterOptions
+                )
+            );
+        } catch (Exception e) {
+            logger.error("Error retrieving filter options", e);
+            return ResponseEntity.badRequest().body(
+                new ApiResponse<>(
+                    ApiResponseStatus.BAD_REQUEST_CODE,
+                    ApiResponseStatus.ERROR_STATUS,
+                    e.getMessage(),
+                    null
+                )
+            );
+        }
+    }
 }
