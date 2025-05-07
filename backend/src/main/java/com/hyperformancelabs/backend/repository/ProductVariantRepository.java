@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.List;
 
@@ -24,4 +25,13 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
         )
     """)
     List<ProductVariant> findByProductGender(@Param("gender") String gender);
+    
+    @Query("SELECT DISTINCT pv.volume FROM ProductVariant pv ORDER BY pv.volume")
+    List<Integer> findAllDistinctVolumes();
+    
+    @Query("SELECT MIN(pv.price) FROM ProductVariant pv")
+    BigDecimal findMinPrice();
+    
+    @Query("SELECT MAX(pv.price) FROM ProductVariant pv")
+    BigDecimal findMaxPrice();
 }

@@ -2,12 +2,10 @@ package com.hyperformancelabs.backend.service.impl;
 
 import com.hyperformancelabs.backend.dto.*;
 import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
-import com.hyperformancelabs.backend.model.Brand;
 import com.hyperformancelabs.backend.model.Product;
 import com.hyperformancelabs.backend.model.ProductDetail;
 import com.hyperformancelabs.backend.model.ProductVariant;
 import com.hyperformancelabs.backend.payload.PagedResponse;
-import com.hyperformancelabs.backend.repository.BrandRepository;
 import com.hyperformancelabs.backend.repository.ProductDetailRepository;
 import com.hyperformancelabs.backend.repository.ProductRepository;
 import com.hyperformancelabs.backend.repository.ProductVariantRepository;
@@ -19,7 +17,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,13 +35,10 @@ public class ProductServiceImpl implements ProductService {
     private ProductRepository productRepository;
 
     @Autowired
-    private BrandRepository brandRepository;
-
-    @Autowired
     private ProductDetailRepository productDetailRepository;
 
-
-
+    @Autowired
+    private ProductVariantRepository productVariantRepository;
 
     private ProductDTO convertToDTO(Product product) {
         ProductDTO dto = new ProductDTO();
@@ -105,7 +101,6 @@ public class ProductServiceImpl implements ProductService {
         return productPage.map(this::convertToDTO);
     }
 
-
     @Override
     public List<Random10Product> getRandom10Product() {
 
@@ -128,9 +123,6 @@ public class ProductServiceImpl implements ProductService {
                 })
                 .collect(Collectors.toList());
     }
-
-    @Autowired
-    private ProductVariantRepository productVariantRepository;
 
     public List<ProductCard> getProductVariantsGroupedByProduct() {
 
@@ -166,7 +158,6 @@ public class ProductServiceImpl implements ProductService {
 
         return response;
     }
-
 
     @Override
     @Transactional
@@ -218,7 +209,6 @@ public class ProductServiceImpl implements ProductService {
         return new PagedResponse<>(pagedList, pageNumber, pageSize, totalItems);
     }
 
-
     @Override
     public List<ProductCard> getFilteredFlashSaleProducts(
             BigDecimal minPrice,
@@ -268,7 +258,6 @@ public class ProductServiceImpl implements ProductService {
 
             String brandName = product.getBrand() != null ? product.getBrand().getBrandName() : "Unknown";
 
-
             List<ProductDetail> details = productDetailRepository.findByProduct_ProductId(productId);
             List<ProductDetailInfoDTO> productDetails = details.stream()
                     .map(detail -> new ProductDetailInfoDTO(
@@ -276,7 +265,7 @@ public class ProductServiceImpl implements ProductService {
                             detail.getDetailValue()))
                     .collect(Collectors.toList());
 
-           String country = details.stream()
+            String country = details.stream()
                     .filter(detail -> "country".equalsIgnoreCase(detail.getDetailName()))
                     .map(ProductDetail::getDetailValue)
                     .findFirst()
@@ -357,5 +346,59 @@ public class ProductServiceImpl implements ProductService {
         return new PagedResponse<>(pagedList, pageNumber, pageSize, totalItems);
     }
 
+    @Override
+    public List<ProductCard> filterProducts(FilterRequestDTO request) {
+        Specification<ProductVariant> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            // Brand filter
+            if (request.getBrands() != null && !request.getBrands().isEmpty()) {
+                predicates.add(root.get("product").get("brand").get("brandName").in(request.getBrands()));
+            }
+            // Volume filter
+            if (request.getVolumes() != null && !request.getVolumes().isEmpty()) {
+                predicates.add(root.get("volume").in(request.getVolumes()));
+            }
+            // Price range filter
+            if (request.getMinPrice() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), request.getMinPrice()));
+            }
+            if (request.getMaxPrice() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), request.getMaxPrice()));
+            }
+            // ProductDetail filters
+            if (request.getProductDetails() != null && !request.getProductDetails().isEmpty()) {
+                Join<ProductVariant, Product> productJoin = root.join("product");
+                for (Map.Entry<String, List<String>> e : request.getProductDetails().entrySet()) {
+                    String dbName = toSnakeCase(e.getKey());
+                    List<String> values = e.getValue();
+                    if (values != null && !values.isEmpty()) {
+                        Join<Product, ProductDetail> detailJoin = productJoin.join("productDetails");
+                        predicates.add(cb.and(
+                            cb.equal(detailJoin.get("detailName"), dbName),
+                            detailJoin.get("detailValue").in(values)
+                        ));
+                    }
+                }
+            }
+            query.distinct(true);
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        // Fetch variants matching spec
+        List<ProductVariant> variants = productVariantRepository.findAll(spec);
+        // Group by product
+        Map<Integer, List<ProductVariant>> grouped = variants.stream()
+            .collect(Collectors.groupingBy(v -> v.getProduct().getProductId()));
+        // Build ProductCard list
+        return grouped.entrySet().stream().map(entry -> {
+            List<VolumePriceDTO> vp = entry.getValue().stream()
+                .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice()))
+                .collect(Collectors.toList());
+            Product p = entry.getValue().get(0).getProduct();
+            return new ProductCard(p.getProductId(), p.getProductName(), p.getImageUrl(), vp);
+        }).collect(Collectors.toList());
+    }
 
+    private String toSnakeCase(String camel) {
+        return camel.replaceAll("([a-z])([A-Z]+)", "$1_$2").toLowerCase();
+    }
 }
