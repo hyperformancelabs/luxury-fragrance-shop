@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -106,6 +106,9 @@ const Login = () => {
                 </button>
               </div>
             </form>
+            <div className="mt-4 text-sm text-center">
+              <Link to="/forgot" className="text-blue-600 hover:underline">Quên mật khẩu?</Link>
+            </div>
           </div>
         </div>
       </div>

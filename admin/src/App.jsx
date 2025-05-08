@@ -12,6 +12,7 @@ import Materials from './pages/Materials';
 import Marketing from './pages/Marketing';
 import Staff from './pages/Staff';
 import Login from './pages/Login';
+import Forgot from './pages/Forgot';
 import EmployeeProfile from './pages/EmployeeProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
@@ -48,6 +49,7 @@ const App = () => {
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot" element={<Forgot />} />
         <Route path="/*" element={
           <ProtectedRoute>
             <AppLayout />
