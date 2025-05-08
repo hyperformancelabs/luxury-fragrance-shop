@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.service;
 
+import java.util.List;
 import java.util.Map;
 import com.hyperformancelabs.backend.dto.EmployeeListResponse;
 import com.hyperformancelabs.backend.dto.EmployeeRegisterRequest;
@@ -42,4 +43,28 @@ public interface EmployeeManagementService {
      * @param force Nếu true, bắt buộc xóa ngay cả khi có dữ liệu liên quan
      */
     void permanentDeleteEmployee(Long employeeId, boolean force);
+    
+    /**
+     * Gán vai trò cho nhân viên
+     * 
+     * @param employeeId ID của nhân viên cần gán vai trò
+     * @param roleIds Danh sách ID vai trò cần gán
+     */
+    void assignRolesToEmployee(Long employeeId, List<Integer> roleIds);
+    
+    /**
+     * Xóa vai trò khỏi nhân viên
+     * 
+     * @param employeeId ID của nhân viên cần xóa vai trò
+     * @param roleIds Danh sách ID vai trò cần xóa
+     */
+    void removeRolesFromEmployee(Long employeeId, List<Integer> roleIds);
+    
+    /**
+     * Cập nhật toàn bộ vai trò của nhân viên
+     * 
+     * @param employeeId ID của nhân viên cần cập nhật vai trò
+     * @param roleIds Danh sách ID vai trò mới (sẽ thay thế hoàn toàn danh sách cũ)
+     */
+    void updateEmployeeRoles(Long employeeId, List<Integer> roleIds);
 }

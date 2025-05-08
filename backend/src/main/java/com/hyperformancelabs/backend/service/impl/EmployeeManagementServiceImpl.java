@@ -7,6 +7,10 @@ import com.hyperformancelabs.backend.exception.DuplicateResourceException;
 import com.hyperformancelabs.backend.exception.InvalidRequestException;
 import com.hyperformancelabs.backend.model.Employee;
 import com.hyperformancelabs.backend.repository.EmployeeRepository;
+import com.hyperformancelabs.backend.repository.RoleRepository;
+import com.hyperformancelabs.backend.repository.EmployeeRoleRepository;
+import com.hyperformancelabs.backend.model.Role;
+import com.hyperformancelabs.backend.model.EmployeeRole;
 import com.hyperformancelabs.backend.service.EmployeeManagementService;
 import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
 import jakarta.persistence.EntityManager;
@@ -20,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.util.StringUtils;
 
@@ -28,6 +33,8 @@ import org.springframework.util.StringUtils;
 public class EmployeeManagementServiceImpl implements EmployeeManagementService {
 
     private final EmployeeRepository employeeRepository;
+    private final RoleRepository roleRepository;
+    private final EmployeeRoleRepository employeeRoleRepository;
     private final PasswordEncoder passwordEncoder;
     
     @PersistenceContext
@@ -219,6 +226,73 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
         
         // Save updated employee
         employeeRepository.save(employee);
+    }
+    
+    @Override
+    @Transactional
+    public void assignRolesToEmployee(Long employeeId, List<Integer> roleIds) {
+        Employee employee = employeeRepository.findById(employeeId.intValue())
+            .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + employeeId));
+        for (Integer roleId : roleIds) {
+            Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
+            Optional<EmployeeRole> existing = employeeRoleRepository.findByEmployeeAndRole(employee, role);
+            if (existing.isEmpty()) {
+                EmployeeRole er = new EmployeeRole();
+                er.setEmployee(employee);
+                er.setRole(role);
+                er.setStatus("active");
+                employeeRoleRepository.save(er);
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void removeRolesFromEmployee(Long employeeId, List<Integer> roleIds) {
+        Employee employee = employeeRepository.findById(employeeId.intValue())
+            .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + employeeId));
+        for (Integer roleId : roleIds) {
+            Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
+            employeeRoleRepository.findByEmployeeAndRole(employee, role)
+                .ifPresent(er -> employeeRoleRepository.delete(er));
+        }
+    }
+    
+    @Override
+    @Transactional
+    public void updateEmployeeRoles(Long employeeId, List<Integer> roleIds) {
+        Employee employee = employeeRepository.findById(employeeId.intValue())
+            .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + employeeId));
+        
+        // Lấy danh sách vai trò hiện tại của nhân viên từ repository
+        List<EmployeeRole> empRoles = employeeRoleRepository.findAllByEmployee(employee);
+        List<Role> currentRoles = empRoles.stream()
+            .map(EmployeeRole::getRole)
+            .collect(Collectors.toList());
+        
+        // Danh sách vai trò cần thêm (có trong roleIds nhưng không có trong currentRoles)
+        List<Integer> rolesToAdd = roleIds.stream()
+            .filter(roleId -> currentRoles.stream()
+                .noneMatch(role -> role.getRoleId().equals(roleId)))
+            .collect(Collectors.toList());
+        
+        // Danh sách vai trò cần xóa (có trong currentRoles nhưng không có trong roleIds)
+        List<Integer> rolesToRemove = currentRoles.stream()
+            .map(Role::getRoleId)
+            .filter(roleId -> !roleIds.contains(roleId))
+            .collect(Collectors.toList());
+        
+        // Xóa các vai trò cũ
+        if (!rolesToRemove.isEmpty()) {
+            removeRolesFromEmployee(employeeId, rolesToRemove);
+        }
+        
+        // Thêm các vai trò mới
+        if (!rolesToAdd.isEmpty()) {
+            assignRolesToEmployee(employeeId, rolesToAdd);
+        }
     }
     
     // Các phương thức deactivateEmployee và reactivateEmployee đã được gộp vào phương thức updateEmployee

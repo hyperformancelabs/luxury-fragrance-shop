@@ -3,6 +3,7 @@ package com.hyperformancelabs.backend.controller;
 import com.hyperformancelabs.backend.dto.EmployeeListResponse;
 import com.hyperformancelabs.backend.dto.EmployeeRegisterRequest;
 import com.hyperformancelabs.backend.dto.EmployeeUpdateRequest;
+import com.hyperformancelabs.backend.dto.EmployeeRoleRequest;
 import com.hyperformancelabs.backend.exception.DuplicateResourceException;
 import com.hyperformancelabs.backend.exception.InvalidRequestException;
 import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
@@ -168,6 +169,65 @@ public class EmployeeManagementController {
     
     // Các endpoint riêng biệt cho việc thay đổi trạng thái đã được gộp vào endpoint cập nhật (PUT /employees/{employeeId})
     // Sử dụng trường status trong EmployeeUpdateRequest để thay đổi trạng thái nhân viên
+    
+    /**
+     * Gán vai trò cho nhân viên
+     */
+    @PostMapping("/employees/{employeeId}/roles")
+    public ResponseEntity<ApiResponse<Void>> assignRolesToEmployee(
+        @PathVariable Long employeeId,
+        @Valid @RequestBody EmployeeRoleRequest request) {
+        employeeManagementService.assignRolesToEmployee(employeeId, request.getRoleIds());
+        return ResponseEntity.ok(new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS,
+            "Gán vai trò cho nhân viên thành công", null));
+    }
+
+    /**
+     * Xóa vai trò khỏi nhân viên
+     */
+    @DeleteMapping("/employees/{employeeId}/roles")
+    public ResponseEntity<ApiResponse<Void>> removeRolesFromEmployee(
+        @PathVariable Long employeeId,
+        @Valid @RequestBody EmployeeRoleRequest request) {
+        employeeManagementService.removeRolesFromEmployee(employeeId, request.getRoleIds());
+        return ResponseEntity.ok(new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS,
+            "Xóa vai trò khỏi nhân viên thành công", null));
+    }
+    
+    /**
+     * Cập nhật toàn bộ vai trò của nhân viên
+     * Thay thế hoàn toàn danh sách vai trò hiện tại bằng danh sách mới
+     */
+    @PutMapping("/employees/{employeeId}/roles")
+    public ResponseEntity<ApiResponse<Void>> updateEmployeeRoles(
+        @PathVariable Long employeeId,
+        @Valid @RequestBody EmployeeRoleRequest request) {
+        System.out.println("[DEBUG] updateEmployeeRoles called with employeeId=" + employeeId + ", roleIds=" + request.getRoleIds());
+        try {
+            employeeManagementService.updateEmployeeRoles(employeeId, request.getRoleIds());
+            return ResponseEntity.ok(new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS,
+                "Cập nhật vai trò cho nhân viên thành công", null));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new ApiResponse<>(
+                    ApiResponseStatus.NOT_FOUND_CODE,
+                    ApiResponseStatus.ERROR_STATUS,
+                    e.getMessage(),
+                    null
+                )
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ApiResponse<>(
+                    ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE,
+                    ApiResponseStatus.ERROR_STATUS,
+                    "Lỗi khi cập nhật vai trò nhân viên: " + e.toString(),
+                    null
+                )
+            );
+        }
+    }
     
     /**
      * Xóa nhân viên vĩnh viễn khỏi cơ sở dữ liệu (hard delete)
