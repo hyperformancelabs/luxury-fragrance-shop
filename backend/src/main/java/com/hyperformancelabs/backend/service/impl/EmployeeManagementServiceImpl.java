@@ -373,7 +373,7 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
         employee.setPhoneNumber(request.getPhoneNumber());
         employee.setEmail(StringUtils.hasText(request.getEmail()) ? request.getEmail() : null);
         employee.setAddress(request.getAddress());
-        employee.setStartDate(request.getStartDate() != null ? request.getStartDate() : LocalDate.now());
+        // startDate is set by DB default GETDATE(); omit manual setting
         employee.setDateOfBirth(request.getDateOfBirth());
         employee.setProfilePictureUrl(StringUtils.hasText(request.getProfilePictureUrl()) ? 
                                     request.getProfilePictureUrl() : null);

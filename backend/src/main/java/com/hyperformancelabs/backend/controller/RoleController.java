@@ -111,6 +111,34 @@ public class RoleController {
             );
         }
     }
+    
+    /**
+     * Lấy danh sách vai trò kèm số lượng nhân viên
+     */
+    @GetMapping("/with-employee-count")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRolesWithEmployeeCount() {
+        try {
+            List<Map<String, Object>> roles = roleService.getRolesWithEmployeeCount();
+            return ResponseEntity.ok(
+                new ApiResponse<>(
+                    ApiResponseStatus.SUCCESS_CODE,
+                    ApiResponseStatus.SUCCESS_STATUS,
+                    "Lấy danh sách vai trò với số lượng nhân viên thành công",
+                    roles
+                )
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(
+                new ApiResponse<>(
+                    ApiResponseStatus.BAD_REQUEST_CODE,
+                    ApiResponseStatus.ERROR_STATUS,
+                    "Lỗi khi lấy danh sách vai trò với số lượng nhân viên: " + e.getMessage(),
+                    null
+                )
+            );
+        }
+    }
 
     /**
      * Lấy vai trò theo ID

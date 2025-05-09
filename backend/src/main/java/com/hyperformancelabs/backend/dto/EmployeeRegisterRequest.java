@@ -29,8 +29,6 @@ public class EmployeeRegisterRequest {
     @NotBlank(message = "Address is required")
     private String address;
 
-    private LocalDate startDate;
-
     private LocalDate dateOfBirth;
 
     private String profilePictureUrl;

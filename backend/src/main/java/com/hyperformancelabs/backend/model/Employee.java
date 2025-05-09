@@ -54,9 +54,8 @@ public class Employee {
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
-    @NotNull(message = "Start date cannot be empty")
-    @PastOrPresent(message = "Start date cannot be in the future")
-    @Column(name = "start_date", nullable = false)
+    // Set by database default via GETDATE(); omit on insert
+    @Column(name = "start_date", insertable = false)
     private LocalDate startDate;
 
     @Column(name = "last_login")

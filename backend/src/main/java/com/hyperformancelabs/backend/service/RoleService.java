@@ -40,6 +40,13 @@ public interface RoleService {
     RoleResponse getRoleById(Integer roleId);
     
     /**
+     * Lấy danh sách vai trò kèm số lượng nhân viên
+     * 
+     * @return Danh sách vai trò với số lượng nhân viên
+     */
+    List<Map<String, Object>> getRolesWithEmployeeCount();
+    
+    /**
      * Tạo vai trò mới
      * 
      * @param request Thông tin vai trò cần tạo

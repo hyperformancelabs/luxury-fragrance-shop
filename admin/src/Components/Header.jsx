@@ -66,7 +66,25 @@ const Header = ({ sidebarOpen }) => {
           />
           <div className="hidden md:block text-left">
             <div className="font-medium">{user?.fullName || 'Không xác định'}</div>
-            <div className="text-xs text-gray-500">{user?.roles?.length > 0 ? user.roles.join(', ') : 'Không có vai trò'}</div>
+            <div className="text-xs flex items-center space-x-1">
+              {user?.roles?.length > 0 ? (
+                <>
+                  <span className="px-2 py-0.5 bg-gray-200 rounded text-xs">{user.roles[0]}</span>
+                  {user.roles.length > 1 && (
+                    <div className="relative group">
+                      <span className="cursor-pointer text-xs text-gray-500">+{user.roles.length-1}</span>
+                      <div className="absolute right-0 bottom-full mb-1 hidden group-hover:block bg-white border rounded shadow-lg p-2 text-sm z-50 w-max">
+                        <div className="flex flex-col space-y-1">
+                          {user.roles.slice(1).map((role, index) => (
+                            <span key={index} className="whitespace-nowrap">{role}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : 'Không có vai trò'}
+            </div>
           </div>
           <ChevronDown size={16} className={`text-gray-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
         </button>

@@ -8,6 +8,7 @@ import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
 import com.hyperformancelabs.backend.model.Permission;
 import com.hyperformancelabs.backend.model.Role;
 import com.hyperformancelabs.backend.model.RolePermission;
+import com.hyperformancelabs.backend.repository.EmployeeRoleRepository;
 import com.hyperformancelabs.backend.repository.PermissionRepository;
 import com.hyperformancelabs.backend.repository.RolePermissionRepository;
 import com.hyperformancelabs.backend.repository.RoleRepository;
@@ -34,6 +35,7 @@ public class RoleServiceImpl implements RoleService {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
+    private final EmployeeRoleRepository employeeRoleRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -103,6 +105,47 @@ public class RoleServiceImpl implements RoleService {
         Role role = roleRepository.findById(roleId)
             .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vai trò với ID: " + roleId));
         return mapToRoleResponse(role);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getRolesWithEmployeeCount() {
+        try {
+            // Lấy số lượng nhân viên cho mỗi vai trò
+            List<Map<String, Object>> employeeCountByRole = employeeRoleRepository.countEmployeesByRole();
+            
+            // Lấy thông tin chi tiết của các vai trò
+            List<Role> allRoles = roleRepository.findAllByOrderByRoleNameAsc();
+            
+            // Map để lưu kết quả cuối cùng
+            List<Map<String, Object>> result = new ArrayList<>();
+            
+            // Tạo map để tra cứu nhanh số lượng nhân viên theo roleId
+            Map<Integer, Long> countMap = new HashMap<>();
+            for (Map<String, Object> item : employeeCountByRole) {
+                Integer roleId = ((Number) item.get("roleId")).intValue();
+                Long count = ((Number) item.get("employeeCount")).longValue();
+                countMap.put(roleId, count);
+            }
+            
+            // Tạo kết quả cuối cùng với thông tin đầy đủ của vai trò và số lượng nhân viên
+            for (Role role : allRoles) {
+                Map<String, Object> roleInfo = new HashMap<>();
+                roleInfo.put("roleId", role.getRoleId());
+                roleInfo.put("roleName", role.getRoleName());
+                roleInfo.put("roleDescription", role.getRoleDescription());
+                roleInfo.put("isDefault", role.getIsDefault());
+                roleInfo.put("status", role.getStatus());
+                roleInfo.put("employeeCount", countMap.getOrDefault(role.getRoleId(), 0L));
+                
+                result.add(roleInfo);
+            }
+            
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi lấy danh sách vai trò với số lượng nhân viên: " + e.getMessage());
+        }
     }
 
     @Override
