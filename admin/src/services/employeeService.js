@@ -18,9 +18,16 @@ const getProfile = async () => {
 // Update employee profile
 const updateProfile = async (profileData) => {
   try {
-    const response = await axios.put(`${API_URL}/employees/profile`, profileData, {
-      headers: authService.getAuthHeader()
-    });
+    // Merge Authorization with Content-Type for JSON
+    const headers = {
+      'Content-Type': 'application/json',
+      ...authService.getAuthHeader()
+    };
+    const response = await axios.put(
+      `${API_URL}/employees/profile`,
+      profileData,
+      { headers }
+    );
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Lỗi kết nối đến máy chủ' };

@@ -32,4 +32,6 @@ public class EmployeeRegisterRequest {
     private LocalDate dateOfBirth;
 
     private String profilePictureUrl;
+
+    private LocalDate startDate;
 }

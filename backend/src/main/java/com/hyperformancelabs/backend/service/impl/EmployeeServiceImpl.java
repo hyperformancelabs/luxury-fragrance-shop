@@ -175,12 +175,16 @@ public class EmployeeServiceImpl implements EmployeeService {
         // Update other fields
         employee.setFullName(request.getFullName());
         employee.setPhoneNumber(request.getPhoneNumber());
-        employee.setEmail(request.getEmail());
+        // Only update email if provided (non-null and non-blank)
+        if (request.getEmail() != null && StringUtils.hasText(request.getEmail())) {
+            employee.setEmail(request.getEmail());
+        }
         employee.setAddress(request.getAddress());
-        employee.setDateOfBirth(request.getDateOfBirth());
-        
-        // Cập nhật URL ảnh đại diện ngay cả khi nó là null
-        // Điều này cho phép xóa ảnh đại diện nếu cần
+        // Only update date of birth if provided
+        if (request.getDateOfBirth() != null) {
+            employee.setDateOfBirth(request.getDateOfBirth());
+        }
+        // Update profile picture URL (allows null to clear)
         employee.setProfilePictureUrl(request.getProfilePictureUrl());
         
         Employee updatedEmployee = employeeRepository.save(employee);
@@ -188,10 +192,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
     
     private EmployeeProfileResponse mapEmployeeToProfileResponse(Employee employee) {
-        var roles = employee.getEmployeeRoles().stream()
-            .map(er -> er.getRole().getRoleName())
-            .collect(Collectors.toList());
-            
+        // Load roles via repository to avoid lazy initialization issues
+        List<String> roles = employeeRepository.findRoleNamesByEmployeeId(employee.getEmployeeId());
         return new EmployeeProfileResponse(
             employee.getEmployeeId().longValue(),
             employee.getUsername(),

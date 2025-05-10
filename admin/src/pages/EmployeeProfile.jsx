@@ -298,7 +298,9 @@ const EmployeeProfile = () => {
         }));
         setErrorMessage('Mật khẩu hiện tại không chính xác');
       } else {
-        setErrorMessage(error.message || 'Cập nhật thông tin thất bại');
+        const errCode = error.code || '';
+        const errMsg = error.message || 'Cập nhật thông tin thất bại';
+        setErrorMessage(`${errCode ? '[' + errCode + '] ' : ''}${errMsg}`);
       }
       
       // Đóng modal xác nhận và hiển thị modal lỗi

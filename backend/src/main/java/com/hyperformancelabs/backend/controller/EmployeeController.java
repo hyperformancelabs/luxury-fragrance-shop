@@ -35,11 +35,16 @@ public class EmployeeController {
                 )
             );
         } catch (Exception e) {
+            // Fallback message if exception message is null
+            String errorMsg = e.getMessage();
+            if (errorMsg == null || errorMsg.isBlank()) {
+                errorMsg = "Lấy thông tin thất bại";
+            }
             return ResponseEntity.badRequest().body(
                 new ApiResponse<>(
                     ApiResponseStatus.BAD_REQUEST_CODE,
                     ApiResponseStatus.ERROR_STATUS,
-                    e.getMessage(),
+                    errorMsg,
                     null
                 )
             );
@@ -63,11 +68,16 @@ public class EmployeeController {
                 )
             );
         } catch (Exception e) {
+            // Fallback message if exception message is null
+            String errorMsg = e.getMessage();
+            if (errorMsg == null || errorMsg.isBlank()) {
+                errorMsg = "Cập nhật thông tin thất bại";
+            }
             return ResponseEntity.badRequest().body(
                 new ApiResponse<>(
                     ApiResponseStatus.BAD_REQUEST_CODE,
                     ApiResponseStatus.ERROR_STATUS,
-                    e.getMessage(),
+                    errorMsg,
                     null
                 )
             );
