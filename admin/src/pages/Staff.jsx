@@ -3,6 +3,7 @@ import { Users, Search, Plus, Edit, Trash2, Filter, Download, Mail, Phone, Award
 import employeeService from '../services/employeeService';
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
+import { FieldHelper, PasswordStrengthMeter, PhoneNumberInput, checkPasswordStrength, normalizeFullName, normalizeAddress } from '../components/FormHelper';
 
 // Sample staff data
 const initialStaffData = [];
@@ -148,26 +149,63 @@ const StaffForm = ({ staff, rolesData, onSave, onCancel }) => {
         dateOfBirth: '', 
         profilePictureUrl: '', 
         status: 'active', 
-        roles: [] 
+        // Auto-select default roles when creating
+        roles: rolesData.filter(r => r.isDefault).map(r => r.roleId) 
       };
   const [formData, setFormData] = useState(initial);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const handleChange = e => { const { name, value } = e.target; setFormData(prev=>({ ...prev, [name]:value })); };
   const handleCheckbox = e => { const id=parseInt(e.target.value); setFormData(prev=>({ ...prev, roles:e.target.checked?[...prev.roles,id]:prev.roles.filter(x=>x!==id) })); };
+  // Sử dụng các hàm từ FormHelper
+  
+  // Xử lý thay đổi họ tên với chuẩn hóa
+  const handleFullNameChange = (e) => {
+    const { value } = e.target;
+    setFormData(prev => ({ ...prev, fullName: value }));
+  };
+  
+  // Xử lý thay đổi địa chỉ với chuẩn hóa
+  const handleAddressChange = (e) => {
+    const { value } = e.target;
+    setFormData(prev => ({ ...prev, address: value }));
+  };
+  
+  // Xử lý blur họ tên để chuẩn hóa
+  const handleFullNameBlur = (e) => {
+    const normalizedName = normalizeFullName(e.target.value);
+    setFormData(prev => ({ ...prev, fullName: normalizedName }));
+  };
+  
+  // Xử lý blur địa chỉ để chuẩn hóa
+  const handleAddressBlur = (e) => {
+    const normalizedAddress = normalizeAddress(e.target.value);
+    setFormData(prev => ({ ...prev, address: normalizedAddress }));
+  };
+  
+  // Kiểm tra form
   const validateForm = () => {
     if (!staff) {
       if (!formData.username.trim()) { toast.error('Username không được để trống'); return false; }
+      if (!/^[a-zA-Z0-9]+$/.test(formData.username)) { toast.error('Username chỉ được chứa chữ cái và số, không có khoảng trắng hoặc ký tự đặc biệt'); return false; }
       if (formData.username.length < 3 || formData.username.length > 50) { toast.error('Username phải từ 3-50 ký tự'); return false; }
+      
+      if (!formData.password) { toast.error('Mật khẩu không được để trống'); return false; }
       if (formData.password.length < 6) { toast.error('Mật khẩu phải ít nhất 6 ký tự'); return false; }
+      if (!/(?=.*[A-Za-z])(?=.*\d)/.test(formData.password)) { toast.error('Mật khẩu phải chứa ít nhất một chữ cái và một số'); return false; }
       if (formData.password !== formData.confirmPassword) { toast.error('Mật khẩu và xác nhận mật khẩu không khớp'); return false; }
     }
+    
     if (!formData.fullName.trim()) { toast.error('Họ và tên không được để trống'); return false; }
+    
     if (!formData.email) { toast.error('Email không được để trống'); return false; }
-    if (!/^[^ ]+@[^ ]{2,}\.[^ ]+$/.test(formData.email)) { toast.error('Email không đúng định dạng'); return false; }
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) { toast.error('Email không đúng định dạng'); return false; }
+    
     if (!formData.phoneNumber) { toast.error('Số điện thoại không được để trống'); return false; }
     if (!/^[0-9 ()+-]+$/.test(formData.phoneNumber)) { toast.error('Số điện thoại không hợp lệ'); return false; }
+    
     if (!formData.address.trim()) { toast.error('Địa chỉ không được để trống'); return false; }
+    
     if (formData.dateOfBirth && new Date(formData.dateOfBirth) >= new Date()) { toast.error('Ngày sinh phải trước ngày hiện tại'); return false; }
     return true;
   };
@@ -194,49 +232,225 @@ const StaffForm = ({ staff, rolesData, onSave, onCancel }) => {
               <>
                 <div className="md:col-span-2 flex justify-center">
                   <div className="w-full max-w-xs">
-                    <label>Username</label>
+                    <div className="flex items-center">
+                      <label>Username</label>
+                      <FieldHelper text="Chỉ chứa chữ cái và số, không có khoảng trắng hoặc ký tự đặc biệt. Độ dài từ 3-50 ký tự." />
+                    </div>
                     <input
                       name="username"
-                      autoComplete="off"
+                      autoComplete="username"
                       value={formData.username}
                       onChange={handleChange}
-                      className="w-full border rounded px-3 py-2"
+                      className="w-full border rounded px-3 py-2 mt-1"
+                      placeholder="Nhập username (chỉ chữ cái và số)"
                       required
                     />
+                    {formData.username && !/^[a-zA-Z0-9]+$/.test(formData.username) && (
+                      <p className="text-xs text-red-500 mt-1">Username chỉ được chứa chữ cái và số</p>
+                    )}
                   </div>
                 </div>
-                <PasswordInput
-                  label="Password"
-                  name="password"
-                  value={formData.password}
-                  show={showPassword}
-                  toggleShow={() => setShowPassword(prev => !prev)}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                />
-                <PasswordInput
-                  label="Xác nhận mật khẩu"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  show={showConfirmPassword}
-                  toggleShow={() => setShowConfirmPassword(prev => !prev)}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                />
+                <div>
+                  <div className="flex items-center">
+                    <label>Password</label>
+                    <FieldHelper text="Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ cái và số. Mật khẩu mạnh nên có thêm ký tự đặc biệt và độ dài trên 8 ký tự." />
+                  </div>
+                  <div className="relative mt-1">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={`w-full border rounded px-3 py-2 pr-10 ${formData.password && (formData.password.length < 6 || !/(?=.*[A-Za-z])(?=.*\d)/.test(formData.password)) ? 'border-red-300' : ''}`}
+                      autoComplete="new-password"
+                      placeholder="Mật khẩu (ít nhất 6 ký tự)"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  
+                  {/* Hiển thị độ mạnh mật khẩu */}
+                  {formData.password && <PasswordStrengthMeter password={formData.password} />}
+                  
+                  {formData.password && formData.password.length < 6 && (
+                    <p className="text-xs text-red-500 mt-1">Mật khẩu phải có ít nhất 6 ký tự</p>
+                  )}
+                  
+                  {formData.password && formData.password.length >= 6 && !/(?=.*[A-Za-z])(?=.*\d)/.test(formData.password) && (
+                    <p className="text-xs text-red-500 mt-1">Mật khẩu phải chứa ít nhất một chữ cái và một số</p>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center">
+                    <label>Xác nhận mật khẩu</label>
+                    <FieldHelper text="Nhập lại mật khẩu để xác nhận" />
+                  </div>
+                  <div className="relative mt-1">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className={`w-full border rounded px-3 py-2 pr-10 ${formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword ? 'border-red-300' : ''}`}
+                      autoComplete="new-password"
+                      placeholder="Nhập lại mật khẩu"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {formData.password && formData.confirmPassword && (
+                    <p className={`text-xs mt-1 ${formData.password === formData.confirmPassword ? 'text-green-500' : 'text-red-500'}`}>
+                      {formData.password === formData.confirmPassword ? 'Mật khẩu khớp' : 'Mật khẩu không khớp'}
+                    </p>
+                  )}
+                </div>
               </>
             )}
-            <div><label>Họ và tên</label><input name="fullName" value={formData.fullName} onChange={handleChange} autoComplete="name" className="w-full border rounded px-3 py-2" required/></div>
-            <div><label>Email</label><input name="email" type="email" pattern="^[^ ]+@[^ ]{2,}\.[^ ]+$" title="Email không đúng định dạng" value={formData.email} onChange={handleChange} autoComplete="email" className="w-full border rounded px-3 py-2" required/></div>
-            <div><label>Số điện thoại</label><input name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} pattern="^[0-9 ()+-]+$" title="Số điện thoại không hợp lệ" autoComplete="tel" className="w-full border rounded px-3 py-2" required/></div>
-            <div><label>Địa chỉ</label><input name="address" value={formData.address} onChange={handleChange} autoComplete="street-address" className="w-full border rounded px-3 py-2" required/></div>
-            <div><label>Ngày sinh</label><input name="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={handleChange} autoComplete="bday" className="w-full border rounded px-3 py-2" max={new Date().toISOString().split('T')[0]}/></div>
-            <div><label>Trạng thái</label><select name="status" value={formData.status} onChange={handleChange} className="w-full border rounded px-3 py-2">
+            <div>
+              <div className="flex items-center">
+                <label>Họ và tên</label>
+                <FieldHelper text="Họ tên sẽ được chuẩn hóa: viết hoa chữ cái đầu mỗi từ và loại bỏ khoảng trắng thừa" />
+              </div>
+              <input 
+                name="fullName" 
+                value={formData.fullName} 
+                onChange={handleFullNameChange} 
+                onBlur={handleFullNameBlur}
+                autoComplete="name" 
+                className="w-full border rounded px-3 py-2 mt-1" 
+                placeholder="Nhập họ và tên"
+                required
+              />
+              {formData.fullName && formData.fullName.trim() === '' && (
+                <p className="text-xs text-red-500 mt-1">Họ tên không được để trống</p>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center">
+                <label>Email</label>
+                <FieldHelper text="Email phải đúng định dạng: example@domain.com" />
+              </div>
+              <input 
+                name="email" 
+                type="email" 
+                pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" 
+                title="Email không đúng định dạng" 
+                value={formData.email} 
+                onChange={handleChange} 
+                autoComplete="email" 
+                className={`w-full border rounded px-3 py-2 mt-1 ${formData.email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email) ? 'border-red-300' : ''}`} 
+                placeholder="example@domain.com"
+                required
+              />
+              {formData.email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email) && (
+                <p className="text-xs text-red-500 mt-1">Email không đúng định dạng</p>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center">
+                <label>Số điện thoại</label>
+                <FieldHelper text="Chỉ hỗ trợ số điện thoại Việt Nam (+84). Các vùng khác hiện chưa được hỗ trợ." />
+              </div>
+              <div className="mt-1 relative">
+                <PhoneNumberInput 
+                  value={formData.phoneNumber} 
+                  onChange={handleChange} 
+                  required={true}
+                  error={formData.phoneNumber && !/^[0-9 ()+-]+$/.test(formData.phoneNumber) ? 'Số điện thoại không hợp lệ' : ''}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center">
+                <label>Địa chỉ</label>
+                <FieldHelper text="Địa chỉ sẽ được chuẩn hóa: loại bỏ khoảng trắng thừa" />
+              </div>
+              <input 
+                name="address" 
+                value={formData.address} 
+                onChange={handleAddressChange} 
+                onBlur={handleAddressBlur}
+                autoComplete="street-address" 
+                className="w-full border rounded px-3 py-2 mt-1" 
+                placeholder="Nhập địa chỉ"
+                required
+              />
+              {formData.address && formData.address.trim() === '' && (
+                <p className="text-xs text-red-500 mt-1">Địa chỉ không được để trống</p>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center">
+                <label>Ngày sinh</label>
+                <FieldHelper text="Ngày sinh phải trước ngày hiện tại" />
+              </div>
+              <input 
+                name="dateOfBirth" 
+                type="date" 
+                value={formData.dateOfBirth} 
+                onChange={handleChange} 
+                autoComplete="bday" 
+                className="w-full border rounded px-3 py-2 mt-1" 
+                max={new Date().toISOString().split('T')[0]}
+              />
+              {formData.dateOfBirth && new Date(formData.dateOfBirth) >= new Date() && (
+                <p className="text-xs text-red-500 mt-1">Ngày sinh phải trước ngày hiện tại</p>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center">
+                <label>Trạng thái</label>
+                <FieldHelper text="Trạng thái hiện tại của nhân viên" />
+              </div>
+              <select 
+                name="status" 
+                value={formData.status} 
+                onChange={handleChange} 
+                className="w-full border rounded px-3 py-2 mt-1"
+              >
                 <option value="active">Đang làm việc</option>
                 <option value="probation">Thử việc</option>
                 <option value="on_leave">Đang nghỉ phép</option>
                 <option value="inactive">Đã nghỉ</option>
-            </select></div>
-            <div className="md:col-span-2"><fieldset><legend>Vai trò</legend><div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded">{rolesData.map(r=>(<label key={r.roleId} className="flex items-center"><input type="checkbox" value={r.roleId} checked={formData.roles.includes(r.roleId)} onChange={handleCheckbox} className="mr-2"/>{r.roleName}</label>))}</div></fieldset></div>
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <fieldset>
+                <div className="flex items-center">
+                  <legend>Vai trò</legend>
+                  <FieldHelper text="Chọn một hoặc nhiều vai trò cho nhân viên" />
+                </div>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded mt-1">
+                  {rolesData.map(r => (
+                    <label key={r.roleId} className="flex items-center p-1 hover:bg-gray-50 rounded">
+                      <input 
+                        type="checkbox" 
+                        value={r.roleId} 
+                        checked={formData.roles.includes(r.roleId)} 
+                        onChange={handleCheckbox} 
+                        className="mr-2"
+                      />
+                      <span className="text-sm">{r.roleName}</span>
+                    </label>
+                  ))}
+                </div>
+                {formData.roles.length === 0 && (
+                  <p className="text-xs text-red-500 mt-1">Phải chọn ít nhất một vai trò</p>
+                )}
+              </fieldset>
+            </div>
           </div>
           <div className="flex justify-end space-x-4"><button type="button" onClick={onCancel} className="border px-4 py-2 rounded">Hủy</button><button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Lưu</button></div>
         </form>

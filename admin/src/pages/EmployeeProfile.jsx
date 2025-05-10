@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import employeeService from '../services/employeeService';
 import { Camera, Loader2, Save, Eye, EyeOff } from 'lucide-react';
+import { FieldHelper, PasswordStrengthMeter, PhoneNumberInput, checkPasswordStrength, normalizeFullName, normalizeAddress } from '../components/FormHelper';
 
 const EmployeeProfile = () => {
   const { user, setUser } = useAuth();
@@ -139,6 +140,59 @@ const EmployeeProfile = () => {
       }));
     }
   };
+  
+  // Xử lý thay đổi họ tên với chuẩn hóa
+  const handleFullNameChange = (e) => {
+    const { value } = e.target;
+    setFormData(prev => ({ ...prev, fullName: value }));
+    
+    // Clear error when field is edited
+    if (errors.fullName) {
+      setErrors(prev => ({ ...prev, fullName: '' }));
+    }
+  };
+  
+  // Xử lý blur họ tên để chuẩn hóa
+  const handleFullNameBlur = (e) => {
+    const normalizedName = normalizeFullName(e.target.value);
+    setFormData(prev => ({ ...prev, fullName: normalizedName }));
+  };
+  
+  // Xử lý thay đổi địa chỉ với chuẩn hóa
+  const handleAddressChange = (e) => {
+    const { value } = e.target;
+    setFormData(prev => ({ ...prev, address: value }));
+    
+    // Clear error when field is edited
+    if (errors.address) {
+      setErrors(prev => ({ ...prev, address: '' }));
+    }
+  };
+  
+  // Xử lý blur địa chỉ để chuẩn hóa
+  const handleAddressBlur = (e) => {
+    const normalizedAddress = normalizeAddress(e.target.value);
+    setFormData(prev => ({ ...prev, address: normalizedAddress }));
+  };
+  
+  // Xử lý thay đổi email
+  const handleEmailChange = (e) => {
+    const { value } = e.target;
+    setFormData(prev => ({ ...prev, email: value }));
+    
+    // Clear error when field is edited
+    if (errors.email) {
+      setErrors(prev => ({ ...prev, email: '' }));
+    }
+  };
+  
+  // Xử lý blur email để kiểm tra định dạng
+  const handleEmailBlur = (e) => {
+    const email = e.target.value.trim();
+    if (email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+      setErrors(prev => ({ ...prev, email: 'Email không hợp lệ' }));
+    }
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -153,7 +207,7 @@ const EmployeeProfile = () => {
       newErrors.phoneNumber = 'Số điện thoại không hợp lệ';
     }
     
-    if (formData.email && !/^[A-Za-z0-9+_.-]+@(.+)$/.test(formData.email)) {
+    if (formData.email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
       newErrors.email = 'Email không hợp lệ';
     }
     
@@ -169,8 +223,16 @@ const EmployeeProfile = () => {
       
       if (!formData.newPassword) {
         newErrors.newPassword = 'Vui lòng nhập mật khẩu mới';
-      } else if (formData.newPassword.length < 6) {
-        newErrors.newPassword = 'Mật khẩu phải có ít nhất 6 ký tự';
+      } else {
+        // Kiểm tra độ dài tối thiểu
+        if (formData.newPassword.length < 6) {
+          newErrors.newPassword = 'Mật khẩu phải có ít nhất 6 ký tự';
+        }
+        
+        // Kiểm tra có chứa cả chữ cái và số
+        if (!/(?=.*[A-Za-z])(?=.*\d)/.test(formData.newPassword)) {
+          newErrors.newPassword = newErrors.newPassword || 'Mật khẩu phải chứa ít nhất một chữ cái và một số';
+        }
       }
       
       if (formData.newPassword !== formData.confirmPassword) {
@@ -594,65 +656,106 @@ const EmployeeProfile = () => {
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Họ tên
-                  </label>
+                  <div className="flex items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Họ tên
+                    </label>
+                    <FieldHelper text="Họ tên đầy đủ của nhân viên" />
+                  </div>
                   <input
                     type="text"
                     name="fullName"
                     value={formData.fullName}
-                    onChange={handleChange}
-                    placeholder="Nhập họ tên đầy đủ"
+                    onChange={handleFullNameChange}
+                    onBlur={handleFullNameBlur}
+                    className={`w-full p-2 border ${errors.fullName ? 'border-red-500' : 'border-gray-300'} rounded-md`}
+                    placeholder="Nhập họ tên"
                     autoComplete="name"
-                    className={`w-full p-2 border rounded-md ${errors.fullName ? 'border-red-500' : 'border-gray-300'}`}
                   />
-                  {errors.fullName && <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>}
+                  {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Số điện thoại
-                  </label>
-                  <input
-                    type="text"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                    placeholder="Nhập số điện thoại"
-                    autoComplete="tel"
-                    className={`w-full p-2 border rounded-md ${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
+                  <div className="flex items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Số điện thoại
+                    </label>
+                    <FieldHelper text="Số điện thoại liên hệ" />
+                  </div>
+                  <div className="relative">
+                    <PhoneNumberInput 
+                      value={formData.phoneNumber} 
+                      onChange={handleChange} 
+                      onBlur={(e) => {
+                        if (formData.phoneNumber && !/^[0-9 ()+-]+$/.test(formData.phoneNumber)) {
+                          setErrors(prev => ({ ...prev, phoneNumber: 'Số điện thoại không hợp lệ' }));
+                        }
+                      }}
+                      error={errors.phoneNumber}
+                      required={true}
+                    />
+                  </div>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
+                  <div className="flex items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <FieldHelper text="Địa chỉ email liên hệ" />
+                  </div>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
-                    onChange={handleChange}
+                    onChange={handleEmailChange}
+                    onBlur={handleEmailBlur}
                     placeholder="Nhập địa chỉ email"
                     autoComplete="email"
-                    className={`w-full p-2 border rounded-md ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                    className={`w-full p-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md`}
                   />
-                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ngày sinh
-                  </label>
+                  <div className="flex items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Địa chỉ
+                    </label>
+                    <FieldHelper text="Địa chỉ liên hệ của nhân viên" />
+                  </div>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleAddressChange}
+                    onBlur={handleAddressBlur}
+                    placeholder="Nhập địa chỉ"
+                    autoComplete="street-address"
+                    className={`w-full p-2 border ${errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md`}
+                  />
+                  {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+                </div>
+                
+                <div>
+                  <div className="flex items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Ngày sinh
+                    </label>
+                    <FieldHelper text="Ngày sinh phải trước ngày hiện tại" />
+                  </div>
                   <input
                     type="date"
                     name="dateOfBirth"
                     value={formData.dateOfBirth}
                     onChange={handleChange}
-                    autoComplete="bday"
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    max={new Date().toISOString().split('T')[0]}
+                    className={`w-full p-2 border ${errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md`}
                   />
+                  {errors.dateOfBirth && <p className="text-red-500 text-xs mt-1">{errors.dateOfBirth}</p>}
+                  {formData.dateOfBirth && new Date(formData.dateOfBirth) >= new Date() && (
+                    <p className="text-red-500 text-xs mt-1">Ngày sinh phải trước ngày hiện tại</p>
+                  )}
                 </div>
                 
                 <div className="md:col-span-2">
@@ -675,68 +778,79 @@ const EmployeeProfile = () => {
               <div className="border-t border-gray-200 pt-6 mb-6">
                 <h3 className="text-lg font-medium mb-4">Đổi mật khẩu</h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Mật khẩu hiện tại
-                    </label>
+                    <div className="flex items-center mb-1">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Mật khẩu hiện tại
+                      </label>
+                      <FieldHelper text="Nhập mật khẩu hiện tại để xác thực" />
+                    </div>
                     <div className="relative">
                       <input
-                        type={showPassword ? "text" : "password"}
+                        type={showPassword ? 'text' : 'password'}
                         name="currentPassword"
                         value={formData.currentPassword}
                         onChange={handleChange}
+                        placeholder="Nhập mật khẩu hiện tại"
+                        className={`w-full p-2 border ${errors.currentPassword ? 'border-red-500' : 'border-gray-300'} rounded-md`}
                         autoComplete="off"
-                        className={`w-full p-2 border rounded-md pr-10 ${errors.currentPassword ? 'border-red-500' : 'border-gray-300'}`}
                       />
-                      <button 
+                      <button
                         type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
-                    {errors.currentPassword && <p className="text-red-500 text-sm mt-1">{errors.currentPassword}</p>}
+                    {errors.currentPassword && <p className="text-red-500 text-xs mt-1">{errors.currentPassword}</p>}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Mật khẩu mới
-                    </label>
+                    <div className="flex items-center mb-1">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Mật khẩu mới
+                      </label>
+                      <FieldHelper text="Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ và số" />
+                    </div>
                     <div className="relative">
                       <input
-                        type={showPassword ? "text" : "password"}
+                        type={showPassword ? 'text' : 'password'}
                         name="newPassword"
                         value={formData.newPassword}
                         onChange={handleChange}
+                        placeholder="Nhập mật khẩu mới"
+                        className={`w-full p-2 border ${errors.newPassword ? 'border-red-500' : 'border-gray-300'} rounded-md`}
                         autoComplete="new-password"
-                        className={`w-full p-2 border rounded-md pr-10 ${errors.newPassword ? 'border-red-500' : 'border-gray-300'}`}
                       />
-                      <button 
-                        type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
+                      {formData.newPassword && (
+                        <PasswordStrengthMeter password={formData.newPassword} />
+                      )}
                     </div>
-                    {errors.newPassword && <p className="text-red-500 text-sm mt-1">{errors.newPassword}</p>}
+                    {errors.newPassword && <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>}
                   </div>
                   
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Xác nhận mật khẩu mới
-                    </label>
+                  <div>
+                    <div className="flex items-center mb-1">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Xác nhận mật khẩu
+                      </label>
+                      <FieldHelper text="Nhập lại mật khẩu mới để xác nhận" />
+                    </div>
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
+                      placeholder="Nhập lại mật khẩu mới"
+                      className={`w-full p-2 border ${errors.confirmPassword ? 'border-red-500' : formData.newPassword && formData.confirmPassword && formData.newPassword === formData.confirmPassword ? 'border-green-500' : 'border-gray-300'} rounded-md`}
                       autoComplete="new-password"
-                      className={`w-full p-2 border rounded-md pr-10 ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
                     />
-                    {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+                    {formData.newPassword && formData.confirmPassword && formData.newPassword === formData.confirmPassword && (
+                      <p className="text-green-500 text-xs mt-1">Mật khẩu khớp</p>
+                    )}
+                    {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
                   </div>
                 </div>
               </div>

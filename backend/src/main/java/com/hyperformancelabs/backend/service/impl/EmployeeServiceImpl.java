@@ -18,7 +18,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -49,6 +48,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     private void validateRequest(EmployeeRegisterRequest request) {
+        // Chuẩn hóa dữ liệu đầu vào
+        normalizeRequestData(request);
+        
         // Kiểm tra các trường bắt buộc
         if (!StringUtils.hasText(request.getUsername())) {
             throw new InvalidRequestException("Username is required");
@@ -66,20 +68,102 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new InvalidRequestException("Address is required");
         }
 
-        // Validate email format nếu có
-        if (StringUtils.hasText(request.getEmail()) && !request.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            throw new InvalidRequestException("Invalid email format");
+        // Validate username format
+        if (!request.getUsername().matches("^[a-zA-Z0-9]+$")) {
+            throw new InvalidRequestException("Username must contain only letters and numbers");
+        }
+        
+        // Validate password strength
+        if (request.getPassword().length() < 6) {
+            throw new InvalidRequestException("Password must be at least 6 characters long");
+        }
+        if (!request.getPassword().matches("^(?=.*[A-Za-z])(?=.*\\d).*$")) {
+            throw new InvalidRequestException("Password must contain at least one letter and one number");
         }
 
-        // Kiểm tra username đã tồn tại
-        if (employeeRepository.existsByUsername(request.getUsername())) {
+        // Validate email format nếu có
+        if (StringUtils.hasText(request.getEmail()) && !request.getEmail().matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            throw new InvalidRequestException("Invalid email format");
+        }
+        
+        // Validate phone number format
+        if (!request.getPhoneNumber().matches("^[0-9 ()+-]+$")) {
+            throw new InvalidRequestException("Phone number can only contain digits, spaces, parentheses, plus and minus signs");
+        }
+
+        // Kiểm tra username đã tồn tại (case insensitive)
+        if (employeeRepository.existsByUsernameIgnoreCase(request.getUsername())) {
             throw new DuplicateResourceException("Username already exists");
         }
 
         // Kiểm tra email đã tồn tại nếu có
-        if (StringUtils.hasText(request.getEmail()) && employeeRepository.existsByEmail(request.getEmail())) {
+        if (StringUtils.hasText(request.getEmail()) && employeeRepository.existsByEmailIgnoreCase(request.getEmail())) {
             throw new DuplicateResourceException("Email already exists");
         }
+    }
+
+    /**
+     * Chuẩn hóa dữ liệu đầu vào từ request
+     * - Loại bỏ khoảng trắng thừa
+     * - Chuẩn hóa họ tên (viết hoa chữ cái đầu mỗi từ)
+     * - Chuẩn hóa địa chỉ
+     */
+    private void normalizeRequestData(EmployeeRegisterRequest request) {
+        // Chuẩn hóa username (loại bỏ khoảng trắng)
+        if (request.getUsername() != null) {
+            request.setUsername(request.getUsername().trim());
+        }
+        
+        // Chuẩn hóa họ tên (loại bỏ khoảng trắng thừa và viết hoa chữ cái đầu mỗi từ)
+        if (request.getFullName() != null) {
+            String normalizedName = normalizeFullName(request.getFullName());
+            request.setFullName(normalizedName);
+        }
+        
+        // Chuẩn hóa địa chỉ (loại bỏ khoảng trắng thừa)
+        if (request.getAddress() != null) {
+            request.setAddress(request.getAddress().trim().replaceAll("\\s+", " "));
+        }
+        
+        // Chuẩn hóa email (loại bỏ khoảng trắng)
+        if (request.getEmail() != null) {
+            request.setEmail(request.getEmail().trim().toLowerCase());
+        }
+        
+        // Chuẩn hóa số điện thoại (loại bỏ khoảng trắng thừa)
+        if (request.getPhoneNumber() != null) {
+            request.setPhoneNumber(request.getPhoneNumber().trim().replaceAll("\\s+", " "));
+        }
+    }
+    
+    /**
+     * Chuẩn hóa họ tên: viết hoa chữ cái đầu mỗi từ và loại bỏ khoảng trắng thừa
+     */
+    private String normalizeFullName(String fullName) {
+        if (fullName == null || fullName.isEmpty()) {
+            return fullName;
+        }
+        
+        // Loại bỏ khoảng trắng thừa
+        String normalized = fullName.trim().replaceAll("\\s+", " ");
+        
+        // Viết hoa chữ cái đầu mỗi từ
+        StringBuilder result = new StringBuilder(normalized.length());
+        boolean capitalizeNext = true;
+        
+        for (char c : normalized.toCharArray()) {
+            if (Character.isSpaceChar(c)) {
+                capitalizeNext = true;
+                result.append(c);
+            } else if (capitalizeNext) {
+                result.append(Character.toUpperCase(c));
+                capitalizeNext = false;
+            } else {
+                result.append(Character.toLowerCase(c));
+            }
+        }
+        
+        return result.toString();
     }
 
     private void mapRequestToEntity(EmployeeRegisterRequest request, Employee employee) {
@@ -92,7 +176,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setStartDate(request.getStartDate() != null ? request.getStartDate() : LocalDate.now());
         employee.setDateOfBirth(request.getDateOfBirth());
         employee.setProfilePictureUrl(StringUtils.hasText(request.getProfilePictureUrl()) ? 
-                                    request.getProfilePictureUrl() : null);
+                                     request.getProfilePictureUrl() : null);
     }
 
     @Override

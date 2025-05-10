@@ -17,6 +17,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     boolean existsByEmail(String email);
     Optional<Employee> findByEmail(String email);
     
+    // Case insensitive search methods
+    boolean existsByUsernameIgnoreCase(String username);
+    boolean existsByEmailIgnoreCase(String email);
+    Optional<Employee> findByUsernameIgnoreCase(String username);
+    Optional<Employee> findByEmailIgnoreCase(String email);
+    
     /**
      * Count the number of orders processed by an employee within a date range
      */

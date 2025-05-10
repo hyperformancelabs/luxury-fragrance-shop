@@ -1,9 +1,17 @@
 -- 1. Table Employee
 ALTER TABLE [Employee]
 ADD
+    CONSTRAINT [CK_Employee_Username_Format] CHECK (
+        [username] IS NOT NULL
+        AND [username] LIKE '[a-zA-Z0-9]%'
+        AND [username] NOT LIKE '%[^a-zA-Z0-9]%'
+    ),
+    CONSTRAINT [CK_Employee_Password_Strength] CHECK (
+        LEN([password]) >= 6
+    ),
     CONSTRAINT [CK_Employee_Email_Format] CHECK (
         [email] IS NULL
-        OR ([email] LIKE '%_@__%.__%' AND CHARINDEX(' ', [email]) = 0)
+        OR ([email] LIKE '%_@__%.__%' AND [email] LIKE '%[a-zA-Z0-9._%+-]@[a-zA-Z0-9.-]%.[a-zA-Z]%')
     ),
     CONSTRAINT [CK_Employee_PhoneNumber_Format] CHECK (
         LEN(LTRIM(RTRIM([phone_number]))) > 0
