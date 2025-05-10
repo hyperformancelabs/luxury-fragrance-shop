@@ -37,6 +37,11 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         return variants.isEmpty() ? null : variants.get(0);
     }
 
+    @Override
+    public List<Object[]> getMinAndMaxVariantPrice(){
+        return productVariantRepository.findMinAndMaxVariantPrice();
+    }
+
     private ProductVariantDTO convertToProductVariantDTO(ProductVariant productVariant) {
         return new ProductVariantDTO(
                 productVariant.getProductVariantId(),

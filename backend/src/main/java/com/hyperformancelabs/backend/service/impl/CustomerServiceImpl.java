@@ -2,10 +2,13 @@ package com.hyperformancelabs.backend.service.impl;
 
 import com.hyperformancelabs.backend.dto.CustomerDTO;
 import com.hyperformancelabs.backend.model.Customer;
+import com.hyperformancelabs.backend.model.Order;
 import com.hyperformancelabs.backend.repository.CustomerRepository;
 import com.hyperformancelabs.backend.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+@Service
 public class CustomerServiceImpl implements CustomerService {
 
     @Autowired

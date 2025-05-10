@@ -62,8 +62,8 @@
 
     <main class="container py-5">
         <h1 class="mb-4">Thanh toán</h1>
-        
-        <form id="checkout-form" class="needs-validation" novalidate>
+
+        <form id="checkout-form" class="needs-validation" novalidate method="POST" action="/checkout">
             <div class="row">
                 <!-- Checkout Form -->
                 <div class="col-lg-8 mb-4 mb-lg-0">
@@ -71,100 +71,83 @@
                         <!-- Billing Information -->
                         <div class="form-section">
                             <h3 class="form-section-title">Thông tin thanh toán</h3>
-                            
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="firstName" class="form-label">Họ</label>
-                                    <input type="text" class="form-control" id="firstName" required>
-                                    <div class="invalid-feedback">
-                                        Vui lòng nhập họ của bạn.
-                                    </div>
+                                    <input type="text" class="form-control" id="firstName" name="firstName" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="lastName" class="form-label">Tên</label>
-                                    <input type="text" class="form-control" id="lastName" required>
-                                    <div class="invalid-feedback">
-                                        Vui lòng nhập tên của bạn.
-                                    </div>
+                                    <input type="text" class="form-control" id="lastName" name="lastName" required>
                                 </div>
                                 <div class="col-12">
                                     <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" placeholder="you@example.com" required>
-                                    <div class="invalid-feedback">
-                                        Vui lòng nhập địa chỉ email hợp lệ.
-                                    </div>
+                                    <input type="email" class="form-control" id="email" name="email" required>
                                 </div>
                                 <div class="col-12">
                                     <label for="phone" class="form-label">Số điện thoại</label>
-                                    <input type="tel" class="form-control" id="phone" required>
-                                    <div class="invalid-feedback">
-                                        Vui lòng nhập số điện thoại.
-                                    </div>
+                                    <input type="tel" class="form-control" id="phone" name="phone" required>
                                 </div>
                                 <div class="col-12">
                                     <label for="address" class="form-label">Địa chỉ</label>
-                                    <input type="text" class="form-control" id="address" required>
-                                    <div class="invalid-feedback">
-                                        Vui lòng nhập địa chỉ của bạn.
-                                    </div>
+                                    <input type="text" class="form-control" id="address" name="address" required>
                                 </div>
                                 <div class="col-md-5">
                                     <label for="province" class="form-label">Tỉnh/Thành phố</label>
-                                    <select class="form-select" id="province" required>
+                                    <select class="form-select" id="province" name="province" required>
                                         <option value="">Chọn tỉnh/thành phố</option>
-                                        <option value="hanoi">Hà Nội</option>
-                                        <option value="hcm">TP. Hồ Chí Minh</option>
-                                        <option value="danang">Đà Nẵng</option>
+                                        <option value="Hà Nội">Hà Nội</option>
+                                        <option value="HCM">TP. Hồ Chí Minh</option>
+                                        <option value="Đà Nẵng">Đà Nẵng</option>
                                     </select>
-                                    <div class="invalid-feedback">
-                                        Vui lòng chọn tỉnh/thành phố.
-                                    </div>
                                 </div>
                                 <div class="col-md-4">
                                     <label for="district" class="form-label">Quận/Huyện</label>
-                                    <select class="form-select" id="district" required disabled>
+                                    <select class="form-select" id="district" name="district" required disabled>
                                         <option value="">Chọn quận/huyện</option>
                                     </select>
-                                    <div class="invalid-feedback">
-                                        Vui lòng chọn quận/huyện.
-                                    </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="zip" class="form-label">Mã bưu điện</label>
-                                    <input type="text" class="form-control" id="zip">
+                                <div class="col-md-4">
+                                    <label for="ward" class="form-label">Phường/Xã</label>
+                                    <select class="form-select" id="ward" name="ward" required disabled>
+                                        <option value="">Chọn phường/xã</option>
+                                    </select>
                                 </div>
+<!--                                <div class="col-md-3">-->
+<!--                                    <label for="addressDetail" class="form-label">Địa chỉ chi tiết</label>-->
+<!--                                    <input type="text" class="form-control" id="addressDetail" name="addressDetail">-->
+<!--                                </div>-->
                             </div>
-                            
+
                             <div class="form-check mt-3">
-                                <input type="checkbox" class="form-check-input" id="sameAddress" checked>
+                                <input type="checkbox" class="form-check-input" id="sameAddress" name="sameAddress" checked>
                                 <label class="form-check-label" for="sameAddress">Địa chỉ giao hàng giống địa chỉ thanh toán</label>
                             </div>
                         </div>
-                        
+
                         <!-- Shipping Address -->
                         <div class="form-section" id="shipping-address-section" style="display: none;">
                             <h3 class="form-section-title">Địa chỉ giao hàng</h3>
-                            
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="shippingFirstName" class="form-label">Họ</label>
-                                    <input type="text" class="form-control" id="shippingFirstName">
+                                    <input type="text" class="form-control" id="shippingFirstName" name="shippingFirstName">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="shippingLastName" class="form-label">Tên</label>
-                                    <input type="text" class="form-control" id="shippingLastName">
+                                    <input type="text" class="form-control" id="shippingLastName" name="shippingLastName">
                                 </div>
                                 <div class="col-12">
                                     <label for="shippingPhone" class="form-label">Số điện thoại</label>
-                                    <input type="tel" class="form-control" id="shippingPhone">
+                                    <input type="tel" class="form-control" id="shippingPhone" name="shippingPhone">
                                 </div>
                                 <div class="col-12">
                                     <label for="shippingAddress" class="form-label">Địa chỉ</label>
-                                    <input type="text" class="form-control" id="shippingAddress">
+                                    <input type="text" class="form-control" id="shippingAddress" name="shippingAddress">
                                 </div>
                                 <div class="col-md-5">
                                     <label for="shippingProvince" class="form-label">Tỉnh/Thành phố</label>
-                                    <select class="form-select" id="shippingProvince">
+                                    <select class="form-select" id="shippingProvince" name="shippingProvince">
                                         <option value="">Chọn tỉnh/thành phố</option>
                                         <option value="hanoi">Hà Nội</option>
                                         <option value="hcm">TP. Hồ Chí Minh</option>
@@ -173,117 +156,100 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label for="shippingDistrict" class="form-label">Quận/Huyện</label>
-                                    <select class="form-select" id="shippingDistrict" disabled>
+                                    <select class="form-select" id="shippingDistrict" name="shippingDistrict" disabled>
                                         <option value="">Chọn quận/huyện</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="shippingZip" class="form-label">Mã bưu điện</label>
-                                    <input type="text" class="form-control" id="shippingZip">
+                                <div class="col-md-4">
+                                    <label for="shippingWard" class="form-label">Phường/Xã</label>
+                                    <select class="form-select" id="shippingWard" name="shippingWard" required disabled>
+                                        <option value="">Chọn phường/xã</option>
+                                    </select>
                                 </div>
+<!--                                <div class="col-md-3">-->
+<!--                                    <label for="shippingAddressDetail" class="form-label">Địa chỉ chi tiết</label>-->
+<!--                                    <input type="text" class="form-control" id="shippingAddressDetail" name="shippingAddressDetail">-->
+<!--                                </div>-->
                             </div>
                         </div>
-                        
+
                         <!-- Payment Method -->
                         <div class="form-section">
                             <h3 class="form-section-title">Phương thức thanh toán</h3>
-                            
                             <div class="payment-method active">
                                 <div class="payment-method-header">
                                     <input type="radio" class="payment-method-radio" name="paymentMethod" id="cod" value="cod" checked>
                                     <label class="payment-method-title" for="cod">Thanh toán khi nhận hàng (COD)</label>
                                 </div>
-                                <div class="payment-method-description">
-                                    Bạn sẽ thanh toán bằng tiền mặt khi nhận hàng.
-                                </div>
                             </div>
-                            
                             <div class="payment-method">
                                 <div class="payment-method-header">
                                     <input type="radio" class="payment-method-radio" name="paymentMethod" id="bank-transfer" value="bank-transfer">
                                     <label class="payment-method-title" for="bank-transfer">Chuyển khoản ngân hàng</label>
                                 </div>
-                                <div class="payment-method-description">
-                                    Thực hiện thanh toán vào tài khoản ngân hàng của chúng tôi. Vui lòng sử dụng Mã đơn hàng của bạn trong phần Nội dung thanh toán. Đơn hàng của bạn sẽ được giao sau khi tiền đã chuyển vào tài khoản của chúng tôi.
-                                </div>
                             </div>
-                            
                             <div class="payment-method">
                                 <div class="payment-method-header">
                                     <input type="radio" class="payment-method-radio" name="paymentMethod" id="credit-card" value="credit-card">
                                     <label class="payment-method-title" for="credit-card">Thẻ tín dụng/Thẻ ghi nợ</label>
-                                    <div>
-                                        <img src="/images/payment/visa.png" alt="Visa" class="payment-method-logo me-1">
-                                        <img src="/images/payment/mastercard.png" alt="MasterCard" class="payment-method-logo me-1">
-                                        <img src="/images/payment/jcb.png" alt="JCB" class="payment-method-logo">
-                                    </div>
-                                </div>
-                                <div class="payment-method-description">
-                                    Thanh toán an toàn với thẻ tín dụng/thẻ ghi nợ của bạn.
                                 </div>
                             </div>
-                            
                             <div class="payment-method">
                                 <div class="payment-method-header">
                                     <input type="radio" class="payment-method-radio" name="paymentMethod" id="momo" value="momo">
                                     <label class="payment-method-title" for="momo">Ví MoMo</label>
-                                    <div>
-                                        <img src="/images/payment/momo.png" alt="MoMo" class="payment-method-logo">
-                                    </div>
-                                </div>
-                                <div class="payment-method-description">
-                                    Thanh toán qua ví điện tử MoMo.
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="form-check mt-3">
-                            <input type="checkbox" class="form-check-input" id="terms" required>
-                            <label class="form-check-label" for="terms">Tôi đã đọc và đồng ý với <a href="#">điều khoản và điều kiện</a> của cửa hàng</label>
-                            <div class="invalid-feedback">
-                                Bạn phải đồng ý với điều khoản và điều kiện để tiếp tục.
-                            </div>
+                            <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
+                            <label class="form-check-label" for="terms">Tôi đã đọc và đồng ý với <a href="#">điều khoản và điều kiện</a></label>
                         </div>
                     </div>
-                    
                     <a href="/cart" class="back-to-cart mt-3">
                         <i class="fas fa-arrow-left"></i> Quay lại giỏ hàng
                     </a>
                 </div>
-                
+
                 <!-- Order Summary -->
                 <div class="col-lg-4">
                     <div class="order-summary">
                         <h3 class="summary-header">Đơn hàng của bạn</h3>
-                        
-                        <div th:each="item : ${cartItems}" class="summary-item">
-                            <div class="summary-item-name" th:text="${item.name}">Nước Hoa Nữ Versace Bright Crystal EDT</div>
-                            <div class="summary-item-quantity" th:text="${'x' + item.quantity}">x2</div>
-                            <div class="summary-item-price" th:text="${#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT') + 'đ'}">4.800.000đ</div>
+
+                        <div th:each="item : ${cartItems}" class="mb-3 border-bottom pb-2">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <div th:text="${item.productName}" class="fw-bold">Tên sản phẩm</div>
+                                    <div class="text-muted small" th:text="'Dung tích: ' + ${item.volume} + 'ml'">Dung tích: 50ml</div>
+                                    <div class="text-muted small" th:text="'Số lượng: ' + ${item.quantity}">Số lượng: 2</div>
+                                </div>
+                                <!-- Sửa lỗi formatDecimal bằng cách dùng item.total đã tính sẵn -->
+                                <div th:text="${#numbers.formatDecimal(item.total, 0, 'COMMA', 0, 'POINT') + 'đ'}" class="fw-bold text-end">1.200.000đ</div>
+                            </div>
                         </div>
-                        
-                        <div class="summary-subtotal">
+
+                        <hr>
+                        <div class="d-flex justify-content-between">
                             <span>Tạm tính:</span>
-                            <span th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT') + 'đ'}">8.000.000đ</span>
+                            <span th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</span>
                         </div>
-                        
-                        <div class="summary-shipping">
+                        <div class="d-flex justify-content-between">
                             <span>Phí vận chuyển:</span>
                             <span th:text="${shipping == 0 ? 'Miễn phí' : #numbers.formatDecimal(shipping, 0, 'COMMA', 0, 'POINT') + 'đ'}">Miễn phí</span>
                         </div>
-                        
-                        <div class="summary-total">
+                        <div class="d-flex justify-content-between fw-bold mt-2">
                             <span>Tổng cộng:</span>
-                            <span th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT') + 'đ'}">8.000.000đ</span>
+                            <span th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</span>
                         </div>
-                        
-                        <button type="submit" id="place-order-btn" class="place-order-btn">
-                            Đặt hàng
-                        </button>
+
+                        <button type="submit" id="place-order-btn" class="place-order-btn mt-3 w-100">Đặt hàng</button>
                     </div>
+
                 </div>
             </div>
         </form>
+
     </main>
 
     <!-- Footer -->
@@ -330,6 +296,129 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/checkout.js"></script>
+<!--    <script src="/js/checkout.js"></script>-->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Xử lý chọn phương thức thanh toán
+            document.querySelectorAll('.payment-method').forEach(method => {
+                method.addEventListener('click', function () {
+                    const radio = this.querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Submit form
+            const checkoutForm = document.getElementById('checkout-form');
+            if (checkoutForm) {
+                checkoutForm.addEventListener('submit', function (e) {
+                    if (!checkoutForm.checkValidity()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        checkoutForm.classList.add('was-validated');
+                    } else {
+                        const btn = document.getElementById('place-order-btn');
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
+                    }
+                });
+            }
+
+            // Toggle shipping address section
+            const sameAddress = document.getElementById('sameAddress');
+            const shippingSection = document.getElementById('shipping-address-section');
+            if (sameAddress && shippingSection) {
+                const toggleShipping = () => {
+                    shippingSection.style.display = sameAddress.checked ? 'none' : 'block';
+                };
+                sameAddress.addEventListener('change', toggleShipping);
+                toggleShipping();
+            }
+
+            // Maps
+            const districtMap = {
+    "Hà Nội": ["Hoàn Kiếm", "Ba Đình", "Đống Đa"],
+    "HCM": ["Quận 1", "Quận 3", "Quận 5"],
+    "Đà Nẵng": ["Hải Châu", "Thanh Khê", "Liên Chiểu"]
+};
+
+const districtLabels = {
+    "Hoàn Kiếm": "Hoàn Kiếm",
+    "Ba Đình": "Ba Đình",
+    "Đống Đa": "Đống Đa",
+    "Quận 1": "Quận 1",
+    "Quận 3": "Quận 3",
+    "Quận 5": "Quận 5",
+    "Hải Châu": "Hải Châu",
+    "Thanh Khê": "Thanh Khê",
+    "Liên Chiểu": "Liên Chiểu"
+};
+
+const wardMap = {
+    "Hoàn Kiếm": ["Hàng Bông", "Hàng Trống"],
+    "Ba Đình": ["Ngọc Hà", "Kim Mã"],
+    "Đống Đa": ["Láng Hạ", "Khâm Thiên"],
+    "Quận 1": ["Bến Nghé", "Bến Thành"],
+    "Quận 3": ["Phường 1", "Phường 2"],
+    "Quận 5": ["Phường 6", "Phường 8"],
+    "Hải Châu": ["Hải Châu 1", "Hải Châu 2"],
+    "Thanh Khê": ["Thanh Khê Đông", "Thanh Khê Tây"],
+    "Liên Chiểu": ["Hoà Minh", "Hoà Khánh"]
+};
+
+
+            function handleLocationChange(provinceId, districtId, wardId) {
+                const provinceSelect = document.getElementById(provinceId);
+                const districtSelect = document.getElementById(districtId);
+                const wardSelect = document.getElementById(wardId);
+
+                if (!provinceSelect || !districtSelect || !wardSelect) return;
+
+                provinceSelect.addEventListener('change', function () {
+                    const provinceValue = this.value;
+                    districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+                    wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+                    wardSelect.disabled = true;
+
+                    console.log(provinceValue)
+
+                    if (districtMap[provinceValue]) {
+                        districtMap[provinceValue].forEach(dKey => {
+                            const opt = document.createElement('option');
+                            opt.value = dKey;
+                            opt.textContent = districtLabels[dKey] || dKey;
+                            districtSelect.appendChild(opt);
+                        });
+                        districtSelect.disabled = false;
+                    } else {
+                        districtSelect.disabled = true;
+                    }
+                });
+
+                districtSelect.addEventListener('change', function () {
+                    const districtValue = this.value;
+                    wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+                    if (wardMap[districtValue]) {
+                        wardMap[districtValue].forEach(w => {
+                            const opt = document.createElement('option');
+                            opt.value = w.toLowerCase().replace(/\s+/g, '');
+                            opt.textContent = w;
+                            wardSelect.appendChild(opt);
+                        });
+                        wardSelect.disabled = false;
+                    } else {
+                        wardSelect.disabled = true;
+                    }
+                });
+            }
+
+            // Áp dụng cho cả billing và shipping
+            handleLocationChange('province', 'district', 'ward');
+            handleLocationChange('shippingProvince', 'shippingDistrict', 'shippingWard');
+        });
+    </script>
+
 </body>
 </html>

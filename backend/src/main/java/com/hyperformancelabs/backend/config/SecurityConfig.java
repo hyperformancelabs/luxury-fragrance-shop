@@ -31,7 +31,8 @@ public class SecurityConfig {
                 .requestMatchers("/error/**").permitAll()
                 .requestMatchers("/about").permitAll() // Cho phép truy cập trang giới thiệu
                 .requestMatchers("/contact").permitAll() // Cho phép truy cập trang liên hệ
-                .requestMatchers("/blog/**").permitAll() // Cho phép truy cập trang blog
+                .requestMatchers("/blog/**").permitAll()
+                .requestMatchers("/register/**").permitAll()// Cho phép truy cập trang blog
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()

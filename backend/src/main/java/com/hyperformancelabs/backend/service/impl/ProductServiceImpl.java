@@ -80,6 +80,16 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Page<ProductDTO> filterProductsPaged(String genderList,
+                                                String brandList,
+                                                String seasonList,
+                                                BigDecimal minPrice,
+                                                BigDecimal maxPrice,
+                                                Pageable pageable){
+        return productRepository.findFilteredProducts(genderList, brandList, seasonList, minPrice, maxPrice, pageable).map(this::convertToProductDTO);
+    }
+
     private ProductDTO convertToProductDTO(Product product) {
         return new ProductDTO(
                 product.getProductId(),

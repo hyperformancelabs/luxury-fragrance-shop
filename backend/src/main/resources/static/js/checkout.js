@@ -1,101 +1,103 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Xử lý chọn phương thức thanh toán
-    const paymentMethods = document.querySelectorAll('.payment-method');
-    const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
-    
-    paymentMethods.forEach(method => {
-        method.addEventListener('click', function() {
-            // Tìm radio button trong phương thức thanh toán này
+    document.querySelectorAll('.payment-method').forEach(method => {
+        method.addEventListener('click', function () {
             const radio = this.querySelector('input[type="radio"]');
-            
-            // Chọn radio button
             radio.checked = true;
-            
-            // Cập nhật trạng thái active
-            paymentMethods.forEach(m => m.classList.remove('active'));
+            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
             this.classList.add('active');
         });
     });
-    
-    // Xử lý form thanh toán
+
+    // Submit form
     const checkoutForm = document.getElementById('checkout-form');
-    
     if (checkoutForm) {
-        checkoutForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Kiểm tra form hợp lệ
+        checkoutForm.addEventListener('submit', function (e) {
             if (!checkoutForm.checkValidity()) {
+
+                e.preventDefault();
                 e.stopPropagation();
                 checkoutForm.classList.add('was-validated');
                 return;
             }
-            
-            // Hiển thị thông báo đang xử lý
-            const submitBtn = document.getElementById('place-order-btn');
-            const originalText = submitBtn.textContent;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
-            
-            // Giả lập xử lý đơn hàng
-            setTimeout(() => {
-                // Chuyển hướng đến trang xác nhận đơn hàng
-                window.location.href = '/checkout/confirmation';
-            }, 2000);
+            const btn = document.getElementById('place-order-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
         });
     }
-    
-    // Xử lý chọn địa chỉ giao hàng giống địa chỉ thanh toán
-    const sameAddressCheckbox = document.getElementById('sameAddress');
-    const shippingAddressSection = document.getElementById('shipping-address-section');
-    
-    if (sameAddressCheckbox && shippingAddressSection) {
-        sameAddressCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                shippingAddressSection.style.display = 'none';
-            } else {
-                shippingAddressSection.style.display = 'block';
-            }
-        });
-        
-        // Khởi tạo ban đầu
-        if (sameAddressCheckbox.checked) {
-            shippingAddressSection.style.display = 'none';
-        }
+
+    // Toggle shipping address section
+    const sameAddress = document.getElementById('sameAddress');
+    const shippingSection = document.getElementById('shipping-address-section');
+    if (sameAddress && shippingSection) {
+        const toggleShipping = () => shippingSection.style.display = sameAddress.checked ? 'none' : 'block';
+        sameAddress.addEventListener('change', toggleShipping);
+        toggleShipping();
     }
-    
-    // Xử lý chọn tỉnh/thành phố
-    const provinceSelect = document.getElementById('province');
-    const districtSelect = document.getElementById('district');
-    
-    if (provinceSelect && districtSelect) {
-        provinceSelect.addEventListener('change', function() {
-            // Trong thực tế, bạn sẽ gọi API để lấy danh sách quận/huyện tương ứng
-            // Ở đây, chúng ta sẽ giả lập
-            
-            // Xóa các option cũ
+
+    // Maps
+    const districtMap = {
+        hanoi: ['Hoàn Kiếm', 'Ba Đình', 'Đống Đa'],
+        hcm: ['Quận 1', 'Quận 3', 'Quận 5'],
+        danang: ['Hải Châu', 'Thanh Khê', 'Liên Chiểu']
+    };
+    const wardMap = {
+        hoankiem: ['Hàng Bông', 'Hàng Trống'],
+        badinh: ['Ngọc Hà', 'Kim Mã'],
+        dongda: ['Láng Hạ', 'Khâm Thiên'],
+        quan1: ['Bến Nghé', 'Bến Thành'],
+        quan3: ['Phường 1', 'Phường 2'],
+        quan5: ['Phường 6', 'Phường 8'],
+        haichau: ['Hải Châu 1', 'Hải Châu 2'],
+        thankhe: ['Thanh Khê Đông', 'Thanh Khê Tây'],
+        lienchieu: ['Hoà Minh', 'Hoà Khánh']
+    };
+
+    function handleLocationChange(provinceId, districtId, wardId) {
+        const provinceSelect = document.getElementById(provinceId);
+        const districtSelect = document.getElementById(districtId);
+        const wardSelect = document.getElementById(wardId);
+
+        if (!provinceSelect || !districtSelect || !wardSelect) return;
+
+        provinceSelect.addEventListener('change', function () {
+            const provinceValue = this.value;
             districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
-            
-            // Thêm các option mới dựa trên tỉnh/thành phố đã chọn
-            if (this.value === 'hanoi') {
-                addDistrictOptions(['Hoàn Kiếm', 'Ba Đình', 'Đống Đa', 'Hai Bà Trưng', 'Cầu Giấy']);
-            } else if (this.value === 'hcm') {
-                addDistrictOptions(['Quận 1', 'Quận 2', 'Quận 3', 'Quận 4', 'Quận 5']);
-            } else if (this.value === 'danang') {
-                addDistrictOptions(['Hải Châu', 'Thanh Khê', 'Liên Chiểu', 'Ngũ Hành Sơn', 'Sơn Trà']);
+            wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+            wardSelect.disabled = true;
+
+            if (districtMap[provinceValue]) {
+                districtMap[provinceValue].forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
+
+                    opt.textContent = d;
+                    districtSelect.appendChild(opt);
+                });
+                districtSelect.disabled = false;
+            } else {
+                districtSelect.disabled = true;
             }
-            
-            // Kích hoạt select
-            districtSelect.disabled = false;
         });
-        
-        function addDistrictOptions(districts) {
-            districts.forEach(district => {
-                const option = document.createElement('option');
-                option.value = district.toLowerCase().replace(/\s+/g, '');
-                option.textContent = district;
-                districtSelect.appendChild(option);
-            });
-        }
+
+        districtSelect.addEventListener('change', function () {
+            const districtValue = this.value;
+            wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+            if (wardMap[districtValue]) {
+                wardMap[districtValue].forEach(w => {
+                    const opt = document.createElement('option');
+                    opt.value = w.toLowerCase().replace(/\s+/g, '');
+                    opt.textContent = w;
+                    wardSelect.appendChild(opt);
+                });
+                wardSelect.disabled = false;
+            } else {
+                wardSelect.disabled = true;
+            }
+        });
     }
+
+    // Áp dụng cho cả billing và shipping
+    handleLocationChange('province', 'district', 'ward');
+    handleLocationChange('shippingProvince', 'shippingDistrict', 'shippingWard');
 });

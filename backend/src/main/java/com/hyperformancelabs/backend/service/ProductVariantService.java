@@ -15,6 +15,9 @@ public interface ProductVariantService {
     // Tìm biến thể đầu tiên của một sản phẩm
     ProductVariantDTO findFirstByProduct_ProductId(Integer productId);
 
+    // Lấy giá min-max của tất cả biến thể
+    List<Object[]> getMinAndMaxVariantPrice();
+
 //    // Lấy danh sách biến thể của một sản phẩm
 //    List<ProductVariantDTO> getProductVariantsByProductId(Integer productId);
 

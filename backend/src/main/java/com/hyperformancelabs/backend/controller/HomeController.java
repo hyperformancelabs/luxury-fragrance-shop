@@ -34,9 +34,6 @@ public class HomeController {
 
     @GetMapping("/")
     public String home(Model model) {
-        // Get featured products for the banner
-        List<ProductDTO> featuredProducts = productService.getTopSellingProducts(8);
-        model.addAttribute("featuredProducts", featuredProducts);
 
         // ------------------- Get flash deal products ----------------------------------------
         List<ProductDTO> flashSaleProducts = new ArrayList<>();
@@ -101,36 +98,6 @@ public class HomeController {
         model.addAttribute("flashSaleProductVariants", flashSaleProductVariants);
         model.addAttribute("flashSaleProductHasStockMap", flashSaleProductHasStockMap);
         model.addAttribute("flashSaleFirstVariantMap", flashSaleFirstVariantMap);
-
-
-
-        // Tạo map chứa danh sách biến thể cho mỗi sản phẩm
-        Map<Integer, String> productVariantsMap = new HashMap<>();
-        Map<Integer, Integer> productFirstVariantMap = new HashMap<>();
-
-        // Thêm biến thể cho các sản phẩm nổi bật
-        for (ProductDTO product : featuredProducts) {
-            List<ProductVariantDTO> variants = productVariantService.getProductVariantsByProductId(product.getProductId());
-            if (!variants.isEmpty()) {
-                productFirstVariantMap.put(product.getProductId(), variants.get(0).getProductVariantId());
-                productVariantsMap.put(product.getProductId(), convertVariantsToJson(variants));
-            }
-        }
-
-        // Thêm biến thể cho các sản phẩm flash deal
-        for (ProductDTO product : featuredProducts) {
-            if (!productVariantsMap.containsKey(product.getProductId())) {
-                List<ProductVariantDTO> variants = productVariantService.getProductVariantsByProductId(product.getProductId());
-                if (!variants.isEmpty()) {
-                    productFirstVariantMap.put(product.getProductId(), variants.get(0).getProductVariantId());
-                    productVariantsMap.put(product.getProductId(), convertVariantsToJson(variants));
-                }
-            }
-        }
-
-        // Add the maps to the model
-        model.addAttribute("productFirstVariantMap", productFirstVariantMap);
-        model.addAttribute("productVariantsMap", productVariantsMap);
 
 
         // ---------------------------------- Get new products -------------------------------------------------------------------
@@ -233,28 +200,8 @@ public class HomeController {
         model.addAttribute("bestSellingProductHasStockMap", bestSellingProductHasStockMap);
 
 
-        // Get top search products
-//        List<ProductDTO> topSearchProducts = productService.getTopSellingProducts(6);
-//
-//        // Tạo map chứa danh sách biến thể cho mỗi sản phẩm tìm kiếm nhiều nhất
-//        Map<Integer, String> topSearchProductVariants = new HashMap<>();
-//        for (ProductDTO product : topSearchProducts) {
-//            if (!productVariantsMap.containsKey(product.getProductId())) {
-//                List<ProductVariantDTO> variants = productVariantService.getProductVariantsByProductId(product.getProductId());
-//                if (!variants.isEmpty()) {
-//                    productFirstVariantMap.put(product.getProductId(), variants.get(0).getProductVariantId());
-//                    topSearchProductVariants.put(product.getProductId(), convertVariantsToJson(variants));
-//                    productVariantsMap.put(product.getProductId(), convertVariantsToJson(variants));
-//                }
-//            } else {
-//                topSearchProductVariants.put(product.getProductId(), productVariantsMap.get(product.getProductId()));
-//            }
-//        }
-//
-//        model.addAttribute("topSearchProducts", topSearchProducts);
-//        model.addAttribute("topSearchProductVariants", topSearchProductVariants);
 
-        // Add brand data - Lấy 12 brand đầu tiên
+        // --------------------------------------------- Add brand data - Lấy 12 brand đầu tiên ------------------------------------
         List<BrandDTO> allBrands = brandService.getAllBrands();
         List<BrandDTO> brands = allBrands.stream()
                 .limit(12)
@@ -310,11 +257,6 @@ public class HomeController {
         ));
 
         return "home";
-    }
-
-    @GetMapping("/login")
-    public String login() {
-        return "login";
     }
 
     /**

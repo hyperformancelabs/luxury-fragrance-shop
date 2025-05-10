@@ -1,7 +1,11 @@
 package com.hyperformancelabs.backend.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hyperformancelabs.backend.dto.BrandDTO;
 import com.hyperformancelabs.backend.dto.ProductDTO;
 import com.hyperformancelabs.backend.dto.ProductVariantDTO;
+import com.hyperformancelabs.backend.service.BrandService;
 import com.hyperformancelabs.backend.service.ProductService;
 import com.hyperformancelabs.backend.service.ProductVariantService;
 
@@ -13,15 +17,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/shop")
@@ -30,37 +29,108 @@ public class ShopController {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private ProductVariantService productVariantService;
+
+    @Autowired
+    private BrandService brandService;
+
     @GetMapping
     public String showProductList(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
-            @RequestParam(required = false) String brand,
-            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String genders,
+            @RequestParam(required = false) String brands,
+            @RequestParam(required = false) String seasons,
+            @RequestParam(required = false) BigDecimal min,
+            @RequestParam(required = false) BigDecimal max,
             Model model) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<ProductDTO> productPage;
 
-        if (brand != null && !brand.isEmpty()) {
-            productPage = productService.getProductsByBrandName(brand, pageable);
-            model.addAttribute("currentBrand", brand);
-        } else if (search != null && !search.isEmpty()) {
-            productPage = productService.getProductsByProductName(search, pageable);
-            model.addAttribute("currentSearch", search);
-        } else {
-            productPage = productService.getAllProducts(pageable);
+        // Lấy khoảng giá toàn bộ sản phẩm
+        List<Object[]> resultList = productVariantService.getMinAndMaxVariantPrice();
+        BigDecimal minPrice = BigDecimal.ZERO;
+        BigDecimal maxPrice = BigDecimal.ZERO;
+
+        if (!resultList.isEmpty()) {
+            Object[] result = resultList.get(0);
+            if (result[0] instanceof BigDecimal) minPrice = (BigDecimal) result[0];
+            if (result[1] instanceof BigDecimal) maxPrice = (BigDecimal) result[1];
         }
 
-        model.addAttribute("products", productPage.getContent());
+        if (min == null) min = minPrice;
+        if (max == null) max = maxPrice;
+
+
+        // Xử lý chuỗi rỗng thành null để tránh lỗi lọc
+        if (genders != null && genders.trim().isEmpty()) genders = null;
+        if (brands != null && brands.trim().isEmpty()) brands = null;
+        if (seasons != null && seasons.trim().isEmpty()) seasons = null;
+
+        // Xử lý min/max rỗng hoặc không hợp lệ
+        if (min.compareTo(BigDecimal.ZERO) < 0) min = minPrice;
+        if (max.compareTo(BigDecimal.ZERO) < 0) max = maxPrice;
+
+
+        List<BrandDTO> brandDTOs = brandService.getAllBrands();
+
+        Page<ProductDTO> productPage = productService.filterProductsPaged(
+                genders, brands, seasons, min, max, pageable
+        );
+
+        List<ProductDTO> products = productPage.getContent();
+
+        // Biến map dữ liệu sản phẩm
+        Map<Integer, List<ProductVariantDTO>> productVariantMap = products.stream()
+                .map(product -> productVariantService.getProductVariantsByProductId(product.getProductId()))
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .collect(Collectors.groupingBy(ProductVariantDTO::getProductId));
+
+        Map<Integer, BigDecimal[]> productPriceRangeMap = new HashMap<>();
+        Map<Integer, String> productVariantsMap = new HashMap<>();
+        Map<Integer, Integer> productFirstVariantMap = new HashMap<>();
+        Map<Integer, Boolean> productHasStockMap = new HashMap<>();
+
+        for (Map.Entry<Integer, List<ProductVariantDTO>> entry : productVariantMap.entrySet()) {
+            Integer productId = entry.getKey();
+            List<ProductVariantDTO> variants = entry.getValue();
+
+            if (!variants.isEmpty()) {
+                Optional<BigDecimal> minVal = variants.stream().map(ProductVariantDTO::getPrice).min(Comparator.naturalOrder());
+                Optional<BigDecimal> maxVal = variants.stream().map(ProductVariantDTO::getPrice).max(Comparator.naturalOrder());
+
+                minVal.ifPresent(bigDecimal -> productPriceRangeMap.put(productId, new BigDecimal[]{bigDecimal, maxVal.get()}));
+
+                productVariantsMap.put(productId, convertVariantsToJson(variants));
+
+                Optional<ProductVariantDTO> firstInStock = variants.stream()
+                        .filter(v -> v.getQuantityInStock() > 0)
+                        .findFirst();
+
+                productFirstVariantMap.put(productId, firstInStock.map(ProductVariantDTO::getProductVariantId).orElse(null));
+                productHasStockMap.put(productId, firstInStock.isPresent());
+            }
+        }
+
+        model.addAttribute("products", products);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productPage.getTotalPages());
         model.addAttribute("totalItems", productPage.getTotalElements());
 
+        model.addAttribute("productPriceRangeMap", productPriceRangeMap);
+        model.addAttribute("productVariantsMap", productVariantsMap);
+        model.addAttribute("productFirstVariantMap", productFirstVariantMap);
+        model.addAttribute("productHasStockMap", productHasStockMap);
+
+        model.addAttribute("brands", brandDTOs);
+        model.addAttribute("minPrice", minPrice);
+        model.addAttribute("maxPrice", maxPrice);
+
         return "shop/product-list";
     }
 
-    @Autowired
-    private ProductVariantService productVariantService;
 
     @GetMapping("/product/{id}")
     public String showProductDetail(@PathVariable Integer id, Model model) {
@@ -138,5 +208,37 @@ public class ShopController {
         model.addAttribute("products", randomProducts);
 
         return "shop/random-products";
+    }
+
+    /**
+     * Chuyển đổi danh sách biến thể thành chuỗi JSON
+     * @param variants Danh sách biến thể
+     * @return Chuỗi JSON
+     */
+    private String convertVariantsToJson(List<ProductVariantDTO> variants) {
+        if (variants == null || variants.isEmpty()) {
+            return "[]";
+        }
+
+        try {
+            // Chuyển đổi danh sách biến thể thành danh sách các map để dễ dàng hơn trong JSON
+            List<Map<String, Object>> variantsList = new ArrayList<>();
+            for (ProductVariantDTO variant : variants) {
+                Map<String, Object> variantMap = new HashMap<>();
+                variantMap.put("id", variant.getProductVariantId());
+                variantMap.put("volume", variant.getVolume());
+                variantMap.put("price", variant.getPrice());
+                variantMap.put("discountPrice", variant.getDiscountPrice());
+                variantMap.put("stock", variant.getQuantityInStock());
+                variantsList.add(variantMap);
+            }
+
+            // Chuyển đổi danh sách thành chuỗi JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writeValueAsString(variantsList);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return "[]";
+        }
     }
 }

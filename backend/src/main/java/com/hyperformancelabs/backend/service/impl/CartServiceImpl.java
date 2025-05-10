@@ -130,7 +130,7 @@ public class CartServiceImpl implements CartService {
             try {
                 cart = cartRepository.findTopBySessionIdOrderByCartIdDesc(sessionId)
                         .orElse(null);
-                
+                System.out.println("Cart found: " + sessionId);
                 if (cart == null) {
                     cart = new Cart();
                     cart.setStatus("active");
@@ -181,4 +181,6 @@ public class CartServiceImpl implements CartService {
                 cartItem.getIsSelected()
         );
     }
+
+
 }

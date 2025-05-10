@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 public interface OrderRepository extends JpaRepository<Order, Integer> {
 //    List<Order> findByCustomer(Customer customer);
 //
-//    Optional<Order> findByOrderId(Integer orderId);
+    Order findByOrderId(Integer orderId);
 //
 //    @Query("""
 //    SELECT o FROM Order o

@@ -52,4 +52,67 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             "AND pr.status = 'active'",
             nativeQuery = true)
     List<Object[]> findActiveFlashSaleProducts();
+
+    // Lọc sản phẩm
+    @Query(value = """
+    SELECT DISTINCT p.*
+    FROM Product p
+    JOIN Brand b ON p.brand_id = b.brand_id
+    LEFT JOIN ProductDetail pd ON p.product_id = pd.product_id
+    LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id
+    WHERE 
+        (:genderList IS NULL OR (
+            pd.detail_name = 'suitable_gender' AND 
+            EXISTS (
+                SELECT 1 FROM STRING_SPLIT(:genderList, ',') s 
+                WHERE LTRIM(RTRIM(s.value)) = pd.detail_value
+            )
+        ))
+        AND (:brandList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:brandList, ',') s 
+            WHERE LTRIM(RTRIM(s.value)) = b.brand_name
+        ))
+        AND ((:minPrice IS NULL OR :maxPrice IS NULL) 
+             OR pv.price BETWEEN :minPrice AND :maxPrice)
+        AND (:seasonList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:seasonList, ',') s 
+            WHERE p.description LIKE '%' + LTRIM(RTRIM(s.value)) + '%'
+        ))
+    ORDER BY p.product_id
+    """,
+            countQuery = """
+    SELECT COUNT(DISTINCT p.product_id)
+    FROM Product p
+    JOIN Brand b ON p.brand_id = b.brand_id
+    LEFT JOIN ProductDetail pd ON p.product_id = pd.product_id
+    LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id
+    WHERE 
+        (:genderList IS NULL OR (
+            pd.detail_name = 'suitable_gender' AND 
+            EXISTS (
+                SELECT 1 FROM STRING_SPLIT(:genderList, ',') s 
+                WHERE LTRIM(RTRIM(s.value)) = pd.detail_value
+            )
+        ))
+        AND (:brandList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:brandList, ',') s 
+            WHERE LTRIM(RTRIM(s.value)) = b.brand_name
+        ))
+        AND ((:minPrice IS NULL OR :maxPrice IS NULL) 
+             OR pv.price BETWEEN :minPrice AND :maxPrice)
+        AND (:seasonList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:seasonList, ',') s 
+            WHERE p.description LIKE '%' + LTRIM(RTRIM(s.value)) + '%'
+        ))
+    """,
+            nativeQuery = true)
+    Page<Product> findFilteredProducts(
+            @Param("genderList") String genderList,
+            @Param("brandList") String brandList,
+            @Param("seasonList") String seasonList,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            Pageable pageable
+    );
+
 }

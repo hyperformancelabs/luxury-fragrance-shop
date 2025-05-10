@@ -4,6 +4,8 @@ import com.hyperformancelabs.backend.dto.FlashSaleProductDTO;
 import com.hyperformancelabs.backend.dto.ProductDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface ProductService {
@@ -28,4 +30,12 @@ public interface ProductService {
 
     // Lấy danh sách sản phẩm trong flash sale
     List<FlashSaleProductDTO> getFlashSaleProducts();
+
+    // Lọc sản phẩm
+    Page<ProductDTO> filterProductsPaged(String genderList,
+                                         String brandList,
+                                         String seasonList,
+                                         BigDecimal minPrice,
+                                         BigDecimal maxPrice,
+                                         Pageable pageable);
 }

@@ -46,4 +46,8 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     List<ProductVariant> findByPriceBetween(
             @Param("minPrice") java.math.BigDecimal minPrice, 
             @Param("maxPrice") java.math.BigDecimal maxPrice);
+
+    // Tìm giá min - max của tất cả biến thể
+    @Query("SELECT MIN(pv.price), MAX(pv.price) FROM ProductVariant pv")
+    List<Object[]> findMinAndMaxVariantPrice();
 }
