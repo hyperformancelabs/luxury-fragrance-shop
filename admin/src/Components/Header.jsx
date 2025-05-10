@@ -73,7 +73,7 @@ const Header = ({ sidebarOpen }) => {
                   {user.roles.length > 1 && (
                     <div className="relative group">
                       <span className="cursor-pointer text-xs text-gray-500">+{user.roles.length-1}</span>
-                      <div className="absolute right-0 bottom-full mb-1 hidden group-hover:block bg-white border rounded shadow-lg p-2 text-sm z-50 w-max">
+                      <div className="absolute right-0 top-full mt-1 hidden group-hover:block bg-white border rounded shadow-lg p-2 text-sm z-50 w-max">
                         <div className="flex flex-col space-y-1">
                           {user.roles.slice(1).map((role, index) => (
                             <span key={index} className="whitespace-nowrap">{role}</span>

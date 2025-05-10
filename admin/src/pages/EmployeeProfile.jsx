@@ -603,6 +603,7 @@ const EmployeeProfile = () => {
                     value={formData.fullName}
                     onChange={handleChange}
                     placeholder="Nhập họ tên đầy đủ"
+                    autoComplete="name"
                     className={`w-full p-2 border rounded-md ${errors.fullName ? 'border-red-500' : 'border-gray-300'}`}
                   />
                   {errors.fullName && <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>}
@@ -618,6 +619,7 @@ const EmployeeProfile = () => {
                     value={formData.phoneNumber}
                     onChange={handleChange}
                     placeholder="Nhập số điện thoại"
+                    autoComplete="tel"
                     className={`w-full p-2 border rounded-md ${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'}`}
                   />
                   {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
@@ -633,6 +635,7 @@ const EmployeeProfile = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Nhập địa chỉ email"
+                    autoComplete="email"
                     className={`w-full p-2 border rounded-md ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
                   />
                   {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
@@ -647,6 +650,7 @@ const EmployeeProfile = () => {
                     name="dateOfBirth"
                     value={formData.dateOfBirth}
                     onChange={handleChange}
+                    autoComplete="bday"
                     className="w-full p-2 border border-gray-300 rounded-md"
                   />
                 </div>
@@ -661,6 +665,7 @@ const EmployeeProfile = () => {
                     onChange={handleChange}
                     rows="3"
                     placeholder="Nhập địa chỉ đầy đủ"
+                    autoComplete="street-address"
                     className={`w-full p-2 border rounded-md ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
                   ></textarea>
                   {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
@@ -681,6 +686,7 @@ const EmployeeProfile = () => {
                         name="currentPassword"
                         value={formData.currentPassword}
                         onChange={handleChange}
+                        autoComplete="off"
                         className={`w-full p-2 border rounded-md pr-10 ${errors.currentPassword ? 'border-red-500' : 'border-gray-300'}`}
                       />
                       <button 
@@ -704,8 +710,16 @@ const EmployeeProfile = () => {
                         name="newPassword"
                         value={formData.newPassword}
                         onChange={handleChange}
+                        autoComplete="new-password"
                         className={`w-full p-2 border rounded-md pr-10 ${errors.newPassword ? 'border-red-500' : 'border-gray-300'}`}
                       />
+                      <button 
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
                     </div>
                     {errors.newPassword && <p className="text-red-500 text-sm mt-1">{errors.newPassword}</p>}
                   </div>
@@ -719,7 +733,8 @@ const EmployeeProfile = () => {
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className={`w-full p-2 border rounded-md ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
+                      autoComplete="new-password"
+                      className={`w-full p-2 border rounded-md pr-10 ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
                     />
                     {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
                   </div>

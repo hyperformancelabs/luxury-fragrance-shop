@@ -103,7 +103,7 @@ const PasswordInput = ({ label, name, value, show, toggleShow, onChange, autoCom
       <input
         name={name}
         type={show ? "text" : "password"}
-        autoComplete={autoComplete}
+        autoComplete={autoComplete || "off"}
         value={value}
         onChange={onChange}
         className="w-full border rounded px-3 py-2 pr-10"
@@ -113,6 +113,7 @@ const PasswordInput = ({ label, name, value, show, toggleShow, onChange, autoCom
         type="button"
         onClick={toggleShow}
         className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500"
+        tabIndex="-1"
       >
         {show ? <EyeOff size={18} /> : <Eye size={18} />}
       </button>
@@ -224,11 +225,11 @@ const StaffForm = ({ staff, rolesData, onSave, onCancel }) => {
                 />
               </>
             )}
-            <div><label>Họ và tên</label><input name="fullName" value={formData.fullName} onChange={handleChange} className="w-full border rounded px-3 py-2" required/></div>
-            <div><label>Email</label><input name="email" type="text" pattern="^[^ ]+@[^ ]{2,}\.[^ ]+$" title="Email không đúng định dạng" value={formData.email} onChange={handleChange} className="w-full border rounded px-3 py-2" required/></div>
-            <div><label>Số điện thoại</label><input name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} pattern="^[0-9 ()+-]+$" title="Số điện thoại không hợp lệ" className="w-full border rounded px-3 py-2" required/></div>
-            <div><label>Địa chỉ</label><input name="address" value={formData.address} onChange={handleChange} className="w-full border rounded px-3 py-2" required/></div>
-            <div><label>Ngày sinh</label><input name="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={handleChange} className="w-full border rounded px-3 py-2" max={new Date().toISOString().split('T')[0]}/></div>
+            <div><label>Họ và tên</label><input name="fullName" value={formData.fullName} onChange={handleChange} autoComplete="name" className="w-full border rounded px-3 py-2" required/></div>
+            <div><label>Email</label><input name="email" type="email" pattern="^[^ ]+@[^ ]{2,}\.[^ ]+$" title="Email không đúng định dạng" value={formData.email} onChange={handleChange} autoComplete="email" className="w-full border rounded px-3 py-2" required/></div>
+            <div><label>Số điện thoại</label><input name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} pattern="^[0-9 ()+-]+$" title="Số điện thoại không hợp lệ" autoComplete="tel" className="w-full border rounded px-3 py-2" required/></div>
+            <div><label>Địa chỉ</label><input name="address" value={formData.address} onChange={handleChange} autoComplete="street-address" className="w-full border rounded px-3 py-2" required/></div>
+            <div><label>Ngày sinh</label><input name="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={handleChange} autoComplete="bday" className="w-full border rounded px-3 py-2" max={new Date().toISOString().split('T')[0]}/></div>
             <div><label>Trạng thái</label><select name="status" value={formData.status} onChange={handleChange} className="w-full border rounded px-3 py-2">
                 <option value="active">Đang làm việc</option>
                 <option value="probation">Thử việc</option>
