@@ -7,4 +7,8 @@ public interface CustomerService {
     CustomerDTO getCustomerById(Integer customerId);
 
     CustomerDTO getCustomerByUsername(String username);
+
+    void updateCustomer(CustomerDTO customerDTO);
+
+    CustomerDTO getCustomerByEmailOrPhone(String email, String phone);
 }

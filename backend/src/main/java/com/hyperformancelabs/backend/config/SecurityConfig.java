@@ -1,23 +1,40 @@
 package com.hyperformancelabs.backend.config;
 
+import com.hyperformancelabs.backend.service.impl.CustomUserDetailsService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.csrf.*;
+import org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect;
+
+import java.util.function.Supplier;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Autowired
+    private CustomLogoutSuccessHandler logoutSuccessHandler;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable()) // Có thể bật lại CSRF protection cho MVC
+        http.csrf(csrf -> csrf.
+                        ignoringRequestMatchers("/logout/**")
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                )
+
+//            .csrf(csrf -> csrf.disable()) // Có thể bật lại CSRF protection cho MVC
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/").permitAll() // Cho phép truy cập trang chủ
                 .requestMatchers("/shop/**").permitAll()
@@ -32,20 +49,25 @@ public class SecurityConfig {
                 .requestMatchers("/about").permitAll() // Cho phép truy cập trang giới thiệu
                 .requestMatchers("/contact").permitAll() // Cho phép truy cập trang liên hệ
                 .requestMatchers("/blog/**").permitAll()
+                .requestMatchers("/track-order/**").permitAll()
                 .requestMatchers("/register/**").permitAll()// Cho phép truy cập trang blog
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
-                .loginPage("/login")
+                .loginPage("/auth/login")
                 .defaultSuccessUrl("/") // Chuyển hướng đến trang chủ sau khi đăng nhập thành công
                 .permitAll()
             )
-            .logout(logout -> logout
-                .logoutSuccessUrl("/login?logout")
-                .permitAll()
-            );
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessHandler(logoutSuccessHandler)  // Sử dụng handler tùy chỉnh
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
+                );
 
         return http.build();
     }
@@ -54,4 +76,15 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
+    @Bean
+    public SpringSecurityDialect springSecurityDialect() {
+        return new SpringSecurityDialect();
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return new CustomUserDetailsService();
+    }
+
 }

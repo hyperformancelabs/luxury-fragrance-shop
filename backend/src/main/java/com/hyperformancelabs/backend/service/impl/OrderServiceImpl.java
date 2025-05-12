@@ -7,6 +7,9 @@ import com.hyperformancelabs.backend.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class OrderServiceImpl implements OrderService {
 
@@ -17,6 +20,22 @@ public class OrderServiceImpl implements OrderService {
     public OrderDTO findOrderById(Integer orderId) {
         Order order = orderRepository.findByOrderId(orderId);
         return order != null ? convertToOrderDTO(order) : null;
+    }
+
+    @Override
+    public List<OrderDTO> findOrdersByCustomerId(Integer customerId) {
+        return orderRepository.findOrdersByCustomer_CustomerId(customerId)
+                .stream()
+                .map(this::convertToOrderDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OrderDTO> findByPhone(String phone) {
+        return orderRepository.findByCustomer_PhoneNumber(phone)
+                .stream()
+                .map(this::convertToOrderDTO)
+                .collect(Collectors.toList());
     }
 
     private OrderDTO convertToOrderDTO(Order order) {

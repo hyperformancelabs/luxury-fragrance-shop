@@ -16,6 +16,12 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 //    List<Order> findByCustomer(Customer customer);
 //
     Order findByOrderId(Integer orderId);
+
+    // Lấy danh sách đơn hàng của khách hàng
+    List<Order> findOrdersByCustomer_CustomerId(Integer customerId);
+
+    // lấy danh sách đơn hàng theo số điện thoại
+    List<Order> findByCustomer_PhoneNumber(String phone);
 //
 //    @Query("""
 //    SELECT o FROM Order o

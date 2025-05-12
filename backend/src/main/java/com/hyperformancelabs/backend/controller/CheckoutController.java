@@ -3,9 +3,7 @@ package com.hyperformancelabs.backend.controller;
 import com.hyperformancelabs.backend.dto.*;
 import com.hyperformancelabs.backend.model.Customer;
 import com.hyperformancelabs.backend.model.Order;
-import com.hyperformancelabs.backend.model.OrderItem;
 import com.hyperformancelabs.backend.repository.CustomerRepository;
-import com.hyperformancelabs.backend.repository.OrderItemRepository;
 import com.hyperformancelabs.backend.repository.OrderRepository;
 import com.hyperformancelabs.backend.service.CartService;
 import com.hyperformancelabs.backend.service.OrderItemService;
@@ -21,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -100,7 +100,10 @@ public class CheckoutController {
         String username = getCurrentUsername();
 
         // 1. Tạo customer mới
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         Customer customer = new Customer();
+        customer.setUsername("guest" + form.getPhone());
+        customer.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
         customer.setName(form.getFirstName() + " " + form.getLastName());
         customer.setPhoneNumber(form.getPhone());
         customer.setEmail(form.getEmail());
@@ -112,6 +115,7 @@ public class CheckoutController {
         customer.setStatus("active");
         customer.setLoyaltyPoints(0);
         customer.setRating(0);
+        customer.setNote("automatically created");
         customer = customerRepository.save(customer);
 
         // 2. Lấy giỏ hàng
