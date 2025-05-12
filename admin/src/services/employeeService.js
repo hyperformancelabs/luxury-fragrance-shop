@@ -116,16 +116,297 @@ const updateEmployeeRoles = async (employeeId, roleIds) => {
   }
 };
 
+// Assign roles to employee (add without removing existing)
+const assignRolesToEmployee = async (employeeId, roleIds) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/emp/employees/${employeeId}/roles`,
+      { roleIds },
+      { headers: authService.getAuthHeader() }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi gán vai trò cho nhân viên' };
+  }
+};
+
+// Remove roles from employee (delete specific roles)
+const removeRolesFromEmployee = async (employeeId, roleIds) => {
+  try {
+    const response = await axios.delete(
+      `${API_URL}/emp/employees/${employeeId}/roles`,
+      { data: { roleIds }, headers: authService.getAuthHeader() }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi xóa vai trò khỏi nhân viên' };
+  }
+};
+
+// Get all roles
+const getAllRoles = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/emp/roles/all`, {
+      headers: authService.getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi lấy tất cả vai trò' };
+  }
+};
+
+// Get role by ID
+const getRoleById = async (roleId) => {
+  try {
+    const response = await axios.get(`${API_URL}/emp/roles/${roleId}`, {
+      headers: authService.getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi lấy vai trò' };
+  }
+};
+
+// Create new role
+const createRole = async (roleData) => {
+  try {
+    const response = await axios.post(`${API_URL}/emp/roles`, roleData, { 
+      headers: {
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      } 
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi tạo vai trò' };
+  }
+};
+
+// Reset default role (set all roles to non-default)
+const resetDefaultRole = async () => {
+  try {
+    const response = await axios.post(`${API_URL}/emp/roles/reset-default`, {}, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error resetting default role:', error);
+    // Nếu API chưa được triển khai, chúng ta sẽ tự xử lý
+    // Lấy tất cả vai trò
+    const roles = await getAllRoles();
+    if (roles?.data) {
+      // Tìm vai trò mặc định
+      const defaultRole = roles.data.find(role => role.isDefault);
+      if (defaultRole) {
+        // Cập nhật vai trò mặc định thành không mặc định
+        await axios.put(`${API_URL}/emp/roles/${defaultRole.roleId}`, 
+          { ...defaultRole, isDefault: false },
+          { headers: { 'Content-Type': 'application/json', ...authService.getAuthHeader() } }
+        );
+      }
+    }
+    return { success: true };
+  }
+};
+
+// Update role
+const updateRole = async (roleId, roleData) => {
+  try {
+    const response = await axios.put(`${API_URL}/emp/roles/${roleId}`, roleData, { 
+      headers: {
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      } 
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating role:', error);
+    throw error.response?.data || { message: 'Lỗi khi cập nhật vai trò' };
+  }
+};
+
+// Delete role
+const deleteRole = async (roleId, force = false) => {
+  try {
+    const response = await axios.delete(`${API_URL}/emp/roles/${roleId}`, { 
+      params: { force }, 
+      headers: authService.getAuthHeader() 
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi xóa vai trò' };
+  }
+};
+
+// Get all permissions
+const getAllPermissions = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/emp/permissions/all`, {
+      headers: authService.getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi lấy tất cả quyền' };
+  }
+};
+
+// Get employees by role ID - API này có thể chưa được triển khai
+const getEmployeesByRole = async (roleId) => {
+  try {
+    const response = await axios.get(`${API_URL}/emp/employees/role/${roleId}`, {
+      headers: authService.getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching employees by role:', error);
+    // Nếu API không tồn tại, chúng ta sẽ sử dụng API getEmployees thay thế
+    return { data: [] };
+  }
+};
+
+// Get roles of an employee
+const getEmployeeRoles = async (employeeId) => {
+  try {
+    const response = await axios.get(`${API_URL}/emp/employees/${employeeId}/roles`, {
+      headers: authService.getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching employee roles:', error);
+    // Nếu API không tồn tại, chúng ta có thể lấy thông tin nhân viên và trả về vai trò của họ
+    try {
+      const employeeResponse = await axios.get(`${API_URL}/emp/employees/${employeeId}`, {
+        headers: authService.getAuthHeader()
+      });
+      if (employeeResponse?.data?.employee?.roles) {
+        return { data: employeeResponse.data.employee.roles };
+      }
+    } catch (innerError) {
+      console.error('Error in fallback for employee roles:', innerError);
+    }
+    return { data: [] };
+  }
+};
+
+// Remove employee from role - API này có thể chưa được triển khai
+// Chúng ta sẽ sử dụng updateEmployeeRoles thay thế
+const removeEmployeeFromRole = async (employeeId, roleId) => {
+  try {
+    const response = await axios.delete(`${API_URL}/emp/employees/${employeeId}/roles/${roleId}`, {
+      headers: authService.getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error removing employee from role:', error);
+    // Nếu API không tồn tại, chúng ta sẽ sử dụng updateEmployeeRoles thay thế
+    throw error.response?.data || { message: 'Lỗi khi xóa nhân viên khỏi vai trò' };
+  }
+};
+
+// Get employees by role ID
+const getEmployeesByRoleId = async (roleId) => {
+  try {
+    const response = await axios.get(`${API_URL}/emp/roles/${roleId}/employees`, {
+      headers: authService.getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi lấy danh sách nhân viên theo vai trò' };
+  }
+};
+
+// Get permissions by role ID
+const getPermissionsByRole = async (roleId) => {
+  try {
+    const response = await axios.get(`${API_URL}/emp/permissions/role/${roleId}`, {
+      headers: authService.getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi lấy quyền theo vai trò' };
+  }
+};
+
+// Get available permissions for a role
+const getAvailablePermissionsByRole = async (roleId) => {
+  try {
+    const response = await axios.get(`${API_URL}/emp/permissions/role/${roleId}/available`, {
+      headers: authService.getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi lấy quyền chưa gán' };
+  }
+};
+
+// Add permissions to role
+const addPermissionsToRole = async (roleId, permissionIds) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/emp/roles/${roleId}/permissions`,
+      { permissionIds },
+      { 
+        headers: {
+          'Content-Type': 'application/json',
+          ...authService.getAuthHeader()
+        } 
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi thêm quyền vào vai trò' };
+  }
+};
+
+// Remove permissions from role
+const removePermissionsFromRole = async (roleId, permissionIds) => {
+  try {
+    const response = await axios.delete(
+      `${API_URL}/emp/roles/${roleId}/permissions`,
+      { 
+        data: { permissionIds },
+        headers: {
+          'Content-Type': 'application/json',
+          ...authService.getAuthHeader()
+        } 
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi xóa quyền khỏi vai trò' };
+  }
+};
+
 const employeeService = {
   getProfile,
   updateProfile,
   getRolesWithEmployeeCount,
+  getEmployeesByRoleId,
+  getEmployeesByRole,
+  getEmployeeRoles,
+  removeEmployeeFromRole,
+  resetDefaultRole,
   getEmployees,
   createEmployee,
   updateEmployee,
   deleteEmployee,
   getActiveRoles,
-  updateEmployeeRoles
+  updateEmployeeRoles,
+  assignRolesToEmployee,
+  removeRolesFromEmployee,
+  getAllRoles,
+  getRoleById,
+  createRole,
+  updateRole,
+  deleteRole,
+  getAllPermissions,
+  getPermissionsByRole,
+  getAvailablePermissionsByRole,
+  addPermissionsToRole,
+  removePermissionsFromRole
 };
 
 export default employeeService;

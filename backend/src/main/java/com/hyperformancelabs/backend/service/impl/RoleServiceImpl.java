@@ -5,6 +5,7 @@ import com.hyperformancelabs.backend.dto.RoleResponse;
 import com.hyperformancelabs.backend.exception.DuplicateResourceException;
 import com.hyperformancelabs.backend.exception.InvalidRequestException;
 import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
+import com.hyperformancelabs.backend.model.Employee;
 import com.hyperformancelabs.backend.model.Permission;
 import com.hyperformancelabs.backend.model.Role;
 import com.hyperformancelabs.backend.model.RolePermission;
@@ -145,6 +146,42 @@ public class RoleServiceImpl implements RoleService {
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Lỗi khi lấy danh sách vai trò với số lượng nhân viên: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getEmployeesByRoleId(Integer roleId) {
+        try {
+            // Kiểm tra vai trò tồn tại
+            Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vai trò với ID: " + roleId));
+            
+            // Lấy danh sách nhân viên đang hoạt động theo vai trò
+            List<Employee> employees = employeeRoleRepository.findActiveEmployeesByRoleId(roleId);
+            
+            // Chuyển đổi thành định dạng phản hồi
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Employee employee : employees) {
+                Map<String, Object> employeeInfo = new HashMap<>();
+                employeeInfo.put("employeeId", employee.getEmployeeId());
+                employeeInfo.put("username", employee.getUsername());
+                employeeInfo.put("fullName", employee.getFullName());
+                employeeInfo.put("email", employee.getEmail());
+                employeeInfo.put("phoneNumber", employee.getPhoneNumber());
+                employeeInfo.put("status", employee.getStatus());
+                employeeInfo.put("profilePictureUrl", employee.getProfilePictureUrl());
+                employeeInfo.put("startDate", employee.getStartDate());
+                
+                result.add(employeeInfo);
+            }
+            
+            return result;
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi lấy danh sách nhân viên theo vai trò: " + e.getMessage());
         }
     }
 

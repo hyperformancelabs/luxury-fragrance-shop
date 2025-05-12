@@ -139,6 +139,43 @@ public class RoleController {
             );
         }
     }
+    
+    /**
+     * Lấy danh sách nhân viên theo vai trò
+     */
+    @GetMapping("/{roleId}/employees")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEmployeesByRoleId(@PathVariable Integer roleId) {
+        try {
+            List<Map<String, Object>> employees = roleService.getEmployeesByRoleId(roleId);
+            return ResponseEntity.ok(
+                new ApiResponse<>(
+                    ApiResponseStatus.SUCCESS_CODE,
+                    ApiResponseStatus.SUCCESS_STATUS,
+                    "Lấy danh sách nhân viên theo vai trò thành công",
+                    employees
+                )
+            );
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new ApiResponse<>(
+                    ApiResponseStatus.NOT_FOUND_CODE,
+                    ApiResponseStatus.ERROR_STATUS,
+                    e.getMessage(),
+                    null
+                )
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(
+                new ApiResponse<>(
+                    ApiResponseStatus.BAD_REQUEST_CODE,
+                    ApiResponseStatus.ERROR_STATUS,
+                    "Lỗi khi lấy danh sách nhân viên theo vai trò: " + e.getMessage(),
+                    null
+                )
+            );
+        }
+    }
 
     /**
      * Lấy vai trò theo ID

@@ -1,0 +1,1130 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Users, Search, Plus, Edit, Trash2, Filter, Download, Mail, Phone, Award, ChevronDown, ChevronUp, Check, X, UserRound, Eye, EyeOff, Copy, MapPin, Settings, User, UserPlus } from 'lucide-react';
+import employeeService from '../services/employeeService';
+import { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
+import { FieldHelper, PasswordStrengthMeter, PhoneNumberInput, checkPasswordStrength, normalizeFullName, normalizeAddress } from '../components/FormHelper';
+
+// Sample staff data
+const initialStaffData = [];
+
+// Placeholder for roles data until API data is loaded
+const initialRolesData = [];
+
+// Function to fetch employees list from API
+const fetchEmployees = async (setLoading, setError, setStaffData) => {
+  setLoading(true);
+  try {
+    const res = await employeeService.getEmployees();
+    if (res?.data?.employees) setStaffData(res.data.employees);
+    setError(null);
+  } catch (err) {
+    console.error('Error fetching employees:', err);
+    setError('Không thể tải dữ liệu nhân viên. Vui lòng thử lại sau.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+// Fetch active roles for form
+const fetchActiveRoles = async (setLoading, setRoles) => {
+  setLoading(true);
+  try { const res = await employeeService.getActiveRoles(); if (res?.data) setRoles(res.data); } catch {} finally { setLoading(false); }
+};
+
+// Performance status component
+const PerformanceIndicator = ({ value }) => {
+  let bgColor = 'bg-gray-200';
+  let textColor = 'text-gray-500';
+  
+  if (value === 0) {
+    return <span className="text-gray-400">N/A</span>;
+  } else if (value >= 90) {
+    bgColor = 'bg-green-100';
+    textColor = 'text-green-800';
+  } else if (value >= 80) {
+    bgColor = 'bg-blue-100';
+    textColor = 'text-blue-800';
+  } else if (value >= 70) {
+    bgColor = 'bg-yellow-100';
+    textColor = 'text-yellow-800';
+  } else {
+    bgColor = 'bg-red-100';
+    textColor = 'text-red-800';
+  }
+  
+  return (
+    <div className="flex items-center">
+      <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
+        <div 
+          className={`h-2 rounded-full ${bgColor}`} 
+          style={{ width: `${value}%` }}
+        ></div>
+      </div>
+      <span className={`text-xs font-medium ${textColor}`}>{value}%</span>
+    </div>
+  );
+};
+
+// Status badge component
+const StatusBadge = ({ status }) => {
+  switch (status) {
+    case 'active':
+      return <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Đang làm việc</span>;
+    case 'probation':
+      return <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Thử việc</span>;
+    case 'on_leave':
+      return <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Đang nghỉ phép</span>;
+    case 'inactive':
+      return <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Đã nghỉ</span>;
+    default:
+      return <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{status}</span>;
+  }
+};
+
+// Role card component
+const RoleCard = ({ role, onEdit }) => {
+  return (
+    <div onClick={() => onEdit(role)} className="bg-white rounded-lg shadow p-4 flex flex-col relative cursor-pointer hover:bg-gray-50">
+      <h3 className="font-medium text-lg mb-2">{role.roleName}</h3>
+      {role.isDefault && (
+        <span className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+          Mặc định
+        </span>
+      )}
+      <div className="flex items-center mt-1">
+        <Users size={16} className="text-gray-500 mr-2" />
+        <span className="text-gray-600 text-sm">{role.employeeCount} nhân viên</span>
+      </div>
+      <p className="text-gray-500 text-sm mt-2 line-clamp-2">
+        {role.roleDescription || "Không có mô tả"}
+      </p>
+      <div className="flex justify-between items-center mt-3">
+        <span className={`text-xs py-1 px-2 rounded-full ${role.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+          {role.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+// Password input with toggle visibility
+const PasswordInput = ({ label, name, value, show, toggleShow, onChange, autoComplete }) => (
+  <div>
+    <label>{label}</label>
+    <div className="relative">
+      <input
+        name={name}
+        type={show ? "text" : "password"}
+        autoComplete={autoComplete || "off"}
+        value={value}
+        onChange={onChange}
+        className="w-full border rounded px-3 py-2 pr-10"
+        required
+      />
+      <button
+        type="button"
+        onClick={toggleShow}
+        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500"
+        tabIndex="-1"
+      >
+        {show ? <EyeOff size={18} /> : <Eye size={18} />}
+      </button>
+    </div>
+  </div>
+);
+
+// Staff Form component
+const StaffForm = ({ staff, rolesData, onSave, onCancel }) => {
+  const initial = staff
+    ? { 
+        fullName: staff.fullName || '', 
+        email: staff.email || '', 
+        phoneNumber: staff.phoneNumber || '', 
+        address: staff.address || '', 
+        dateOfBirth: staff.dateOfBirth ? new Date(staff.dateOfBirth).toISOString().split('T')[0] : '', 
+        profilePictureUrl: staff.profilePictureUrl || '', 
+        status: staff.status || 'active', 
+        roles: staff.roles.map(rn => {
+          const r = rolesData.find(r => r.roleName === rn);
+          return r?.roleId;
+        }).filter(Boolean) 
+      }
+    : { 
+        username: '', 
+        password: '', 
+        confirmPassword: '',
+        fullName: '', 
+        email: '', 
+        phoneNumber: '', 
+        address: '', 
+        dateOfBirth: '', 
+        profilePictureUrl: '', 
+        status: 'active', 
+        // Auto-select default roles when creating
+        roles: rolesData.filter(r => r.isDefault).map(r => r.roleId) 
+      };
+  const [formData, setFormData] = useState(initial);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const handleChange = e => { const { name, value } = e.target; setFormData(prev=>({ ...prev, [name]:value })); };
+  const handleCheckbox = e => { const id=parseInt(e.target.value); setFormData(prev=>({ ...prev, roles:e.target.checked?[...prev.roles,id]:prev.roles.filter(x=>x!==id) })); };
+  // Sử dụng các hàm từ FormHelper
+  
+  // Xử lý thay đổi họ tên với chuẩn hóa
+  const handleFullNameChange = (e) => {
+    const { value } = e.target;
+    setFormData(prev => ({ ...prev, fullName: value }));
+  };
+  
+  // Xử lý thay đổi địa chỉ với chuẩn hóa
+  const handleAddressChange = (e) => {
+    const { value } = e.target;
+    setFormData(prev => ({ ...prev, address: value }));
+  };
+  
+  // Xử lý blur họ tên để chuẩn hóa
+  const handleFullNameBlur = (e) => {
+    const normalizedName = normalizeFullName(e.target.value);
+    setFormData(prev => ({ ...prev, fullName: normalizedName }));
+  };
+  
+  // Xử lý blur địa chỉ để chuẩn hóa
+  const handleAddressBlur = (e) => {
+    const normalizedAddress = normalizeAddress(e.target.value);
+    setFormData(prev => ({ ...prev, address: normalizedAddress }));
+  };
+  
+  // Kiểm tra form
+  const validateForm = () => {
+    if (!staff) {
+      if (!formData.username.trim()) { toast.error('Username không được để trống'); return false; }
+      if (!/^[a-zA-Z0-9]+$/.test(formData.username)) { toast.error('Username chỉ được chứa chữ cái và số, không có khoảng trắng hoặc ký tự đặc biệt'); return false; }
+      if (formData.username.length < 3 || formData.username.length > 50) { toast.error('Username phải từ 3-50 ký tự'); return false; }
+      
+      if (!formData.password) { toast.error('Mật khẩu không được để trống'); return false; }
+      if (formData.password.length < 6) { toast.error('Mật khẩu phải ít nhất 6 ký tự'); return false; }
+      if (!/(?=.*[A-Za-z])(?=.*\d)/.test(formData.password)) { toast.error('Mật khẩu phải chứa ít nhất một chữ cái và một số'); return false; }
+      if (formData.password !== formData.confirmPassword) { toast.error('Mật khẩu và xác nhận mật khẩu không khớp'); return false; }
+    }
+    
+    if (!formData.fullName.trim()) { toast.error('Họ và tên không được để trống'); return false; }
+    
+    if (!formData.email) { toast.error('Email không được để trống'); return false; }
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) { toast.error('Email không đúng định dạng'); return false; }
+    
+    if (!formData.phoneNumber) { toast.error('Số điện thoại không được để trống'); return false; }
+    if (!/^[0-9 ()+-]+$/.test(formData.phoneNumber)) { toast.error('Số điện thoại không hợp lệ'); return false; }
+    
+    if (!formData.address.trim()) { toast.error('Địa chỉ không được để trống'); return false; }
+    
+    if (formData.dateOfBirth && new Date(formData.dateOfBirth) >= new Date()) { toast.error('Ngày sinh phải trước ngày hiện tại'); return false; }
+    return true;
+  };
+  const handleSubmit = e => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    const dataToSave = { ...formData };
+    if (!staff) {
+      delete dataToSave.confirmPassword;
+    }
+    onSave(dataToSave);
+  };
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl overflow-auto max-h-full">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold">{staff?'Chỉnh sửa':'Thêm nhân viên'}</h2>
+          <button onClick={onCancel} className="text-gray-500 hover:text-gray-700"><X size={20}/></button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* add credentials when creating */}
+            {!staff && (
+              <>
+                <div className="md:col-span-2 flex justify-center">
+                  <div className="w-full max-w-xs">
+                    <div className="flex items-center">
+                      <label>Username</label>
+                      <FieldHelper text="Chỉ chứa chữ cái và số, không có khoảng trắng hoặc ký tự đặc biệt. Độ dài từ 3-50 ký tự." />
+                    </div>
+                    <input
+                      name="username"
+                      autoComplete="username"
+                      value={formData.username}
+                      onChange={handleChange}
+                      className="w-full border rounded px-3 py-2 mt-1"
+                      placeholder="Nhập username (chỉ chữ cái và số)"
+                      required
+                    />
+                    {formData.username && !/^[a-zA-Z0-9]+$/.test(formData.username) && (
+                      <p className="text-xs text-red-500 mt-1">Username chỉ được chứa chữ cái và số</p>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center">
+                    <label>Password</label>
+                    <FieldHelper text="Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ cái và số. Mật khẩu mạnh nên có thêm ký tự đặc biệt và độ dài trên 8 ký tự." />
+                  </div>
+                  <div className="relative mt-1">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={`w-full border rounded px-3 py-2 pr-10 ${formData.password && (formData.password.length < 6 || !/(?=.*[A-Za-z])(?=.*\d)/.test(formData.password)) ? 'border-red-300' : ''}`}
+                      autoComplete="new-password"
+                      placeholder="Mật khẩu (ít nhất 6 ký tự)"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  
+                  {/* Hiển thị độ mạnh mật khẩu */}
+                  {formData.password && <PasswordStrengthMeter password={formData.password} />}
+                  
+                  {formData.password && formData.password.length < 6 && (
+                    <p className="text-xs text-red-500 mt-1">Mật khẩu phải có ít nhất 6 ký tự</p>
+                  )}
+                  
+                  {formData.password && formData.password.length >= 6 && !/(?=.*[A-Za-z])(?=.*\d)/.test(formData.password) && (
+                    <p className="text-xs text-red-500 mt-1">Mật khẩu phải chứa ít nhất một chữ cái và một số</p>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center">
+                    <label>Xác nhận mật khẩu</label>
+                    <FieldHelper text="Nhập lại mật khẩu để xác nhận" />
+                  </div>
+                  <div className="relative mt-1">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className={`w-full border rounded px-3 py-2 pr-10 ${formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword ? 'border-red-300' : ''}`}
+                      autoComplete="new-password"
+                      placeholder="Nhập lại mật khẩu"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {formData.password && formData.confirmPassword && (
+                    <p className={`text-xs mt-1 ${formData.password === formData.confirmPassword ? 'text-green-500' : 'text-red-500'}`}>
+                      {formData.password === formData.confirmPassword ? 'Mật khẩu khớp' : 'Mật khẩu không khớp'}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+            <div>
+              <div className="flex items-center">
+                <label>Họ và tên</label>
+                <FieldHelper text="Họ tên sẽ được chuẩn hóa: viết hoa chữ cái đầu mỗi từ và loại bỏ khoảng trắng thừa" />
+              </div>
+              <input 
+                name="fullName" 
+                value={formData.fullName} 
+                onChange={handleFullNameChange} 
+                onBlur={handleFullNameBlur}
+                autoComplete="name" 
+                className="w-full border rounded px-3 py-2 mt-1" 
+                placeholder="Nhập họ và tên"
+                required
+              />
+              {formData.fullName && formData.fullName.trim() === '' && (
+                <p className="text-xs text-red-500 mt-1">Họ tên không được để trống</p>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center">
+                <label>Email</label>
+                <FieldHelper text="Email phải đúng định dạng: example@domain.com" />
+              </div>
+              <input 
+                name="email" 
+                type="email" 
+                pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" 
+                title="Email không đúng định dạng" 
+                value={formData.email} 
+                onChange={handleChange} 
+                autoComplete="email" 
+                className={`w-full border rounded px-3 py-2 mt-1 ${formData.email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email) ? 'border-red-300' : ''}`} 
+                placeholder="example@domain.com"
+                required
+              />
+              {formData.email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email) && (
+                <p className="text-xs text-red-500 mt-1">Email không đúng định dạng</p>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center">
+                <label>Số điện thoại</label>
+                <FieldHelper text="Chỉ hỗ trợ số điện thoại Việt Nam (+84). Các vùng khác hiện chưa được hỗ trợ." />
+              </div>
+              <div className="mt-1 relative">
+                <PhoneNumberInput 
+                  value={formData.phoneNumber} 
+                  onChange={handleChange} 
+                  required={true}
+                  error={formData.phoneNumber && !/^[0-9 ()+-]+$/.test(formData.phoneNumber) ? 'Số điện thoại không hợp lệ' : ''}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center">
+                <label>Địa chỉ</label>
+                <FieldHelper text="Địa chỉ sẽ được chuẩn hóa: loại bỏ khoảng trắng thừa" />
+              </div>
+              <input 
+                name="address" 
+                value={formData.address} 
+                onChange={handleAddressChange} 
+                onBlur={handleAddressBlur}
+                autoComplete="street-address" 
+                className="w-full border rounded px-3 py-2 mt-1" 
+                placeholder="Nhập địa chỉ"
+                required
+              />
+              {formData.address && formData.address.trim() === '' && (
+                <p className="text-xs text-red-500 mt-1">Địa chỉ không được để trống</p>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center">
+                <label>Ngày sinh</label>
+                <FieldHelper text="Ngày sinh phải trước ngày hiện tại" />
+              </div>
+              <input 
+                name="dateOfBirth" 
+                type="date" 
+                value={formData.dateOfBirth} 
+                onChange={handleChange} 
+                autoComplete="bday" 
+                className="w-full border rounded px-3 py-2 mt-1" 
+                max={new Date().toISOString().split('T')[0]}
+              />
+              {formData.dateOfBirth && new Date(formData.dateOfBirth) >= new Date() && (
+                <p className="text-xs text-red-500 mt-1">Ngày sinh phải trước ngày hiện tại</p>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center">
+                <label>Trạng thái</label>
+                <FieldHelper text="Trạng thái hiện tại của nhân viên" />
+              </div>
+              <select 
+                name="status" 
+                value={formData.status} 
+                onChange={handleChange} 
+                className="w-full border rounded px-3 py-2 mt-1"
+              >
+                <option value="active">Đang làm việc</option>
+                <option value="probation">Thử việc</option>
+                <option value="on_leave">Đang nghỉ phép</option>
+                <option value="inactive">Đã nghỉ</option>
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <fieldset>
+                <div className="flex items-center">
+                  <legend>Vai trò</legend>
+                  <FieldHelper text="Chọn một hoặc nhiều vai trò cho nhân viên" />
+                </div>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded mt-1">
+                  {rolesData.map(r => (
+                    <label key={r.roleId} className="flex items-center p-1 hover:bg-gray-50 rounded">
+                      <input 
+                        type="checkbox" 
+                        value={r.roleId} 
+                        checked={formData.roles.includes(r.roleId)} 
+                        onChange={handleCheckbox} 
+                        className="mr-2"
+                      />
+                      <span className="text-sm">{r.roleName}</span>
+                    </label>
+                  ))}
+                </div>
+                {formData.roles.length === 0 && (
+                  <p className="text-xs text-red-500 mt-1">Phải chọn ít nhất một vai trò</p>
+                )}
+              </fieldset>
+            </div>
+          </div>
+          <div className="flex justify-end space-x-4"><button type="button" onClick={onCancel} className="border px-4 py-2 rounded">Hủy</button><button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Lưu</button></div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Confirm Dialog component
+const ConfirmDialog = ({ title, message, onConfirm, onCancel, confirmText = "Xác nhận", confirmButtonClass = "bg-red-600 hover:bg-red-700" }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[70]">
+      <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+        <h3 className="text-lg font-medium mb-4">{title || "Xác nhận"}</h3>
+        <p className="mb-6">{message}</p>
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`px-4 py-2 text-white rounded-md ${confirmButtonClass}`}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// View dialog for detailed info
+const ViewDialog = ({ employee, onClose }) => {
+  if (!employee) return null;
+  const fields = [ ['ID', employee.employeeId], ['Họ và tên', employee.fullName], ['Email', employee.email], ['Số điện thoại', employee.phoneNumber], ['Địa chỉ', employee.address], ['Ngày sinh', employee.dateOfBirth], ['Trạng thái', employee.status], ['Vai trò', employee.roles.join(', ')] ];
+  const copyText = txt => { 
+    navigator.clipboard.writeText(txt); 
+    toast.success('Đã sao chép!', {
+      duration: 2000,
+      position: 'bottom-right',
+      style: { background: '#4CAF50', color: 'white' }
+    }); 
+  };
+  
+  const copyAll = () => { 
+    const allText = fields.map(f=>`${f[0]}: ${f[1]}`).join('\n'); 
+    navigator.clipboard.writeText(allText); 
+    toast.success('Đã sao chép tất cả!', {
+      duration: 2000,
+      position: 'bottom-right',
+      style: { background: '#4CAF50', color: 'white' }
+    }); 
+  };
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+        <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-semibold">Thông tin nhân viên</h3><button onClick={onClose}><X size={20}/></button></div>
+        <div className="space-y-2">{fields.map(([label,val],i)=>(<div key={i} className="flex justify-between items-center border-b pb-1"><div><strong>{label}:</strong> {val}</div><button onClick={()=>copyText(val)}><Copy size={16}/></button></div>))}</div>
+        <div className="flex justify-end mt-4"><button onClick={copyAll} className="flex items-center text-sm text-gray-700"><Copy size={16} className="mr-1"/>Copy tất cả</button></div>
+      </div>
+    </div>
+  );
+};
+
+// Role Form component
+const RoleForm = ({ role, onSave, onCancel }) => {
+  const initialData = role 
+    ? { 
+        roleName: role.roleName || '', 
+        roleDescription: role.roleDescription || '',
+        isDefault: role.isDefault || false,
+        status: role.status || 'active'
+      } 
+    : { 
+        roleName: '', 
+        roleDescription: '',
+        isDefault: false,
+        status: 'active'
+      };
+    
+  const [formData, setFormData] = useState(initialData);
+  
+  const handleChange = e => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+  
+  const validateForm = () => {
+    if (!formData.roleName.trim()) {
+      toast.error('Tên vai trò không được để trống');
+      return false;
+    }
+    return true;
+  };
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validateForm()) {
+      onSave(formData);
+    }
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">{role ? 'Chỉnh sửa vai trò' : 'Thêm vai trò mới'}</h3>
+          <button onClick={onCancel}><X size={20}/></button>
+        </div>
+        
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tên vai trò <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="roleName"
+                value={formData.roleName}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mô tả
+              </label>
+              <textarea
+                name="roleDescription"
+                value={formData.roleDescription}
+                onChange={handleChange}
+                rows="3"
+                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="isDefault"
+                name="isDefault"
+                checked={formData.isDefault}
+                onChange={handleChange}
+                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="isDefault" className="ml-2 block text-sm text-gray-700">
+                Đặt làm vai trò mặc định
+              </label>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Trạng thái
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="active">Hoạt động</option>
+                <option value="inactive">Không hoạt động</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex justify-end mt-6 space-x-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              {role ? 'Cập nhật' : 'Thêm mới'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Permission Management component
+const PermissionManager = ({ role, onSave, onCancel }) => {
+  const [allPermissions, setAllPermissions] = useState([]);
+  const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [permissionGroups, setPermissionGroups] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [expandedGroups, setExpandedGroups] = useState({});
+  
+  // Fetch all permissions and role's current permissions
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch all permissions
+        const permissionsResponse = await employeeService.getAllPermissions();
+        if (permissionsResponse?.data) {
+          setAllPermissions(permissionsResponse.data);
+          
+          // Group permissions by category (based on prefix before the dot)
+          const groups = {};
+          permissionsResponse.data.forEach(permission => {
+            const [category] = permission.permissionName.split('.');
+            if (!groups[category]) {
+              groups[category] = [];
+            }
+            groups[category].push(permission);
+          });
+          setPermissionGroups(groups);
+          
+          // Initialize expanded state for all groups
+          const initialExpandedState = {};
+          Object.keys(groups).forEach(group => {
+            initialExpandedState[group] = true; // Start with all expanded
+          });
+          setExpandedGroups(initialExpandedState);
+        }
+        
+        // Fetch role's current permissions
+        if (role) {
+          const rolePermissionsResponse = await employeeService.getPermissionsByRole(role.roleId);
+          if (rolePermissionsResponse?.data) {
+            setSelectedPermissions(rolePermissionsResponse.data.map(p => p.permissionId));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching permissions:', error);
+        toast.error('Không thể tải dữ liệu quyền. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [role]);
+  
+  // Handle permission selection change
+  const handlePermissionChange = (permissionId) => {
+    setSelectedPermissions(prev => 
+      prev.includes(permissionId)
+        ? prev.filter(id => id !== permissionId)
+        : [...prev, permissionId]
+    );
+  };
+  
+  // Handle group expansion toggle
+  const toggleGroupExpansion = (group) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [group]: !prev[group]
+    }));
+  };
+  
+  // Handle select all permissions in a group
+  const selectAllInGroup = (group) => {
+    const groupPermissionIds = permissionGroups[group].map(p => p.permissionId);
+    const allSelected = groupPermissionIds.every(id => selectedPermissions.includes(id));
+    
+    if (allSelected) {
+      // Deselect all in group
+      setSelectedPermissions(prev => 
+        prev.filter(id => !groupPermissionIds.includes(id))
+      );
+    } else {
+      // Select all in group
+      setSelectedPermissions(prev => {
+        const newSelected = [...prev];
+        groupPermissionIds.forEach(id => {
+          if (!newSelected.includes(id)) {
+            newSelected.push(id);
+          }
+        });
+        return newSelected;
+      });
+    }
+  };
+  
+  // Filter permissions based on search term
+  const filteredGroups = Object.keys(permissionGroups).filter(group => {
+    if (!searchTerm) return true;
+    
+    // Check if group name contains search term
+    if (group.toLowerCase().includes(searchTerm.toLowerCase())) return true;
+    
+    // Check if any permission in group contains search term
+    return permissionGroups[group].some(permission => 
+      permission.permissionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (permission.permissionDescription && 
+       permission.permissionDescription.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  });
+  
+  // Map permission name to display name
+  const getDisplayName = (name) => {
+    const parts = name.split('.');
+    if (parts.length === 2) {
+      const [category, action] = parts;
+      return action.split('_').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ');
+    }
+    return name;
+  };
+  
+  // Map category name to display name
+  const getCategoryDisplayName = (category) => {
+    const categoryMap = {
+      'employee': 'Nhân viên',
+      'role': 'Vai trò',
+      'permission': 'Quyền hạn',
+      'material': 'Vật tư',
+      'material_transaction': 'Giao dịch vật tư',
+      'brand': 'Thương hiệu',
+      'product': 'Sản phẩm',
+      'inventory': 'Kho hàng',
+      'inventory_transaction': 'Giao dịch kho',
+      'promotion': 'Khuyến mãi',
+      'customer': 'Khách hàng',
+      'cart': 'Giỏ hàng',
+      'order': 'Đơn hàng',
+      'payment': 'Thanh toán',
+      'shipment': 'Vận chuyển',
+      'conversation': 'Hội thoại',
+      'report': 'Báo cáo',
+      'dashboard': 'Bảng điều khiển'
+    };
+    
+    return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1);
+  };
+  
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      // Get current permissions for the role
+      const currentResponse = await employeeService.getPermissionsByRole(role.roleId);
+      const currentPermissionIds = currentResponse?.data?.map(p => p.permissionId) || [];
+      
+      // Determine which permissions to add and which to remove
+      const permissionsToAdd = selectedPermissions.filter(id => !currentPermissionIds.includes(id));
+      const permissionsToRemove = currentPermissionIds.filter(id => !selectedPermissions.includes(id));
+      
+      // Add new permissions
+      if (permissionsToAdd.length > 0) {
+        await employeeService.addPermissionsToRole(role.roleId, permissionsToAdd);
+      }
+      
+      // Remove permissions
+      if (permissionsToRemove.length > 0) {
+        await employeeService.removePermissionsFromRole(role.roleId, permissionsToRemove);
+      }
+      
+      toast.success('Cập nhật quyền cho vai trò thành công!');
+      onSave();
+    } catch (error) {
+      console.error('Error updating role permissions:', error);
+      toast.error('Lỗi khi cập nhật quyền: ' + (error.message || 'Vui lòng thử lại sau'));
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Quản lý quyền cho vai trò: {role?.roleName}</h3>
+          <button onClick={onCancel}><X size={20}/></button>
+        </div>
+        
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : (
+          <>
+            <div className="mb-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm quyền..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full border rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+              </div>
+            </div>
+            
+            <div className="border rounded-lg overflow-hidden mb-4">
+              <div className="max-h-[60vh] overflow-y-auto">
+                {filteredGroups.length > 0 ? (
+                  filteredGroups.map(group => (
+                    <div key={group} className="border-b last:border-b-0">
+                      <div 
+                        className="flex items-center justify-between p-3 bg-gray-50 cursor-pointer hover:bg-gray-100"
+                        onClick={() => toggleGroupExpansion(group)}
+                      >
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`group-${group}`}
+                            name="isDefault"
+                            checked={permissionGroups[group].every(p => selectedPermissions.includes(p.permissionId))}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              selectAllInGroup(group);
+                            }}
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-3"
+                          />
+                          <label htmlFor={`group-${group}`} className="font-medium text-gray-700">
+                            {getCategoryDisplayName(group)}
+                          </label>
+                        </div>
+                        {expandedGroups[group] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      </div>
+                      
+                      {expandedGroups[group] && (
+                        <div className="bg-white p-2">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {permissionGroups[group]
+                              .filter(permission => 
+                                !searchTerm || 
+                                permission.permissionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (permission.permissionDescription && 
+                                 permission.permissionDescription.toLowerCase().includes(searchTerm.toLowerCase()))
+                              )
+                              .map(permission => (
+                                <div key={permission.permissionId} className="flex items-start p-2 hover:bg-gray-50 rounded">
+                                  <input
+                                    type="checkbox"
+                                    id={`permission-${permission.permissionId}`}
+                                    checked={selectedPermissions.includes(permission.permissionId)}
+                                    onChange={() => handlePermissionChange(permission.permissionId)}
+                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-1"
+                                  />
+                                  <label 
+                                    htmlFor={`permission-${permission.permissionId}`}
+                                    className="ml-3 text-sm cursor-pointer"
+                                  >
+                                    <div className="font-medium text-gray-700">{getDisplayName(permission.permissionName)}</div>
+                                    <div className="text-gray-500 text-xs mt-0.5">{permission.permissionDescription || 'Không có mô tả'}</div>
+                                  </label>
+                                </div>
+                              ))
+                            }
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-8 text-center text-gray-500">
+                    Không tìm thấy quyền nào phù hợp với từ khóa tìm kiếm
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-gray-500">
+                Đã chọn {selectedPermissions.length} quyền
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  disabled={loading}
+                >
+                  {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Role Manager Modal component
+import { Save, Trash } from 'lucide-react';
+const RoleManagerModal = ({ isOpen, onClose, staffData, defaultRole, singleColumn, onRolesUpdated }) => {
+  // Tab state
+  const [activeTab, setActiveTab] = useState('settings'); // 'settings', 'permissions', 'employees'
+  // Role edit state
+  const [editedRole, setEditedRole] = useState(null);
+  // Employees in role
+  const [employees, setEmployees] = useState([]);
+  const [employeesLoading, setEmployeesLoading] = useState(false);
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
+  // Modal thêm nhân viên vào vai trò
+  const [showAddEmployeeToRoleModal, setShowAddEmployeeToRoleModal] = useState(false);
+  const [availableEmployees, setAvailableEmployees] = useState([]);
+  const [availableEmployeesLoading, setAvailableEmployeesLoading] = useState(false);
+  const [availableEmployeeSearchTerm, setAvailableEmployeeSearchTerm] = useState('');
+  // State cho xác nhận xóa vai trò
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState(null);
+  // State cho chọn nhiều nhân viên
+  const [selectedEmployeesToAdd, setSelectedEmployeesToAdd] = useState([]);
+  const [selectedEmployeesToRemove, setSelectedEmployeesToRemove] = useState([]);
+  // ... giữ nguyên các state khác
+
+  const [roles, setRoles] = useState([]);
+  const [selectedRole, setSelectedRole] = useState(defaultRole);
+  const [loading, setLoading] = useState(false);
+  const [newRoleName, setNewRoleName] = useState('');
+  const [isAddingRole, setIsAddingRole] = useState(false);
+  const [permissions, setPermissions] = useState([]);
+  const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [permissionGroups, setPermissionGroups] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [expandedGroups, setExpandedGroups] =  // Fetch roles on mount
+  useEffect(() => {
+    if (isOpen) fetchRoles();
+    // eslint-disable-next-line
+  }, [isOpen]);
+
+{{ ... }}
+      {/* Main content */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Role overview */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Cơ cấu nhân sự</h2>
+        <div className="flex items-center">
+          <button
+            onClick={() => { setShowRoleManagerModal(true); setRoleManagerSingleColumn(true); }}
+            className="ml-2 p-1 text-gray-500 hover:text-blue-600 transition-colors"
+            title="Quản lý vai trò và quyền hạn"
+          >
+            <Settings size={18} />
+          </button>
+        </div>
+        <button 
+          onClick={handleAddRole}
+          className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm flex items-center hover:bg-blue-700"
+        >
+          <Plus size={16} className="mr-1" />
+          Thêm vai trò
+        </button>
+      </div>
+      
+      <div className="mt-4 flex items-center">
+        <span className="text-sm font-medium mr-2">Lọc theo trạng thái:</span>
+        <div className="flex space-x-2">
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              name="roleStatusFilter"
+              value="all"
+              checked={roleStatusFilter === 'all'}
+              onChange={() => setRoleStatusFilter('all')}
+              className="form-radio h-4 w-4 text-blue-600"
+            />
+            <span className="ml-2 text-sm">Tất cả</span>
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              name="roleStatusFilter"
+              value="active"
+              checked={roleStatusFilter === 'active'}
+              onChange={() => setRoleStatusFilter('active')}
+              className="form-radio h-4 w-4 text-blue-600"
+            />
+            <span className="ml-2 text-sm">Hoạt động</span>
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              name="roleStatusFilter"
+              value="inactive"
+              checked={roleStatusFilter === 'inactive'}
+              onChange={() => setRoleStatusFilter('inactive')}
+              className="form-radio h-4 w-4 text-blue-600"
+            />
+            <span className="ml-2 text-sm">Không hoạt động</span>
+          </label>
+        </div>
+      </div>
+          
+          {loading ? (
+            <div className="text-center py-4">Đang tải dữ liệu...</div>
+          ) : error ? (
+            <div className="text-center py-4 text-red-500">{error}</div>
+{{ ... }}
+                Sau
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <div className="py-4 flex flex-wrap items-center justify-between border-t border-gray-200 px-6 gap-4">
+            <div className="flex items-center">
+              <span className="mr-2 text-sm">Hiển thị</span>
+              <select 
+                value={itemsPerPage} 
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className="border rounded px-2 py-1 text-sm"
+              >
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span className="ml-2 text-sm">mỗi trang</span>
+            </div>
+            <div>
+              Hiển thị <span className="font-medium">1</span> đến <span className="font-medium">{sortedStaff.length}</span> của <span className="font-medium">{sortedStaff.length}</span> kết quả
+            </div>
+            <div className="flex space-x-2">
+              <button className="px-3 py-1 border rounded text-sm disabled:opacity-50">Trước</button>
+              <button className="px-3 py-1 border rounded text-sm bg-blue-50 text-blue-600 border-blue-300">1</button>
+              <button className="px-3 py-1 border rounded text-sm disabled:opacity-50">Sau</button>
+            </div>
+          </div>span className="sr-only">Previous</span>
+                    <ChevronDown className="h-5 w-5 rotate-90" aria-hidden="true" />
+                  </button>
+                  <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    1
+                  </button>
+{{ ... }}
+          onCancel={handleCancelPermissions} 
+        />
+      )}
+      {showRoleManagerModal && (
+        <RoleManagerModal 
+        isOpen={showRoleManagerModal}
+        onClose={() => setShowRoleManagerModal(false)}
+        staffData={staffData}
+        singleColumn={roleManagerSingleColumn}
+        onRolesUpdated={fetchRolesData}
+      />    singleColumn={roleManagerSingleColumn}
+        />
+      )}
+    </div>
+  );
+};
+export default Staff;
