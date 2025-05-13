@@ -1,0 +1,381 @@
+-- 1. Insert data into Employee table
+INSERT INTO Employee (username, password, full_name, phone_number, email, address, status, start_date, last_login, date_of_birth, profile_picture_url)
+VALUES
+('vhphat0807', 'admin@123', N'Vũ Hoàng Phát', '708643765', 'vhp08072004@gmail.com', '122 Hoàng Quốc Việt, Cổ Nhuế, Cầu Giấy, Hà Nội', 'active', '2025-03-10', NULL, '2025-04-10', 'https://www.vietcap.com.vn/api/cms-api/uploads/contents/202211/lam-phat-la-gi.jpg'),
+('yaohu38', 'password@123', N'Phạm Nguyễn Quốc Huy', '701234567', 'sinh.nhat.toi@gmail.com', N'11 Nguyễn Đình Chiểu, Đa Kao, Quận 1, Hồ Chí Minh', 'active', '2023-01-15', '2023-11-20 10:00:00', '1990-05-20', 'https://cafefcdn.com/2019/2/27/photo-1-15512505967251974040600.png'),
+('lta207', 'secure@pass', N'Lý Trọng Ân', '901234567', 'andeptrai@gmail.com', '97 Man Thiện, Hiệp Phú, Quận 9, Hồ Chí Minh', 'inactive', '2023-02-01', '2024-11-20 11:30:00', '2015-10-10', 'https://cdn.tcdulichtphcm.vn/upload/4-2024/images/2024-10-31/1730343994-dien-vien-thien-an-va-con-gai-2.jpg'),
+('ntthao01', 'pass@123', N'Nguyễn Thị Thảo', '703456789', 'thao.nguyen@gmail.com', N'55 Lê Văn Việt, Hiệp Phú, Quận 9, Hồ Chí Minh', 'active', '2023-04-12', '2024-03-05 08:20:00', '1998-08-25', 'https://randomuser.me/api/portraits/women/1.jpg'),
+('dminh02', 'minhsecure@456', N'Đặng Minh', '705678123', 'minh.dang@gmail.com', N'22 Trần Hưng Đạo, Quận 1, Hồ Chí Minh', 'active', '2023-06-18', '2024-02-15 09:00:00', '1995-12-15', 'https://randomuser.me/api/portraits/men/2.jpg'),
+('ptlinh03', 'linhpass@789', N'Phạm Thùy Linh', '709876543', 'linh.pham@gmail.com', N'88 Nguyễn Huệ, Quận 1, Hồ Chí Minh', 'inactive', '2023-08-22', NULL, '1997-03-05', 'https://randomuser.me/api/portraits/women/3.jpg'),
+('lvson04', 'son@abc123', N'Lê Văn Sơn', '706543210', 'son.le@gmail.com', N'77 Hoàng Diệu, Quận 4, Hồ Chí Minh', 'active', '2024-01-10', '2025-04-01 14:15:00', '1992-06-30', 'https://randomuser.me/api/portraits/men/4.jpg'),
+('nqphuong05', 'phuongpass@abc', N'Nguyễn Quỳnh Phương', '704321678', 'phuong.nguyen@gmail.com', N'21 Phan Xích Long, Phú Nhuận, Hồ Chí Minh', 'active', '2024-02-20', NULL, '1999-01-20', 'https://randomuser.me/api/portraits/women/5.jpg');
+
+
+-- 2. Insert data into Role table
+INSERT INTO Role (role_name, role_description, is_default, status)
+VALUES
+('System Admin', 'Administrator with full access', 0, 'active'),
+('Manager', 'Manager with management access', 0, 'active'),
+('Material Staff', 'Material handling staff', 0, 'active'),
+('Decanting Staff', 'Perfume bottling staff', 0, 'active'),
+('Order Staff', 'Order processing staff', 0, 'active'),
+('Customer Care', 'Customer care staff', 0, 'active'),
+('Data Analyst', 'Data analyst with reporting access', 0, 'active'),
+('Staff', 'General staff (default permissions)', 1, 'active');
+
+
+-- 3. Insert data into EmployeeRole table
+INSERT INTO EmployeeRole (employee_id, role_id, status)
+VALUES
+(1, 1, 'active'),
+(2, 2, 'active'),
+(3, 3, 'active'),
+(3, 4, 'active'),
+(3, 5, 'active'),
+(3, 6, 'active'),
+(4, 3, 'active'),
+(4, 4, 'active'),
+(5, 5, 'active'),
+(6, 6, 'inactive'),
+(7, 7, 'active'),
+(8, 7, 'active');
+
+
+-- 4. Insert data into Permission table
+INSERT INTO Permission (permission_name, permission_description)
+VALUES
+
+-- Employee Management
+('employee.view', 'View employee information'),
+('employee.create', 'Create new employees'),
+('employee.edit', 'Edit employee information'),
+('employee.delete', 'Delete employees'),
+('employee.view_sensitive', 'View sensitive employee information'),
+
+-- Role Management
+('role.view', 'View roles'),
+('role.create', 'Create new roles'),
+('role.edit', 'Edit roles'),
+('role.delete', 'Delete roles'),
+('role.assign', 'Assign roles to employees'),
+
+-- Permission Management
+('permission.view', 'View permissions'),
+('permission.assign', 'Assign permissions to roles'),
+
+-- Material Management
+('material.view', 'View materials'),
+('material.create', 'Create new materials'),
+('material.edit', 'Edit material information'),
+('material.import', 'Import materials to inventory'),
+('material.export', 'Export materials from inventory'),
+('material.adjust', 'Adjust material quantities'),
+('material.delete', 'Delete materials'),
+
+-- Material Transaction
+('material_transaction.view', 'View material transactions'),
+('material_transaction.manage', 'Full access: create, edit, delete material transaction records'),
+
+-- Brand Management
+('brand.view', 'View brands'),
+('brand.create', 'Create new brands'),
+('brand.edit', 'Edit brand information'),
+('brand.delete', 'Delete brands'),
+
+-- Product Management
+('product.view', 'View products'),
+('product.create', 'Create new products'),
+('product.edit', 'Edit product information'),
+('product.delete', 'Delete products'),
+('product.details.manage', 'Manage product details'),
+
+-- Inventory Management
+('inventory.view', 'View inventory'),
+('inventory.import', 'Import products to inventory'),
+('inventory.export', 'Export products from inventory'),
+('inventory.adjust', 'Adjust inventory quantities'),
+('inventory.sell', 'Sell products from inventory'),
+('inventory.combine', 'Combine products for custom perfumes'),
+
+-- Inventory Transaction
+('inventory_transaction.view', 'View inventory transactions'),
+('inventory_transaction.manage', 'Full access: create, edit, delete inventory transaction records'),
+
+-- Promotion Management
+('promotion.view', 'View promotions'),
+('promotion.create', 'Create new promotions'),
+('promotion.edit', 'Edit promotion information'),
+('promotion.delete', 'Delete promotions'),
+('promotion.assign', 'Assign promotions to products'),
+
+-- Customer Management
+('customer.view', 'View customer information'),
+('customer.create', 'Create new customers'),
+('customer.edit', 'Edit customer information'),
+('customer.delete', 'Delete customers'),
+('customer.rating', 'Rating customer'),
+('customer.view_sensitive', 'View sensitive customer information'),
+
+-- Cart Management
+('cart.view', 'View carts'),
+('cart.edit', 'Edit cart contents'),
+('cart.delete', 'Delete carts'),
+
+-- Order Management
+('order.view', 'View orders'),
+('order.create', 'Create new orders'),
+('order.edit', 'Edit order information'),
+('order.delete', 'Delete orders'),
+('order.process', 'Process orders'),
+
+-- Payment Management
+('payment.view', 'View payments'),
+('payment.create', 'Create payments'),
+('payment.edit', 'Edit payment information'),
+('payment.delete', 'Delete payments'),
+('payment.process', 'Process payments'),
+
+-- Shipment Management
+('shipment.view', 'View shipments'),
+('shipment.create', 'Create shipments'),
+('shipment.edit', 'Edit shipment information'),
+('shipment.delete', 'Delete shipments'),
+('shipment.track', 'Track shipments'),
+
+-- Conversation Management
+('conversation.view', 'View customer conversations'),
+('conversation.create', 'Start conversations'),
+('conversation.respond', 'Respond to conversations'),
+('conversation.close', 'Close conversations'),
+('conversation.rate', 'Rate conversations'),
+('conversation.delete', 'Delete conversations'),
+
+-- Report Generation
+('report.view', 'View reports'),
+('report.generate', 'Generate reports'),
+('report.export', 'Export reports'),
+('report.manage', 'Manage report settings'),
+
+-- Dashboard Access
+('dashboard.analytics', 'Access analytics dashboard'),
+('dashboard.sales', 'Access sales dashboard'),
+('dashboard.inventory', 'Access inventory dashboard'),
+('dashboard.customer', 'Access customer dashboard');
+
+
+-- 5. Insert data into RolePermission table
+
+-- Admin role permissions (role_id = 1)
+-- Admin has all permissions
+INSERT INTO RolePermission (role_id, permission_id)
+SELECT 1, permission_id FROM Permission;
+
+-- Manager role permissions (role_id = 2)
+-- Managers have broad access but with some limitations
+INSERT INTO RolePermission (role_id, permission_id)
+SELECT 2, permission_id FROM Permission
+WHERE permission_name IN (
+    -- Employee Management (Cannot delete)
+    'employee.view', 'employee.create', 'employee.edit', 'employee.view_sensitive',
+
+    -- Role Management (All)
+    'role.view', 'role.create', 'role.edit', 'role.assign', 'role.delete',
+
+    -- Permission Management (All)
+    'permission.view', 'permission.assign',
+
+    -- Material Management (All)
+    'material.view', 'material.create', 'material.edit', 'material.import',
+    'material.export', 'material.adjust', 'material.delete',
+
+    -- Material Transaction (Cannot manage)
+    'material_transaction.view',
+
+    -- Brand Management (All)
+    'brand.view', 'brand.create', 'brand.edit', 'brand.delete',
+
+    -- Product Management (All)
+    'product.view', 'product.create', 'product.edit', 'product.details.manage', 'product.delete',
+
+    -- Inventory Management (All)
+    'inventory.view', 'inventory.import', 'inventory.export', 'inventory.adjust',
+    'inventory.sell', 'inventory.combine',
+
+    -- Inventory Transaction (Cannot manage)
+    'inventory_transaction.view',
+
+    -- Promotion Management (Cannot delete)
+    'promotion.view', 'promotion.create', 'promotion.edit', 'promotion.assign',
+
+    -- Customer Management (Cannot delete)
+    'customer.view', 'customer.create', 'customer.edit', 'customer.rating', 'customer.view_sensitive',
+
+    -- Cart Management (View only)
+    'cart.view',
+
+    -- Order Management (Cannot delete)
+    'order.view', 'order.create', 'order.edit', 'order.process',
+
+    -- Payment Management (Cannot delete)
+    'payment.view', 'payment.create', 'payment.edit', 'payment.process',
+
+    -- Shipment Management (Cannot delete)
+    'shipment.view', 'shipment.create', 'shipment.edit', 'shipment.track',
+
+    -- Conversation Management (Cannot delete)
+    'conversation.view', 'conversation.create', 'conversation.respond', 'conversation.close', 'conversation.rate',
+
+    -- Report Generation (All)
+    'report.view', 'report.generate', 'report.export', 'report.manage',
+
+    -- Dashboard Access (All)
+    'dashboard.analytics', 'dashboard.sales', 'dashboard.inventory', 'dashboard.customer'
+);
+
+-- Material Staff role permissions (role_id = 3)
+-- Material Staff have access to material and inventory management
+INSERT INTO RolePermission (role_id, permission_id)
+SELECT 3, permission_id FROM Permission
+WHERE permission_name IN (
+    -- Material Management (Cannot delete)
+    'material.view',
+    'material.create',
+    'material.edit',
+    'material.import',
+    'material.export',
+    'material.adjust',
+
+    -- Material Transaction (Cannot manage)
+    'material_transaction.view'
+);
+GO
+
+-- Decanting Staff role permissions (role_id = 4)
+-- Decanting Staff have access to product and inventory management
+INSERT INTO RolePermission (role_id, permission_id)
+SELECT 4, permission_id FROM Permission
+WHERE permission_name IN (
+    -- Material Management (Only view)
+    'material.view',
+
+    -- Inventory Management (All)
+    'inventory.view',
+    'inventory.import',
+    'inventory.export',
+    'inventory.adjust',
+    'inventory.sell',
+    'inventory.combine',
+
+    -- Product Management (Only view)
+    'product.view'
+);
+GO
+
+-- Order Staff role permissions (role_id = 5)
+-- Order Staff have access to order and payment management
+INSERT INTO RolePermission (role_id, permission_id)
+SELECT 5, permission_id FROM Permission
+WHERE permission_name IN (
+    -- Inventory Management (Only view)
+    'inventory.view',
+
+    -- Inventory Transaction (Only view)
+    'inventory_transaction.view',
+
+    -- Order Management (Cannot delete)
+    'order.view',
+    'order.create',
+    'order.edit',
+    'order.process',
+
+    -- Payment Management (Cannot view and process)
+    'payment.view',
+    'payment.process',
+
+    -- Shipment Management (Cannot delete)
+    'shipment.view',
+    'shipment.create',
+    'shipment.edit',
+    'shipment.track',
+
+    -- Cart Management (Only view)
+    'cart.view',
+
+    -- Customer Management (Can view and rating)
+    'customer.view',
+    'customer.rating',
+
+    -- Conversation Management (Only view)
+    'conversation.view',
+    'conversation.create',
+    'conversation.respond',
+    'conversation.close',
+    'conversation.rate'
+);
+GO
+
+-- Customer Care role permissions (role_id = 6)
+-- Customer Care have access to customer and conversation management
+INSERT INTO RolePermission (role_id, permission_id)
+SELECT 6, permission_id FROM Permission
+WHERE permission_name IN (
+    -- Customer Management (Can delete and view sensitive)
+    'customer.view',
+    'customer.create',
+    'customer.edit',
+    'customer.rating',
+
+    -- Cart Management (Only view)
+    'cart.view',
+
+    -- Order Management (Only view)
+    'order.view',
+
+    -- Payment Management (Only view)
+    'payment.view',
+
+    -- Shipment Management (Only view)
+    'shipment.view',
+
+    -- Conversation Management (Cannot delete)
+    'conversation.view',
+    'conversation.create',
+    'conversation.respond',
+    'conversation.close',
+    'conversation.rate'
+);
+GO
+
+-- Data Analyst role permissions (role_id = 7)
+-- Data Analyst have access to report generation and dashboard
+INSERT INTO RolePermission (role_id, permission_id)
+SELECT 7, permission_id FROM Permission
+WHERE permission_name IN (
+    -- Report Generation (All)
+    'report.view',
+    'report.generate',
+    'report.export',
+    'report.manage',
+
+    -- Dashboard Access (All)
+    'dashboard.analytics',
+    'dashboard.sales',
+    'dashboard.inventory',
+    'dashboard.customer'
+);
+
+-- Staff (default role) permissions (role_id = 8)
+-- Staff have limited access to view only
+INSERT INTO RolePermission (role_id, permission_id)
+SELECT 8, permission_id FROM Permission
+WHERE permission_name IN (
+    -- Material Management (Only view)
+    'material.view',
+
+    -- Inventory Management (Only view)
+    'inventory.view',
+
+    -- Product Management (Only view)
+    'product.view'
+);
+GO

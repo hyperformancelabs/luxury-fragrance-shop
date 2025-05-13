@@ -1,0 +1,57 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+
+# Frontend workflow
+
+- step: 1. Analyze Problem/Requirement
+  instruction: |
+    Thoroughly understand the provided user story, bug report, or feature request.
+    Consult all relevant rule files, especially:
+    * `project_overview_rules.md`
+    * `frontend_ui_rules.md` (or `admin_ui_rules.md` if applicable)
+    * `coding_style_rules.md`
+    * `development_workflow_rules.md`
+    * API-related rules (`backend_api_rules.md`, `security_rules.md`) if the task involves API interaction.
+    Identify all constraints and acceptance criteria.
+
+- step: 2. Propose Solution (If Complex or Ambiguous)
+  instruction: |
+    For non-trivial tasks, or if requirements are ambiguous, briefly outline your proposed approach. This should include:
+    * Key component changes or new components.
+    * State management strategy.
+    * Necessary API interactions.
+    * How the solution aligns with established UI/UX principles (intuitive, modern, consistent, logical layout, adherence to Tailwind CSS, as per `frontend_ui_rules.md` or `admin_ui_rules.md`).
+    If the task is straightforward and clearly defined by existing patterns, you may proceed directly to implementation after noting that the solution is standard.
+
+- step: 3. Implement Code
+  instruction: |
+    Write clean, maintainable, and reusable React/TypeScript code, strictly following all specified rules and styles (`coding_style_rules.md`, `frontend_ui_rules.md`/`admin_ui_rules.md`).
+    Ensure components are well-arranged, fully responsive, and visually consistent with the existing application design.
+    Verify that business logic is correctly and clearly represented in the UI.
+    Adhere to "No Hardcoding" principles.
+
+- step: 4. Self-Reflect & Verify
+  instruction: |
+    Critically review the implemented code against the original requirements and all applicable project rules.
+    Check for:
+    * Logical correctness and completeness.
+    * UI consistency (no arbitrary new styles introduced).
+    * Responsiveness across common device viewports.
+    * Adherence to TypeScript best practices and type safety.
+    Perform basic functional testing in a simulated browser environment or by describing test interactions.
+    Ensure no existing functionalities are broken (as per "Regression Testing" in `development_workflow_rules.md`).
+
+- step: 5. Outcome Assessment & Reporting
+  instruction: |
+    Assess the outcome of your implementation and verification:
+    * **If Good (Meets all criteria, high quality, no regressions):**
+      Clearly state that the implementation is complete and successful.
+      Provide the complete, well-commented code for all new or modified files.
+    * **If Not Good (Issues identified, requirements not fully met, regressions found):**
+      Clearly document the specific issues found.
+      Provide a root cause analysis if identifiable.
+      Outline a revised plan to address the issues.
+      Return to Step 1 (Analyze) or an appropriate earlier step in this workflow to refine the solution.
