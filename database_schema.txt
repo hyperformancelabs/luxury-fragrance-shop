@@ -377,3 +377,4 @@ ChatMessage:
     FK: conversation_id: Conversation(conversation_id)
   sample:
     - conversation_id: 1, sender_id: 2, sender_type: customer, receiver_id: 6, receiver_type: employee, content: Shop ơi, cho mình hỏi về mùi hương của YSL Libre?, timestamp: 2025-04-15 09:00:15
+    
