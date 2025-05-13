@@ -66,7 +66,7 @@
             <div class="profile-sidebar">
                 <div class="profile-menu">
                     <div class="profile-menu-header">
-                        <img th:src="${user.avatar}" class="profile-avatar" alt="Avatar">
+<!--                        <img th:src="${user.avatar}" class="profile-avatar" alt="Avatar">-->
                         <div>
                             <div class="profile-name" th:text="${user.name}">Nguyễn Văn A</div>
                             <div class="profile-email" th:text="${user.email}">nguyenvana@example.com</div>
@@ -112,30 +112,50 @@
                             <i class="fas fa-edit me-1"></i> Chỉnh sửa
                         </a>
                     </div>
-                    
+
                     <div class="profile-info">
                         <div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">Tên đăng nhập</div>
+                                <div class="profile-info-value" th:text="${user.username}">username</div>
+                            </div>
                             <div class="profile-info-item">
                                 <div class="profile-info-label">Họ và tên</div>
                                 <div class="profile-info-value" th:text="${user.name}">Nguyễn Văn A</div>
                             </div>
                             <div class="profile-info-item">
                                 <div class="profile-info-label">Email</div>
-                                <div class="profile-info-value" th:text="${user.email}">nguyenvana@example.com</div>
+                                <div class="profile-info-value" th:text="${user.email}">email@example.com</div>
                             </div>
-                        </div>
-                        
-                        <div>
                             <div class="profile-info-item">
                                 <div class="profile-info-label">Số điện thoại</div>
-                                <div class="profile-info-value" th:text="${user.phone}">0987654321</div>
+                                <div class="profile-info-value" th:text="${user.phoneNumber}">0987654321</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">Trạng thái</div>
+                                <div class="profile-info-value" th:text="${user.status}">active</div>
                             </div>
                             <div class="profile-info-item">
+                                <div class="profile-info-label">Điểm tích lũy</div>
+                                <div class="profile-info-value" th:text="${user.loyaltyPoints}">100</div>
+                            </div>
+<!--                            <div class="profile-info-item">-->
+<!--                                <div class="profile-info-label">Thời gian tạo</div>-->
+<!--                                <div class="profile-info-value" th:text="${#dates.format(user.createAt, 'dd/MM/yyyy HH:mm')}">01/01/2023 09:00</div>-->
+<!--                            </div>-->
+                            <div class="profile-info-item">
                                 <div class="profile-info-label">Địa chỉ</div>
-                                <div class="profile-info-value" th:text="${user.address}">123 Đường Nguyễn Văn Linh, Quận 7, TP. Hồ Chí Minh</div>
+                                <div class="profile-info-value"
+                                     th:text="${user.street + ', ' + user.ward + ', ' + user.district + ', ' + user.city}">
+                                    123 Nguyễn Văn Linh, Tân Phong, Quận 7, TP. HCM
+                                </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>

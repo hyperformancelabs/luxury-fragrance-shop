@@ -127,15 +127,15 @@
                                 <tr th:each="order : ${orders}">
                                     <td th:text="${order.orderId}">APH123456789</td>
                                     <td th:text="${order.orderDate}">15/05/2023 14:30</td>
-                                    <td th:text="${#numbers.formatDecimal(order.total, 0, 'COMMA', 0, 'POINT') + 'đ'}">8.000.000đ</td>
+                                    <td th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT') + 'đ'}">8.000.000đ</td>
                                     <td>
                                         <span class="order-status" 
                                               th:classappend="${
-                                                order.status == 'Đã giao hàng' ? 'order-status-delivered' : 
-                                                (order.status == 'Đang giao hàng' ? 'order-status-shipping' : 
-                                                (order.status == 'Đang xử lý' ? 'order-status-processing' : 'order-status-cancelled'))
+                                                order.orderStatus == 'Đã giao hàng' ? 'order-status-delivered' :
+                                                (order.orderStatus == 'Đang giao hàng' ? 'order-status-shipping' :
+                                                (order.orderStatus == 'Đang xử lý' ? 'order-status-processing' : 'order-status-cancelled'))
                                               }"
-                                              th:text="${order.status}">Đã giao hàng</span>
+                                              th:text="${order.orderStatus}">Đã giao hàng</span>
                                     </td>
                                     <td>
                                         <a th:href="@{'/order-success?orderId=' + ${order.orderId}}" class="view-order-btn">
