@@ -107,13 +107,35 @@
                         <span class="badge bg-danger">-30%</span>
                     </div>
                     <div class="product-actions">
-                        <button class="action-btn" title="Yêu thích">
-                            <i class="far fa-heart"></i>
-                        </button>
+                        <!-- Nếu đã đăng nhập -->
+                        <div sec:authorize="isAuthenticated()">
+                            <form th:action="@{/wishlist/add}" method="post"
+                                  th:if="${!flashSaleProductInWishlistMap[product.productId]}"
+                                  class="d-inline">
+                                <input type="hidden" name="productId" th:value="${product.productId}" />
+                                <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                                <button type="submit" class="action-btn" title="Yêu thích">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </form>
+                            <button class="action-btn active" title="Đã yêu thích" disabled
+                                    th:if="${flashSaleProductInWishlistMap[product.productId]}">
+                                <i class="far fa-heart text-danger"></i>
+                            </button>
+                        </div>
+
+                        <!-- Nếu chưa đăng nhập -->
+                        <div sec:authorize="isAnonymous()">
+                            <button class="action-btn" title="Yêu thích" onclick="showLoginReminder()">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+
                         <button class="action-btn" title="Xem nhanh" th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
                             <i class="far fa-eye"></i>
                         </button>
                     </div>
+
                     <a th:href="@{'/shop/product/' + ${product.productId}}">
                         <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
                     </a>
@@ -201,13 +223,35 @@
                         <span class="badge bg-danger">-30%</span>
                     </div>
                     <div class="product-actions">
-                        <button class="action-btn" title="Yêu thích">
-                            <i class="far fa-heart"></i>
-                        </button>
+                        <!-- Nếu đã đăng nhập -->
+                        <div sec:authorize="isAuthenticated()">
+                            <form th:action="@{/wishlist/add}" method="post"
+                                  th:if="${!flashSaleProductInWishlistMap[product.productId]}"
+                                  class="d-inline">
+                                <input type="hidden" name="productId" th:value="${product.productId}" />
+                                <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                                <button type="submit" class="action-btn" title="Yêu thích">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </form>
+                            <button class="action-btn active" title="Đã yêu thích" disabled
+                                    th:if="${flashSaleProductInWishlistMap[product.productId]}">
+                                <i class="far fa-heart text-danger"></i>
+                            </button>
+                        </div>
+
+                        <!-- Nếu chưa đăng nhập -->
+                        <div sec:authorize="isAnonymous()">
+                            <button class="action-btn" title="Yêu thích" onclick="showLoginReminder()">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+
                         <button class="action-btn" title="Xem nhanh" th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
                             <i class="far fa-eye"></i>
                         </button>
                     </div>
+
                     <a th:href="@{'/shop/product/' + ${product.productId}}">
                         <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
                     </a>
@@ -289,13 +333,38 @@
                     <span class="badge bg-danger">Mới</span>
                 </div>
                 <div class="product-actions">
-                    <button class="action-btn" title="Yêu thích">
-                        <i class="far fa-heart"></i>
-                    </button>
+                    <!-- Nếu đã đăng nhập -->
+                    <div sec:authorize="isAuthenticated()">
+                        <!-- Nếu chưa nằm trong wishlist -->
+                        <form th:action="@{/wishlist/add}" method="post"
+                              th:if="${!newProductInWishlistMap[product.productId]}"
+                              class="d-inline">
+                            <input type="hidden" name="productId" th:value="${product.productId}" />
+                            <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                            <button type="submit" class="action-btn" title="Yêu thích">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </form>
+
+                        <!-- Nếu đã nằm trong wishlist -->
+                        <button class="action-btn active" title="Đã yêu thích" disabled
+                                th:if="${newProductInWishlistMap[product.productId]}">
+                            <i class="far fa-heart text-danger"></i>
+                        </button>
+                    </div>
+
+                    <!-- Nếu chưa đăng nhập -->
+                    <div sec:authorize="isAnonymous()">
+                        <button class="action-btn" title="Yêu thích" onclick="showLoginReminder()">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+
                     <button class="action-btn" title="Xem nhanh" th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
                         <i class="far fa-eye"></i>
                     </button>
                 </div>
+
                 <a th:href="@{'/shop/product/' + ${product.productId}}">
                     <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
                 </a>
@@ -387,13 +456,39 @@
                     <span class="badge bg-success">Bán chạy</span>
                 </div>
                 <div class="product-actions">
-                    <button class="action-btn" title="Yêu thích">
-                        <i class="far fa-heart"></i>
-                    </button>
-                    <button class="action-btn" title="Xem nhanh" th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
+                    <!-- Nếu đã đăng nhập -->
+                    <div sec:authorize="isAuthenticated()">
+                        <!-- Nếu chưa nằm trong wishlist -->
+                        <form th:action="@{/wishlist/add}" method="post"
+                              th:if="${!bestSellingProductInWishlistMap[product.productId]}"
+                              class="d-inline">
+                            <input type="hidden" name="productId" th:value="${product.productId}" />
+                            <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                            <button type="submit" class="action-btn" title="Yêu thích">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </form>
+
+                        <!-- Nếu đã nằm trong wishlist -->
+                        <button class="action-btn active" title="Đã yêu thích" disabled
+                                th:if="${bestSellingProductInWishlistMap[product.productId]}">
+                            <i class="far fa-heart text-danger"></i>
+                        </button>
+                    </div>
+
+                    <!-- Nếu chưa đăng nhập -->
+                    <div sec:authorize="isAnonymous()">
+                        <button class="action-btn" title="Yêu thích" onclick="showLoginReminder()">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+
+                    <button class="action-btn" title="Xem nhanh"
+                            th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
                         <i class="far fa-eye"></i>
                     </button>
                 </div>
+
                 <a th:href="@{'/shop/product/' + ${product.productId}}">
                     <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
                 </a>
@@ -459,13 +554,39 @@
                     <span class="badge bg-success">Bán chạy</span>
                 </div>
                 <div class="product-actions">
-                    <button class="action-btn" title="Yêu thích">
-                        <i class="far fa-heart"></i>
-                    </button>
-                    <button class="action-btn" title="Xem nhanh" th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
+                    <!-- Nếu đã đăng nhập -->
+                    <div sec:authorize="isAuthenticated()">
+                        <!-- Nếu chưa nằm trong wishlist -->
+                        <form th:action="@{/wishlist/add}" method="post"
+                              th:if="${!bestSellingProductInWishlistMap[product.productId]}"
+                              class="d-inline">
+                            <input type="hidden" name="productId" th:value="${product.productId}" />
+                            <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                            <button type="submit" class="action-btn" title="Yêu thích">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </form>
+
+                        <!-- Nếu đã nằm trong wishlist -->
+                        <button class="action-btn active" title="Đã yêu thích" disabled
+                                th:if="${bestSellingProductInWishlistMap[product.productId]}">
+                            <i class="far fa-heart text-danger"></i>
+                        </button>
+                    </div>
+
+                    <!-- Nếu chưa đăng nhập -->
+                    <div sec:authorize="isAnonymous()">
+                        <button class="action-btn" title="Yêu thích" onclick="showLoginReminder()">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+
+                    <button class="action-btn" title="Xem nhanh"
+                            th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
                         <i class="far fa-eye"></i>
                     </button>
                 </div>
+
                 <a th:href="@{'/shop/product/' + ${product.productId}}">
                     <img th:src="${product.imageUrl}" class="card-img-top product-img" alt="Product Image">
                 </a>
@@ -637,6 +758,60 @@
             window.location.reload();
         });
 
+        }
+    });
+</script>
+<script>
+    function showLoginReminder() {
+        Swal.fire({
+            icon: 'info',
+            title: 'Vui lòng đăng nhập',
+            text: 'Bạn cần đăng nhập để thêm sản phẩm vào mục yêu thích.',
+            confirmButtonText: 'Đăng nhập',
+            showCancelButton: true,
+            cancelButtonText: 'Hủy',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/auth/login";
+            }
+        });
+    }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get("logout") === "success") {
+            Swal.fire({
+                icon: 'success',
+                title: 'Đăng xuất thành công!',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                window.history.replaceState({}, document.title, window.location.pathname);
+                window.location.reload();
+            });
+        }
+
+        if (params.get("addedToCart") === "success") {
+            Swal.fire({
+                icon: 'success',
+                title: 'Đã thêm vào giỏ hàng!',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        if (params.get("wishlistAdded") === "success") {
+            Swal.fire({
+                icon: 'success',
+                title: 'Đã thêm vào danh sách yêu thích!',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
     });
 </script>

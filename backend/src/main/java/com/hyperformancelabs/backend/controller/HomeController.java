@@ -2,11 +2,10 @@ package com.hyperformancelabs.backend.controller;
 
 import com.hyperformancelabs.backend.dto.*;
 import com.hyperformancelabs.backend.model.ProductVariant;
-import com.hyperformancelabs.backend.service.BrandService;
-import com.hyperformancelabs.backend.service.InventoryTransactionService;
-import com.hyperformancelabs.backend.service.ProductService;
-import com.hyperformancelabs.backend.service.ProductVariantService;
+import com.hyperformancelabs.backend.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,13 +31,28 @@ public class HomeController {
     @Autowired
     private ProductVariantService productVariantService;
 
+    @Autowired
+    private WishlistService wishlistService;
+
     @GetMapping("/")
     public String home(Model model) {
+        String username = getCurrentUsername();
+        Set<Integer> wishlistProductIds = new HashSet<>();
+
+        if (username != null) {
+            List<WishlistDTO> wishlistItems = wishlistService.getWishlistItems(username);
+            for (WishlistDTO item : wishlistItems) {
+                ProductVariantDTO variant = productVariantService.getProductVariantById(item.getProductVariantId());
+                if (variant != null) {
+                    wishlistProductIds.add(variant.getProductId());
+                }
+            }
+        }
 
         // ------------------- Get flash deal products ----------------------------------------
         List<ProductDTO> flashSaleProducts = new ArrayList<>();
         List<FlashSaleProductDTO> flashDealProducts = productService.getFlashSaleProducts();
-        for(FlashSaleProductDTO flashDealProduct : flashDealProducts) {
+        for (FlashSaleProductDTO flashDealProduct : flashDealProducts) {
             flashSaleProducts.add(productService.getProductById(flashDealProduct.getProductId()));
         }
 
@@ -50,47 +64,28 @@ public class HomeController {
 
         Map<Integer, BigDecimal[]> flashSaleProductPriceRangeMap = new HashMap<>();
         Map<Integer, String> flashSaleProductVariants = new HashMap<>();
+        Map<Integer, Boolean> flashSaleProductHasStockMap = new HashMap<>();
+        Map<Integer, Integer> flashSaleFirstVariantMap = new HashMap<>();
+        Map<Integer, Boolean> flashSaleProductInWishlistMap = new HashMap<>();
+
         for (Map.Entry<Integer, List<ProductVariantDTO>> entry : flashSaleProductVariantMap.entrySet()) {
+            Integer productId = entry.getKey();
             List<ProductVariantDTO> variants = entry.getValue();
 
-            if (variants != null && !variants.isEmpty()) {
-                // Tính toán giá thấp nhất và cao nhất
+            if (!variants.isEmpty()) {
                 Optional<BigDecimal> min = variants.stream().map(ProductVariantDTO::getPrice).min(Comparator.naturalOrder());
                 Optional<BigDecimal> max = variants.stream().map(ProductVariantDTO::getPrice).max(Comparator.naturalOrder());
+                min.ifPresent(bigDecimal -> flashSaleProductPriceRangeMap.put(productId, new BigDecimal[]{bigDecimal, max.get()}));
 
-                max.ifPresent(bigDecimal -> flashSaleProductPriceRangeMap.put(entry.getKey(), new BigDecimal[]{min.get(), bigDecimal}));
+                flashSaleProductVariants.put(productId, convertVariantsToJson(variants));
 
-                // Thêm biến thể vào map
-                if(!flashSaleProductVariants.containsKey(entry.getKey())) {
-                    flashSaleProductVariants.put(entry.getKey(), convertVariantsToJson(variants));
-                    String variantsJson = convertVariantsToJson(variants);
-                    flashSaleProductVariants.put(entry.getKey(), variantsJson);
-                    flashSaleProductVariantMap.put(entry.getKey(), variants);
-                } else {
-                    flashSaleProductVariants.put(entry.getKey(), flashSaleProductVariants.get(entry.getKey()));
-                }
+                Optional<ProductVariantDTO> firstInStock = variants.stream().filter(v -> v.getQuantityInStock() > 0).findFirst();
+                flashSaleFirstVariantMap.put(productId, firstInStock.map(ProductVariantDTO::getProductVariantId).orElse(null));
+
+                flashSaleProductHasStockMap.put(productId, firstInStock.isPresent());
+
+                flashSaleProductInWishlistMap.put(productId, wishlistProductIds.contains(productId));
             }
-        }
-
-        Map<Integer, Boolean> flashSaleProductHasStockMap = new HashMap<>();
-        for (Map.Entry<Integer, List<ProductVariantDTO>> entry : flashSaleProductVariantMap.entrySet()) {
-            Integer productId = entry.getKey();
-            List<ProductVariantDTO> variants = entry.getValue();
-
-            boolean hasStock = variants.stream().anyMatch(v -> v.getQuantityInStock() > 0);
-            flashSaleProductHasStockMap.put(productId, hasStock);
-        }
-
-        Map<Integer, Integer> flashSaleFirstVariantMap = new HashMap<>();
-        for (Map.Entry<Integer, List<ProductVariantDTO>> entry : flashSaleProductVariantMap.entrySet()) {
-            Integer productId = entry.getKey();
-            List<ProductVariantDTO> variants = entry.getValue();
-
-            Optional<ProductVariantDTO> firstInStock = variants.stream()
-                    .filter(v -> v.getQuantityInStock() > 0)
-                    .findFirst();
-
-            flashSaleFirstVariantMap.put(productId, firstInStock.map(ProductVariantDTO::getProductVariantId).orElse(null));
         }
 
         model.addAttribute("flashDealProducts", flashSaleProducts);
@@ -98,6 +93,7 @@ public class HomeController {
         model.addAttribute("flashSaleProductVariants", flashSaleProductVariants);
         model.addAttribute("flashSaleProductHasStockMap", flashSaleProductHasStockMap);
         model.addAttribute("flashSaleFirstVariantMap", flashSaleFirstVariantMap);
+        model.addAttribute("flashSaleProductInWishlistMap", flashSaleProductInWishlistMap);
 
 
         // ---------------------------------- Get new products -------------------------------------------------------------------
@@ -117,6 +113,7 @@ public class HomeController {
         Map<Integer, String> newProductVariants = new HashMap<>();
         Map<Integer, Integer> newFirstVariantMap = new HashMap<>();
         Map<Integer, Boolean> newProductHasStockMap = new HashMap<>();
+        Map<Integer, Boolean> newProductInWishlistMap = new HashMap<>();
 
         for (Map.Entry<Integer, List<ProductVariantDTO>> entry : newProductVariantMap.entrySet()) {
             Integer productId = entry.getKey();
@@ -142,6 +139,8 @@ public class HomeController {
 
                 // Cờ còn hàng
                 newProductHasStockMap.put(productId, firstInStock.isPresent());
+
+                newProductInWishlistMap.put(productId, wishlistProductIds.contains(productId));
             }
         }
 
@@ -150,6 +149,7 @@ public class HomeController {
         model.addAttribute("newProductVariants", newProductVariants);
         model.addAttribute("newFirstVariantMap", newFirstVariantMap);
         model.addAttribute("newProductHasStockMap", newProductHasStockMap);
+        model.addAttribute("newProductInWishlistMap", newProductInWishlistMap);
 
 
         // --------------------------------------------- Get best selling ----------------------------------------------------
@@ -165,6 +165,7 @@ public class HomeController {
         Map<Integer, String> bestSellingProductVariants = new HashMap<>();
         Map<Integer, Integer> bestSellingFirstVariantMap = new HashMap<>();
         Map<Integer, Boolean> bestSellingProductHasStockMap = new HashMap<>();
+        Map<Integer, Boolean> bestSellingProductInWishlistMap = new HashMap<>();
 
         for (Map.Entry<Integer, List<ProductVariantDTO>> entry : bestSellingProductVariantMap.entrySet()) {
             Integer productId = entry.getKey();
@@ -190,6 +191,8 @@ public class HomeController {
 
                 // Cờ còn hàng
                 bestSellingProductHasStockMap.put(productId, firstInStock.isPresent());
+
+                bestSellingProductInWishlistMap.put(productId, wishlistProductIds.contains(productId));
             }
         }
 
@@ -198,6 +201,7 @@ public class HomeController {
         model.addAttribute("bestSellingProductVariants", bestSellingProductVariants);
         model.addAttribute("bestSellingFirstVariantMap", bestSellingFirstVariantMap);
         model.addAttribute("bestSellingProductHasStockMap", bestSellingProductHasStockMap);
+        model.addAttribute("bestSellingProductInWishlistMap", bestSellingProductInWishlistMap);
 
 
 
@@ -259,11 +263,6 @@ public class HomeController {
         return "home";
     }
 
-    /**
-     * Chuyển đổi danh sách biến thể thành chuỗi JSON
-     * @param variants Danh sách biến thể
-     * @return Chuỗi JSON
-     */
     private String convertVariantsToJson(List<ProductVariantDTO> variants) {
         if (variants == null || variants.isEmpty()) {
             return "[]";
@@ -289,5 +288,14 @@ public class HomeController {
             e.printStackTrace();
             return "[]";
         }
+    }
+
+    private String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal())) {
+            return authentication.getName();
+        }
+        return null;
     }
 }

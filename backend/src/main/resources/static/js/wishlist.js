@@ -113,29 +113,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Xử lý nút thêm tất cả vào giỏ hàng
-    const addAllToCartBtn = document.getElementById('add-all-to-cart-btn');
-    if (addAllToCartBtn) {
-        addAllToCartBtn.addEventListener('click', function() {
-            const wishlistItems = document.querySelectorAll('.wishlist-item');
-
-            wishlistItems.forEach(item => {
-                const productId = item.getAttribute('data-product-id');
-                const quantity = item.querySelector('.quantity-input').value;
-                const selectedSize = item.querySelector('.size-option.active');
-
-                if (selectedSize) {
-                    const size = selectedSize.getAttribute('data-value');
-                    console.log(`Thêm sản phẩm ${productId} vào giỏ hàng, kích thước: ${size}, số lượng: ${quantity}`);
-                } else {
-                    console.log(`Vui lòng chọn kích thước cho sản phẩm ${productId}`);
-                }
-            });
-
-            // Hiển thị thông báo thành công
-            alert('Đã thêm tất cả sản phẩm vào giỏ hàng!');
-        });
-    }
+//    const addAllToCartBtn = document.getElementById('add-all-to-cart-btn');
+//    if (addAllToCartBtn) {
+//        addAllToCartBtn.addEventListener('click', function() {
+//            const wishlistItems = document.querySelectorAll('.wishlist-item');
+//
+//            wishlistItems.forEach(item => {
+//                const productId = item.getAttribute('data-product-id');
+//                const quantity = item.querySelector('.quantity-input').value;
+//                const selectedSize = item.querySelector('.size-option.active');
+//
+//                if (selectedSize) {
+//                    const size = selectedSize.getAttribute('data-value');
+//                    console.log(`Thêm sản phẩm ${productId} vào giỏ hàng, kích thước: ${size}, số lượng: ${quantity}`);
+//                } else {
+//                    console.log(`Vui lòng chọn kích thước cho sản phẩm ${productId}`);
+//                }
+//            });
+//
+//            // Hiển thị thông báo thành công
+//            alert('Đã thêm tất cả sản phẩm vào giỏ hàng!');
+//        });
+//    }
 
     // Hiển thị danh sách yêu thích trống
     function showEmptyWishlist() {

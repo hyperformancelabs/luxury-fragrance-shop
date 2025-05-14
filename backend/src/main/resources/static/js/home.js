@@ -27,15 +27,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Quick view and wishlist buttons
     document.querySelectorAll('.action-btn').forEach(button => {
         button.addEventListener('click', function(e) {
-            e.preventDefault();
             const action = this.getAttribute('title');
             const productCard = this.closest('.product-card');
             const productName = productCard.querySelector('.card-title').textContent;
 
-            if (action === 'Yêu thích') {
-                console.log('Added to wishlist:', productName);
-                // In a real implementation, this would add the product to the wishlist
-            } else if (action === 'Xem nhanh') {
+//            if (action === 'Yêu thích') {
+//                console.log('Added to wishlist:', productName);
+//                // In a real implementation, this would add the product to the wishlist
+//            } else
+            if (action === 'Xem nhanh') {
+                        e.preventDefault();
                 console.log('Quick view for:', productName);
                 // In a real implementation, this would open a modal with product details
             }

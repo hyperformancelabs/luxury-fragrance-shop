@@ -40,9 +40,6 @@ public class CartController {
     @Autowired
     private BrandService brandService;
 
-    /**
-     * Hiển thị trang giỏ hàng
-     */
     @GetMapping
     public String viewCart(Model model, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         try {
@@ -128,15 +125,11 @@ public class CartController {
         }
     }
 
-    /**
-     * Thêm sản phẩm vào giỏ hàng
-     */
     @PostMapping("/add")
     public String addToCart(
             @RequestParam Integer productVariantId,
             @RequestParam Integer quantity,
-            HttpServletRequest request,
-            RedirectAttributes redirectAttributes) {
+            HttpServletRequest request) {
 
         String username = getCurrentUsername();
         String sessionId = getOrCreateSessionId(request);
@@ -147,19 +140,19 @@ public class CartController {
 
         try {
             cartService.addToCart(username, sessionId, addToCartRequest);
-            redirectAttributes.addFlashAttribute("successMessage", "Sản phẩm đã được thêm vào giỏ hàng");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể thêm sản phẩm vào giỏ hàng: " + e.getMessage());
+            // Nếu có lỗi, vẫn quay lại trang trước, nhưng kèm thông báo lỗi
+            String referer = request.getHeader("Referer");
+            return "redirect:" + (referer != null ? referer.split("\\?")[0] + "?error=true" : "/?error=true");
         }
 
-        // Chuyển hướng về trang trước đó hoặc trang giỏ hàng
+        // ✅ Thêm tham số ?addedToCart=success để hiển thị thông báo SweetAlert
         String referer = request.getHeader("Referer");
-        return "redirect:" + (referer != null ? referer : "/cart");
+        return "redirect:" + (referer != null ? referer.split("\\?")[0] + "?addedToCart=success" : "/?addedToCart=success");
     }
 
-    /**
-     * Cập nhật số lượng sản phẩm trong giỏ hàng
-     */
+
+
     @PostMapping("/update")
     public String updateCartItemQuantity(
             @RequestParam Integer cartItemId,
@@ -185,9 +178,7 @@ public class CartController {
         return "redirect:/cart";
     }
 
-    /**
-     * Xóa sản phẩm khỏi giỏ hàng
-     */
+
     @PostMapping("/remove")
     public String removeCartItem(
             @RequestParam Integer cartItemId,
@@ -207,9 +198,7 @@ public class CartController {
         return "redirect:/cart";
     }
 
-    /**
-     * Lấy username của người dùng hiện tại
-     */
+
     private String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated() &&
@@ -219,9 +208,6 @@ public class CartController {
         return null;
     }
 
-    /**
-     * Lấy hoặc tạo sessionId
-     */
     private String getOrCreateSessionId(HttpServletRequest request) {
         HttpSession session = request.getSession(true);
         String sessionId = (String) session.getAttribute("CART_SESSION_ID");
@@ -234,7 +220,6 @@ public class CartController {
         return sessionId;
     }
 
-    // Thêm endpoint mới để thêm sản phẩm vào giỏ hàng bằng productId
     @PostMapping("/add-by-product")
     public String addToCartByProduct(@RequestParam(value = "productId", required = true) Integer productId,
                                     @RequestParam(value = "quantity", defaultValue = "1") Integer quantity,
@@ -268,7 +253,6 @@ public class CartController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể thêm sản phẩm vào giỏ hàng: " + e.getMessage());
 
-            // Chuyển hướng về trang trước đó hoặc trang giỏ hàng
             String referer = request.getHeader("Referer");
             return "redirect:" + (referer != null ? referer : "/shop");
         }

@@ -1,61 +1,152 @@
 package com.hyperformancelabs.backend.controller;
 
+import com.hyperformancelabs.backend.dto.*;
+import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
+import com.hyperformancelabs.backend.service.ProductService;
+import com.hyperformancelabs.backend.service.ProductVariantService;
+import com.hyperformancelabs.backend.service.WishlistService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/wishlist")
 public class WishlistController {
 
+    @Autowired
+    private WishlistService wishlistService;
+
+    @Autowired
+    private ProductService productService;
+
+    @Autowired
+    private ProductVariantService productVariantService;
+
     @GetMapping
-    public String viewWishlist(Model model) {
-        // Tạo dữ liệu mẫu cho danh sách yêu thích
-        List<Map<String, Object>> wishlistItems = new ArrayList<>();
-        
-        // Thêm một số sản phẩm mẫu vào danh sách yêu thích
-        wishlistItems.add(createWishlistItem(1, "Nước Hoa Nữ Versace Bright Crystal EDT", "/images/products/versace-bright-crystal.jpg", true, 
-                List.of(
-                    Map.of("value", "50ml", "label", "50ml", "price", 2400000),
-                    Map.of("value", "100ml", "label", "100ml", "price", 3500000)
-                )));
-        
-        wishlistItems.add(createWishlistItem(2, "Nước Hoa Nam Dior Sauvage EDT", "/images/products/dior-sauvage.jpg", true, 
-                List.of(
-                    Map.of("value", "60ml", "label", "60ml", "price", 2800000),
-                    Map.of("value", "100ml", "label", "100ml", "price", 3800000)
-                )));
-        
-        wishlistItems.add(createWishlistItem(3, "Nước Hoa Unisex Jo Malone Wood Sage & Sea Salt", "/images/products/jo-malone.jpg", false, 
-                List.of(
-                    Map.of("value", "30ml", "label", "30ml", "price", 1900000),
-                    Map.of("value", "100ml", "label", "100ml", "price", 3200000)
-                )));
-        
-        wishlistItems.add(createWishlistItem(4, "Nước Hoa Nữ Chanel Coco Mademoiselle EDP", "/images/products/chanel-coco.jpg", true, 
-                List.of(
-                    Map.of("value", "50ml", "label", "50ml", "price", 2700000),
-                    Map.of("value", "75ml", "label", "75ml", "price", 3000000)
-                )));
-        
-        model.addAttribute("wishlistItems", wishlistItems);
-        
-        return "wishlist/wishlist";
+    public String viewWishlist(Model model, RedirectAttributes redirectAttributes) {
+        try {
+            String username = getCurrentUsername();
+//            String username = "nguyenvana";
+
+
+            List<WishlistDTO> wishlistItems = wishlistService.getWishlistItems(username);
+            List<WishlistItemDisplayDTO> wishlistItemDisplays = new ArrayList<>();
+
+            boolean hasInStock = false;
+
+            for (WishlistDTO wishlistItem : wishlistItems) {
+                try {
+                    ProductVariantDTO productVariant = productVariantService.getProductVariantById(wishlistItem.getProductVariantId());
+                    ProductDTO product = productService.getProductById(productVariant.getProductId());
+
+                    List<ProductVariantDTO> variants = productVariantService.getProductVariantsByProductId(product.getProductId());
+
+                    List<Integer> volumes = variants.stream()
+                            .map(ProductVariantDTO::getVolume)
+                            .distinct()
+                            .sorted()
+                            .collect(Collectors.toList());
+
+                    BigDecimal minPrice = variants.stream()
+                            .map(ProductVariantDTO::getPrice)
+                            .min(BigDecimal::compareTo)
+                            .orElse(BigDecimal.ZERO);
+
+                    BigDecimal maxPrice = variants.stream()
+                            .map(ProductVariantDTO::getPrice)
+                            .max(BigDecimal::compareTo)
+                            .orElse(BigDecimal.ZERO);
+
+                    boolean anyVariantInStock = variants.stream()
+                            .anyMatch(v -> v.getQuantityInStock() > 0);
+
+                    WishlistItemDisplayDTO displayDTO = getWishlistItemDisplayDTO(wishlistItem, product, productVariant);
+                    displayDTO.setVariantVolumes(volumes);
+                    displayDTO.setMinPrice(minPrice);
+                    displayDTO.setMaxPrice(maxPrice);
+                    displayDTO.setInStock(anyVariantInStock);
+
+                    if (anyVariantInStock) {
+                        hasInStock = true;
+                    }
+
+                    wishlistItemDisplays.add(displayDTO);
+
+                } catch (ResourceNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            model.addAttribute("hasInStock", hasInStock);
+            model.addAttribute("wishlistItems", wishlistItemDisplays);
+
+            return "wishlist/wishlist";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi xảy ra khi tải giỏ hàng: " + e.getMessage());
+            e.printStackTrace();
+            model.addAttribute("wishlistItems", List.of());
+            return "wishlist/wishlist";
+        }
     }
-    
-    private Map<String, Object> createWishlistItem(int id, String name, String image, boolean inStock, List<Map<String, Object>> sizes) {
-        Map<String, Object> item = new HashMap<>();
-        item.put("id", id);
-        item.put("name", name);
-        item.put("image", image);
-        item.put("inStock", inStock);
-        item.put("sizes", sizes);
-        return item;
+
+    @PostMapping("/add")
+    public String addToWishlist(
+            @RequestParam Integer productId,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes) {
+        try {
+            String username = getCurrentUsername();
+            Integer productVariantId = productVariantService.findFirstByProduct_ProductId(productId).getProductVariantId();
+            wishlistService.addToWishlist(username, productVariantId);
+            redirectAttributes.addFlashAttribute("wishlistAdded", "success");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể thêm sản phẩm vào danh sách yêu thích: " + e.getMessage());
+        }
+
+
+        String referer = request.getHeader("Referer");
+        if (referer != null) {
+            if (referer.contains("?")) {
+                return "redirect:" + referer + "&wishlistAdded=success";
+            } else {
+                return "redirect:" + referer + "?wishlistAdded=success";
+            }
+        }
+        return "redirect:/?wishlistAdded=success";
+    }
+
+
+    private static WishlistItemDisplayDTO getWishlistItemDisplayDTO(WishlistDTO wishlistItem, ProductDTO product, ProductVariantDTO productVariant) {
+        WishlistItemDisplayDTO displayDTO = new WishlistItemDisplayDTO();
+        displayDTO.setWishlistId(wishlistItem.getWishlistId());
+        displayDTO.setProductId(product.getProductId());
+        displayDTO.setProductVariantId(productVariant.getProductVariantId());
+        displayDTO.setProductName(product.getProductName());
+        displayDTO.setImageUrl(product.getImageUrl());
+        displayDTO.setVolume(productVariant.getVolume());
+        displayDTO.setUnitPrice(productVariant.getPrice());
+        return displayDTO;
+    }
+
+    private String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated() &&
+                !"anonymousUser".equals(authentication.getPrincipal())) {
+            return authentication.getName();
+        }
+        return null;
     }
 }

@@ -30,8 +30,7 @@ public class Wishlist {
     @JoinColumn(name = "product_variant_id", nullable = false)
     private ProductVariant productVariant;
 
-    @NotNull(message = "Added date cannot be empty")
-    @PastOrPresent(message = "Added date cannot be in the future")
-    @Column(name = "added_date", nullable = false)
+    @Column(name = "added_date", insertable = false, updatable = false)
     private LocalDateTime addedDate;
+
 }
