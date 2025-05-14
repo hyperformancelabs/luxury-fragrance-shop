@@ -134,6 +134,9 @@ public class CartController {
         String username = getCurrentUsername();
         String sessionId = getOrCreateSessionId(request);
 
+        System.out.println("Adding to cart: " + productVariantId + " - " + quantity);
+        System.out.println("Username: " + username + " - SessionId: " + sessionId);
+
         AddToCartRequest addToCartRequest = new AddToCartRequest();
         addToCartRequest.setProductVariantId(productVariantId);
         addToCartRequest.setQuantity(quantity);

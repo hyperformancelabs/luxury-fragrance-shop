@@ -79,10 +79,13 @@
                         </div>
 
                         <div class="size-options">
-                            <span th:each="vol : ${item.variantVolumes}" class="size-option"
-                            th:data-value="${vol}"
-                            th:text="${vol + 'ml'}">50ml</span>
+    <span th:each="vol, iterStat : ${item.variantVolumes}"
+          th:data-value="${vol}"
+          th:data-variant-id="${item.volumeVariantIdMap[vol.toString()]}"
+          th:class="'size-option' + (iterStat.index == 0 ? ' active' : '')"
+          th:text="${vol + 'ml'}">50ml</span>
                         </div>
+
 
 
                         <div class="quantity-selector">
@@ -105,9 +108,16 @@
                     </div>
 
                     <div class="wishlist-item-actions">
-                        <button class="add-to-cart-btn" th:if="${item.inStock}">
-                            <i class="fas fa-shopping-cart me-1"></i> Thêm vào giỏ
-                        </button>
+                        <form th:action="@{/cart/add}" method="post" class="wishlist-add-to-cart-form">
+                            <input type="hidden" name="productVariantId" th:value="${item.productVariantId}" />
+                            <input type="hidden" name="quantity" value="1" />
+                            <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                            <button type="submit" class="add-to-cart-btn">
+                                <i class="fas fa-shopping-cart me-1"></i> Thêm vào giỏ
+                            </button>
+                        </form>
+
+
                         <form th:action="@{/wishlist/remove}" method="post" class="d-inline">
                             <input type="hidden" name="productVariantId" th:value="${item.productVariantId}" />
                             <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
@@ -189,6 +199,59 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/wishlist.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const addToCartForms = document.querySelectorAll(".wishlist-add-to-cart-form");
+
+            addToCartForms.forEach(form => {
+                form.addEventListener("submit", function (e) {
+                    e.preventDefault(); // ⛔ Ngăn submit ngay lập tức
+
+                    const wishlistItem = form.closest(".wishlist-item");
+
+                    const quantityInput = wishlistItem.querySelector(".quantity-input");
+                    const quantity = quantityInput ? quantityInput.value : 1;
+
+                    const selectedSize = wishlistItem.querySelector(".size-option.active");
+                    const productVariantIdInput = form.querySelector("input[name='productVariantId']");
+
+                    if (selectedSize) {
+                        const selectedVariantId = selectedSize.getAttribute("data-variant-id");
+                        const volume = selectedSize.getAttribute("data-value");
+
+                        // ✅ In ra để debug
+                        console.log("✅ Selected Volume (ml):", volume);
+                        console.log("✅ Selected Quantity:", quantity);
+                        console.log("✅ Selected Variant ID:", selectedVariantId);
+
+                        if (selectedVariantId && productVariantIdInput) {
+                            productVariantIdInput.value = selectedVariantId;
+                        }
+                    } else {
+                        console.warn("⚠️ Chưa chọn kích thước (volume) cho sản phẩm.");
+                    }
+
+                    form.querySelector("input[name='quantity']").value = quantity;
+
+                    // ✅ Chờ JS hoàn thành cập nhật trước khi submit
+                    setTimeout(() => {
+                        form.submit();
+                    }, 0);
+                });
+            });
+
+            // Xử lý chọn volume
+            document.querySelectorAll('.size-option').forEach(option => {
+                option.addEventListener('click', function () {
+                    const container = option.closest('.size-options');
+                    container.querySelectorAll('.size-option').forEach(el => el.classList.remove('active'));
+                    option.classList.add('active');
+                });
+            });
+        });
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function handleAddAllToCartClick(event) {
@@ -231,7 +294,6 @@
             });
         }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const params = new URLSearchParams(window.location.search);
@@ -248,7 +310,20 @@
             }
         });
     </script>
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("addedToCart") === "success") {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Đã thêm vào giỏ hàng!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+    </script>
 
 </body>
 </html>

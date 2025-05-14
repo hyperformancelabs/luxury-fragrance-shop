@@ -73,8 +73,18 @@ public class WishlistController {
                     boolean anyVariantInStock = variants.stream()
                             .anyMatch(v -> v.getQuantityInStock() > 0);
 
+                    Map<String, Integer> volumeVariantMap = variants.stream()
+                            .collect(Collectors.toMap(
+                                    v -> String.valueOf(v.getVolume()),
+                                    ProductVariantDTO::getProductVariantId,
+                                    (a, b) -> a
+                            ));
+
+                    System.out.println("Volume Variant Map: " + volumeVariantMap.keySet());
+
                     WishlistItemDisplayDTO displayDTO = getWishlistItemDisplayDTO(wishlistItem, product, productVariant);
                     displayDTO.setVariantVolumes(volumes);
+                    displayDTO.setVolumeVariantIdMap(volumeVariantMap);
                     displayDTO.setMinPrice(minPrice);
                     displayDTO.setMaxPrice(maxPrice);
                     displayDTO.setInStock(anyVariantInStock);
@@ -92,6 +102,7 @@ public class WishlistController {
 
             model.addAttribute("hasInStock", hasInStock);
             model.addAttribute("wishlistItems", wishlistItemDisplays);
+
 
             return "wishlist/wishlist";
         } catch (Exception e) {
