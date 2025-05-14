@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -126,6 +127,32 @@ public class WishlistController {
             }
         }
         return "redirect:/?wishlistAdded=success";
+    }
+
+    @PostMapping("/remove")
+    @Transactional
+    public String removeWishlistItem(
+            @RequestParam Integer productVariantId,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes) {
+        try {
+            String username = getCurrentUsername();
+            wishlistService.removeWishlistItem(username, productVariantId);
+            redirectAttributes.addFlashAttribute("wishlistRemoved", "success");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể xóa sản phẩm khỏi danh sách yêu thích: " + e.getMessage());
+        }
+
+        String referer = request.getHeader("Referer");
+        if (referer != null) {
+            if (referer.contains("?")) {
+                return "redirect:" + referer + "&wishlistRemoved=success";
+            } else {
+                return "redirect:" + referer + "?wishlistRemoved=success";
+            }
+        }
+        return "redirect:/?wishlistRemoved=success";
     }
 
 

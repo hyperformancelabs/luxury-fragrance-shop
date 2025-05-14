@@ -108,9 +108,14 @@
                         <button class="add-to-cart-btn" th:if="${item.inStock}">
                             <i class="fas fa-shopping-cart me-1"></i> Thêm vào giỏ
                         </button>
-                        <button class="remove-btn">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+                        <form th:action="@{/wishlist/remove}" method="post" class="d-inline">
+                            <input type="hidden" name="productVariantId" th:value="${item.productVariantId}" />
+                            <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                            <button type="submit" class="remove-btn" title="Xóa khỏi danh sách yêu thích">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+
                     </div>
                 </div>
             </div>
@@ -226,6 +231,24 @@
             });
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const params = new URLSearchParams(window.location.search);
+
+            if (params.get("wishlistRemoved") === "success") {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Đã xóa khỏi danh sách yêu thích!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                // Xóa query khỏi URL để không hiện lại sau khi reload
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+    </script>
+
 
 </body>
 </html>
