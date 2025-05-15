@@ -4,6 +4,7 @@
 <head th:replace="fragments/head :: head(${currentBrand != null ? currentBrand : (currentSearch != null ? 'Tìm kiếm: ' + currentSearch : 'Danh sách sản phẩm')}, ~{::link})">
     <link rel="stylesheet" href="/css/product-list.css">
     <link rel="stylesheet" href="/css/quickview.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-light">
 <!-- Navigation -->
@@ -295,17 +296,32 @@
                                             </span>
                                         </div>
 
-
                                         <!-- Nút Yêu thích và Xem nhanh -->
-                                        <div class="d-flex justify-content-between">
-                                            <button class="wishlist-btn" title="Yêu thích">
-                                                Yêu thích
-                                            </button>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <!-- Nếu đã đăng nhập -->
+                                            <div sec:authorize="isAuthenticated()">
+                                                <form th:action="@{/wishlist/add}" method="post" class="d-inline">
+                                                    <input type="hidden" name="productId" th:value="${product.productId}" />
+                                                    <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                                                    <button type="submit" class="wishlist-btn" title="Yêu thích">
+                                                        Yêu thích
+                                                    </button>
+                                                </form>
+                                            </div>
+
+                                            <!-- Nếu chưa đăng nhập -->
+                                            <div sec:authorize="isAnonymous()">
+                                                <button class="wishlist-btn" title="Yêu thích" onclick="showLoginReminder()">
+                                                    Yêu thích
+                                                </button>
+                                            </div>
+
                                             <button class="quick-view-btn" title="Xem nhanh"
                                                     th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
                                                 Xem nhanh
                                             </button>
                                         </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -508,5 +524,93 @@
             document.getElementById('applyFilterBtn').addEventListener('click', submitFilterForm);
         });
     </script>
+
+    <script>
+    function confirmLogout() {
+        Swal.fire({
+            title: 'Xác nhận đăng xuất',
+            text: 'Bạn có chắc chắn muốn đăng xuất không?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Đăng xuất',
+            cancelButtonText: 'Hủy',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('logout-form').submit();
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("logout") === "success") {
+            Swal.fire({
+                icon: 'success',
+                title: 'Đăng xuất thành công!',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            window.location.reload();
+        });
+
+        }
+    });
+</script>
+    <script>
+    function showLoginReminder() {
+        Swal.fire({
+            icon: 'info',
+            title: 'Vui lòng đăng nhập',
+            text: 'Bạn cần đăng nhập để thêm sản phẩm vào mục yêu thích.',
+            confirmButtonText: 'Đăng nhập',
+            showCancelButton: true,
+            cancelButtonText: 'Hủy',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/auth/login";
+            }
+        });
+    }
+</script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get("logout") === "success") {
+            Swal.fire({
+                icon: 'success',
+                title: 'Đăng xuất thành công!',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                window.history.replaceState({}, document.title, window.location.pathname);
+                window.location.reload();
+            });
+        }
+
+        if (params.get("addedToCart") === "success") {
+            Swal.fire({
+                icon: 'success',
+                title: 'Đã thêm vào giỏ hàng!',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        if (params.get("wishlistAdded") === "success") {
+            Swal.fire({
+                icon: 'success',
+                title: 'Đã thêm vào danh sách yêu thích!',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    });
+</script>
 </body>
 </html>

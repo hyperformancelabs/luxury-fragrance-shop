@@ -98,33 +98,52 @@ public class CheckoutController {
                              RedirectAttributes redirectAttributes) {
         String sessionId = getOrCreateSessionId(request);
         String username = getCurrentUsername();
+        Customer customer;
 
-        // 1. Tạo customer mới
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        Customer customer = new Customer();
-        customer.setUsername("guest" + form.getPhone());
-        customer.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
-        customer.setName(form.getFirstName() + " " + form.getLastName());
-        customer.setPhoneNumber(form.getPhone());
-        customer.setEmail(form.getEmail());
-        customer.setStreet(form.getAddress());
-        customer.setWard(form.getWard());
-        customer.setDistrict(form.getDistrict());
-        customer.setCity(form.getProvince());
-        customer.setCreateAt(LocalDateTime.now());
-        customer.setStatus("active");
-        customer.setLoyaltyPoints(0);
-        customer.setRating(0);
-        customer.setNote("automatically created");
-        customer = customerRepository.save(customer);
+        if (username != null) {
+            // Đã đăng nhập: lấy Customer entity từ username
+            customer = customerRepository.findByUsername(username).get(0);
+            if (customer == null) {
+                throw new IllegalStateException("Không tìm thấy Customer với username: " + username);
+            }
 
-        // 2. Lấy giỏ hàng
+            // (Tuỳ chọn) Cập nhật form với thông tin người dùng để hiện lại nếu cần
+            form.setFirstName(customer.getName());
+            form.setLastName(""); // Nếu bạn có logic tách họ tên thì xử lý thêm
+            form.setPhone(customer.getPhoneNumber());
+            form.setEmail(customer.getEmail());
+            form.setAddress(customer.getStreet());
+            form.setWard(customer.getWard());
+            form.setDistrict(customer.getDistrict());
+            form.setProvince(customer.getCity());
+        } else {
+            // Chưa đăng nhập: tạo tài khoản guest
+            PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+            customer = new Customer();
+            customer.setUsername("guest" + form.getPhone());
+            customer.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+            customer.setName(form.getFirstName() + " " + form.getLastName());
+            customer.setPhoneNumber(form.getPhone());
+            customer.setEmail(form.getEmail());
+            customer.setStreet(form.getAddress());
+            customer.setWard(form.getWard());
+            customer.setDistrict(form.getDistrict());
+            customer.setCity(form.getProvince());
+            customer.setCreateAt(LocalDateTime.now());
+            customer.setStatus("active");
+            customer.setLoyaltyPoints(0);
+            customer.setRating(0);
+            customer.setNote("automatically created");
+            customer = customerRepository.save(customer);
+        }
+
+        // Lấy giỏ hàng
         List<CartItemDTO> cartItems = cartService.getCartItems(username, sessionId);
         BigDecimal totalAmount = cartItems.stream()
                 .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 3. Tạo đơn hàng
+        // Tạo đơn hàng
         Order order = new Order();
         order.setCustomer(customer);
         order.setShippingAddress(form.getAddress() + ", " + form.getWard() + ", " + form.getDistrict() + ", " + form.getProvince());
@@ -134,7 +153,7 @@ public class CheckoutController {
         order.setOrderStatus("pending");
         order = orderRepository.save(order);
 
-        // 4. Lưu các sản phẩm đã đặt
+        // Lưu từng sản phẩm trong giỏ hàng
         for (CartItemDTO item : cartItems) {
             OrderItemDTO orderItem = new OrderItemDTO();
             orderItem.setOrderId(order.getOrderId());
@@ -144,17 +163,18 @@ public class CheckoutController {
             orderItemService.save(orderItem);
         }
 
+        // Xoá giỏ hàng sau khi đặt hàng
         for (CartItemDTO item : cartItems) {
             cartService.removeCartItem(item.getCartItemId(), username, sessionId);
         }
 
-        if(order.getOrderId() == null) return "redirect:/checkout";
+        if (order.getOrderId() == null) return "redirect:/checkout";
 
         System.out.println("Redirecting to order-success with orderId = " + order.getOrderId());
-
-        // 6. Redirect
+        System.out.println("username: " + username);
         return "redirect:/order-success?orderId=" + order.getOrderId();
     }
+
 
     private String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

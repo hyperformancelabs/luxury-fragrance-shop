@@ -42,6 +42,7 @@ public class ProfileController {
         CustomerDTO customer = customerService.getCustomerByUsername(username);
         List<OrderDTO> orders = orderService.findOrdersByCustomerId(customer.getCustomerId());
         model.addAttribute("orders", orders);
+        model.addAttribute("user", customer);
         return "profile/orders";
     }
 

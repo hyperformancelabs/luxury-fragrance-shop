@@ -56,32 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     */
 
-    // Wishlist buttons
-    const wishlistButtons = document.querySelectorAll('.wishlist-btn');
-    wishlistButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            // Toggle active class
-            this.classList.toggle('active');
-
-            // In a real implementation, this would add the product to the wishlist
-            const productCard = this.closest('.product-card');
-            const productId = productCard.getAttribute('data-product-id');
-            const productTitle = productCard.querySelector('.card-title').textContent;
-
-            if (this.classList.contains('active')) {
-                this.textContent = 'Đã thích'; // Đã thích
-                console.log('Added to wishlist:', productTitle, 'ID:', productId);
-                // Here you would make an AJAX call to add to wishlist
-            } else {
-                this.textContent = 'Yêu thích'; // Yêu thích
-                console.log('Removed from wishlist:', productTitle, 'ID:', productId);
-                // Here you would make an AJAX call to remove from wishlist
-            }
-        });
-    });
 
     // Filter checkboxes
     const filterCheckboxes = document.querySelectorAll('.filter-option input[type="checkbox"]');
