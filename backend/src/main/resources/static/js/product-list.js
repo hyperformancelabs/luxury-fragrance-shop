@@ -1,24 +1,42 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Sort buttons
     const sortButtons = document.querySelectorAll('.sort-btn');
-    sortButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Remove active class from all buttons
-            sortButtons.forEach(btn => btn.classList.remove('active'));
-            // Add active class to clicked button
-            this.classList.add('active');
 
-            // In a real implementation, this would trigger a form submission or AJAX request
-            // to sort the products based on the selected option
-            const sortOption = this.textContent.trim();
-            console.log('Sorting by:', sortOption);
+        sortButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                sortButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
 
-            // For demo purposes, we'll just reload the page with a sort parameter
-            // const currentUrl = new URL(window.location.href);
-            // currentUrl.searchParams.set('sort', sortOption.toLowerCase().replace(/ /g, '-'));
-            // window.location.href = currentUrl.toString();
+                const sortOption = this.textContent.trim();
+
+                // Tạo URL tương ứng
+                let sortUrl = '/shop';
+                if (sortOption === 'Giá thấp đến cao') {
+                    sortUrl = '/shop/sort/min-price';
+                } else if (sortOption === 'Giá cao đến thấp') {
+                    sortUrl = '/shop/sort/max-price';
+                } else if (sortOption === 'Bán chạy') {
+                    sortUrl = '/shop/sort/top-selling';
+                }
+
+                // Lấy các tham số lọc hiện tại từ form
+                const brands = document.getElementById('brandsInput')?.value || '';
+                const genders = document.getElementById('gendersInput')?.value || '';
+                const seasons = document.getElementById('seasonsInput')?.value || '';
+                const min = document.getElementById('minRange')?.value || '';
+                const max = document.getElementById('maxRange')?.value || '';
+
+                // Xây URL đầy đủ với query string
+                const queryParams = new URLSearchParams();
+                if (brands) queryParams.append('brands', brands);
+                if (genders) queryParams.append('genders', genders);
+                if (seasons) queryParams.append('seasons', seasons);
+                if (min) queryParams.append('min', min);
+                if (max) queryParams.append('max', max);
+
+                window.location.href = `${sortUrl}?${queryParams.toString()}`;
+            });
         });
-    });
 
     // Quick view buttons - Handled by quickview.js
     // We're keeping this commented out as a reference

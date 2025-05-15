@@ -38,4 +38,25 @@ public interface ProductService {
                                          BigDecimal minPrice,
                                          BigDecimal maxPrice,
                                          Pageable pageable);
+
+    Page<ProductDTO> getAllProductsOrderByMinVariantPriceAsc(String genderList,
+                                                             String brandList,
+                                                             String seasonList,
+                                                             BigDecimal minPrice,
+                                                             BigDecimal maxPrice,
+                                                             Pageable pageable);
+
+    Page<ProductDTO> getAllProductsOrderByMaxVariantPriceDesc(String genderList,
+                                                              String brandList,
+                                                              String seasonList,
+                                                              BigDecimal minPrice,
+                                                              BigDecimal maxPrice,
+                                                              Pageable pageable);
+
+    Page<ProductDTO> getAllProductsOrderByTopSelling(String genderList,
+                                                      String brandList,
+                                                      String seasonList,
+                                                      BigDecimal minPrice,
+                                                      BigDecimal maxPrice,
+                                                      Pageable pageable);
 }

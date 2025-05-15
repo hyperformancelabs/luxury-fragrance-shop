@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="fragments/head :: head(${currentBrand != null ? currentBrand : (currentSearch != null ? 'Tìm kiếm: ' + currentSearch : 'Danh sách sản phẩm')}, ~{::link})">
     <link rel="stylesheet" href="/css/product-list.css">
     <link rel="stylesheet" href="/css/quickview.css">
@@ -14,30 +15,51 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Trang chủ</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="/shop">Sản phẩm</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/shop/top-selling">Bán chạy</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/about">Giới thiệu</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/contact">Liên hệ</a>
-                </li>
+                <li class="nav-item"><a class="nav-link active" href="/">Trang chủ</a></li>
+                <li class="nav-item"><a class="nav-link" href="/shop">Sản phẩm</a></li>
+                <li class="nav-item"><a class="nav-link" href="/shop/top-selling">Bán chạy</a></li>
+                <li class="nav-item"><a class="nav-link" href="/about">Giới thiệu</a></li>
+                <li class="nav-item"><a class="nav-link" href="/contact">Liên hệ</a></li>
             </ul>
-            <div class="d-flex">
-                <a href="/login" class="btn btn-outline-dark me-2">
-                    <i class="fas fa-user me-1"></i> Đăng nhập
-                </a>
+            <div class="d-flex align-items-center gap-2">
+                <!-- Nếu đã đăng nhập -->
+                <div sec:authorize="isAuthenticated()" class="d-flex align-items-center gap-2">
+                    <span class="text-dark">
+                         <a href="/profile" class="text-dark text-decoration-none d-flex align-items-center">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <strong sec:authentication="name">Tên người dùng</strong>
+                         </a>
+
+                     </span>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmLogout()">
+                        <i class="fas fa-sign-out-alt me-1"></i> Đăng xuất
+                    </button>
+
+                    <!-- Form logout POST -->
+                    <form id="logout-form" th:action="@{/logout}" method="post" style="display:none;">
+                        <input type="hidden" name="_csrf" th:if="${_csrf != null}" th:value="${_csrf.token}"/>
+                    </form>
+
+                    <!-- Nút yêu thích chỉ hiển thị khi đã đăng nhập -->
+                    <a href="/wishlist" class="btn btn-outline-danger">
+                        <i class="fas fa-heart me-1"></i> Yêu thích
+                    </a>
+                </div>
+
+
+                <!-- Nếu chưa đăng nhập -->
+                <div sec:authorize="isAnonymous()" class="d-flex align-items-center gap-2">
+                    <a href="/auth/login" class="btn btn-outline-dark">
+                        <i class="fas fa-user me-1"></i> Đăng nhập
+                    </a>
+                </div>
+
+                <!-- Giỏ hàng luôn hiển thị -->
                 <a href="/cart" class="btn btn-dark">
                     <i class="fas fa-shopping-cart me-1"></i> Giỏ hàng
                 </a>
             </div>
+
         </div>
     </div>
 </nav>
@@ -64,8 +86,8 @@
                         <i class="fas fa-filter"></i>
                     </button>
 
-                    <form id="filterForm" method="get" th:action="@{/shop}">
-                        <input type="hidden" id="brandsInput" name="brands">
+                    <form id="filterForm" method="get" th:action="@{${currentUri}}">
+                    <input type="hidden" id="brandsInput" name="brands">
                         <input type="hidden" id="gendersInput" name="genders">
                         <input type="hidden" id="seasonsInput" name="seasons">
                         <input type="hidden" id="minInput" name="min">
@@ -227,10 +249,11 @@
                         <div class="d-flex justify-content-center align-items-center mb-4">
                             <span class="me-2">Sắp xếp theo:</span>
                             <div>
-                                <button class="sort-btn active">Mới nhất</button>
-                                <button class="sort-btn">Bán chạy</button>
-                                <button class="sort-btn">Giá thấp đến cao</button>
-                                <button class="sort-btn">Giá cao đến thấp</button>
+                                <button class="sort-btn" th:classappend="${currentSort} == null ? 'active'" th:onclick="|window.location='/shop'|">Mới nhất</button>
+                                <button class="sort-btn" th:classappend="${currentSort} == 'top-selling' ? 'active'" th:onclick="|window.location='/shop/sort/top-selling'|">Bán chạy</button>
+                                <button class="sort-btn" th:classappend="${currentSort} == 'min-price' ? 'active'" th:onclick="|window.location='/shop/sort/min-price'|">Giá thấp đến cao</button>
+                                <button class="sort-btn" th:classappend="${currentSort} == 'max-price' ? 'active'" th:onclick="|window.location='/shop/sort/max-price'|">Giá cao đến thấp</button>
+
                             </div>
                         </div>
 

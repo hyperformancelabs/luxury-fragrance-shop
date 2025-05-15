@@ -90,6 +90,36 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findFilteredProducts(genderList, brandList, seasonList, minPrice, maxPrice, pageable).map(this::convertToProductDTO);
     }
 
+    @Override
+    public Page<ProductDTO> getAllProductsOrderByMinVariantPriceAsc(String genderList,
+                                                                    String brandList,
+                                                                    String seasonList,
+                                                                    BigDecimal minPrice,
+                                                                    BigDecimal maxPrice,
+                                                                    Pageable pageable) {
+        return productRepository.filterOrderByMinVariantPriceAsc(genderList, brandList, seasonList, minPrice, maxPrice, pageable).map(this::convertToProductDTO);
+    }
+
+    @Override
+    public Page<ProductDTO> getAllProductsOrderByMaxVariantPriceDesc(String genderList,
+                                                                     String brandList,
+                                                                     String seasonList,
+                                                                     BigDecimal minPrice,
+                                                                     BigDecimal maxPrice,
+                                                                     Pageable pageable) {
+        return productRepository.filterOrderByMaxVariantPriceDesc(genderList, brandList, seasonList, minPrice, maxPrice, pageable).map(this::convertToProductDTO);
+    }
+
+    @Override
+    public Page<ProductDTO> getAllProductsOrderByTopSelling(String genderList,
+                                                            String brandList,
+                                                            String seasonList,
+                                                            BigDecimal minPrice,
+                                                            BigDecimal maxPrice,
+                                                            Pageable pageable) {
+        return productRepository.filterTopSellingProducts(genderList, brandList, seasonList, minPrice, maxPrice, pageable).map(this::convertToProductDTO);
+    }
+
     private ProductDTO convertToProductDTO(Product product) {
         return new ProductDTO(
                 product.getProductId(),

@@ -2,8 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="fragments/head :: head('Trang chủ', ~{::link})">
-    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}" />
-    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : ''}" />
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}"/>
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : ''}"/>
     <link rel="stylesheet" href="/css/home.css">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -28,8 +28,11 @@
                 <!-- Nếu đã đăng nhập -->
                 <div sec:authorize="isAuthenticated()" class="d-flex align-items-center gap-2">
                     <span class="text-dark">
-                         <i class="fas fa-user-circle me-1"></i>
-                        <strong sec:authentication="name">Tên người dùng</strong>
+                         <a href="/profile" class="text-dark text-decoration-none d-flex align-items-center">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <strong sec:authentication="name">Tên người dùng</strong>
+                         </a>
+
                      </span>
                     <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmLogout()">
                         <i class="fas fa-sign-out-alt me-1"></i> Đăng xuất
@@ -37,8 +40,13 @@
 
                     <!-- Form logout POST -->
                     <form id="logout-form" th:action="@{/logout}" method="post" style="display:none;">
-                        <input type="hidden" name="_csrf" th:if="${_csrf != null}" th:value="${_csrf.token}" />
+                        <input type="hidden" name="_csrf" th:if="${_csrf != null}" th:value="${_csrf.token}"/>
                     </form>
+
+                    <!-- Nút yêu thích chỉ hiển thị khi đã đăng nhập -->
+                    <a href="/wishlist" class="btn btn-outline-danger">
+                        <i class="fas fa-heart me-1"></i> Yêu thích
+                    </a>
                 </div>
 
 
@@ -63,7 +71,8 @@
 <section class="banner-section text-center">
     <div class="container">
         <h1 class="display-4 fw-bold">
-            <span sec:authorize="isAuthenticated()">Chào mừng, <strong sec:authentication="name">Người dùng</strong>!</span>
+            <span sec:authorize="isAuthenticated()">Chào mừng, <strong
+                    sec:authentication="name">Người dùng</strong>!</span>
             <span sec:authorize="isAnonymous()">Khám Phá Hương Thơm Xa Xỉ</span>
         </h1>
         <p class="lead">Bộ sưu tập nước hoa cao cấp từ các thương hiệu hàng đầu</p>
@@ -112,8 +121,8 @@
                             <form th:action="@{/wishlist/add}" method="post"
                                   th:if="${!flashSaleProductInWishlistMap[product.productId]}"
                                   class="d-inline">
-                                <input type="hidden" name="productId" th:value="${product.productId}" />
-                                <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                                <input type="hidden" name="productId" th:value="${product.productId}"/>
+                                <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}"/>
                                 <button type="submit" class="action-btn" title="Yêu thích">
                                     <i class="far fa-heart"></i>
                                 </button>
@@ -131,7 +140,8 @@
                             </button>
                         </div>
 
-                        <button class="action-btn" title="Xem nhanh" th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
+                        <button class="action-btn" title="Xem nhanh"
+                                th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
                             <i class="far fa-eye"></i>
                         </button>
                     </div>
@@ -151,7 +161,8 @@
                         <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
                         <div class="product-price">
                             <!-- Original price -->
-                            <span class="original-price" th:if="${flashSaleProductPriceRangeMap != null && flashSaleProductPriceRangeMap.containsKey(product.productId)}"
+                            <span class="original-price"
+                                  th:if="${flashSaleProductPriceRangeMap != null && flashSaleProductPriceRangeMap.containsKey(product.productId)}"
                                   th:text="${#numbers.formatDecimal(flashSaleProductPriceRangeMap.get(product.productId)[0], 0, 'COMMA', 0, 'POINT') + 'đ'}">3.500.000đ</span>
 
                             <!-- Single price if product has only one variant -->
@@ -228,8 +239,8 @@
                             <form th:action="@{/wishlist/add}" method="post"
                                   th:if="${!flashSaleProductInWishlistMap[product.productId]}"
                                   class="d-inline">
-                                <input type="hidden" name="productId" th:value="${product.productId}" />
-                                <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                                <input type="hidden" name="productId" th:value="${product.productId}"/>
+                                <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}"/>
                                 <button type="submit" class="action-btn" title="Yêu thích">
                                     <i class="far fa-heart"></i>
                                 </button>
@@ -247,7 +258,8 @@
                             </button>
                         </div>
 
-                        <button class="action-btn" title="Xem nhanh" th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
+                        <button class="action-btn" title="Xem nhanh"
+                                th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
                             <i class="far fa-eye"></i>
                         </button>
                     </div>
@@ -267,7 +279,8 @@
                         <h5 class="card-title" th:text="${product.productName}">Tên sản phẩm</h5>
                         <div class="product-price">
                             <!-- Original price -->
-                            <span class="original-price" th:if="${flashSaleProductPriceRangeMap != null && flashSaleProductPriceRangeMap.containsKey(product.productId)}"
+                            <span class="original-price"
+                                  th:if="${flashSaleProductPriceRangeMap != null && flashSaleProductPriceRangeMap.containsKey(product.productId)}"
                                   th:text="${#numbers.formatDecimal(flashSaleProductPriceRangeMap.get(product.productId)[0], 0, 'COMMA', 0, 'POINT') + 'đ'}">3.500.000đ</span>
 
                             <!-- Single price if product has only one variant -->
@@ -339,8 +352,8 @@
                         <form th:action="@{/wishlist/add}" method="post"
                               th:if="${!newProductInWishlistMap[product.productId]}"
                               class="d-inline">
-                            <input type="hidden" name="productId" th:value="${product.productId}" />
-                            <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                            <input type="hidden" name="productId" th:value="${product.productId}"/>
+                            <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}"/>
                             <button type="submit" class="action-btn" title="Yêu thích">
                                 <i class="far fa-heart"></i>
                             </button>
@@ -360,7 +373,8 @@
                         </button>
                     </div>
 
-                    <button class="action-btn" title="Xem nhanh" th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
+                    <button class="action-btn" title="Xem nhanh"
+                            th:onclick="'javascript:openQuickView(' + ${product.productId} + ');'">
                         <i class="far fa-eye"></i>
                     </button>
                 </div>
@@ -423,7 +437,8 @@
                 <img src="/images/collection-spring.jpg" alt="Spring Collection" class="collection-image">
                 <div class="collection-content">
                     <h3 class="collection-title">Bộ Sưu Tập Mùa Xuân</h3>
-                    <p class="collection-description">Khám phá những mùi hương tươi mới và đầy sức sống của mùa xuân.</p>
+                    <p class="collection-description">Khám phá những mùi hương tươi mới và đầy sức sống của mùa
+                        xuân.</p>
                     <a href="/shop" class="btn btn-light">Khám Phá Ngay</a>
                 </div>
             </div>
@@ -433,7 +448,8 @@
                 <img src="/images/collection-summer.jpg" alt="Summer Collection" class="collection-image">
                 <div class="collection-content">
                     <h3 class="collection-title">Bộ Sưu Tập Mùa Hè</h3>
-                    <p class="collection-description">Tận hưởng những mùi hương mát lạnh và trái cây cho những ngày hè nóng bức.</p>
+                    <p class="collection-description">Tận hưởng những mùi hương mát lạnh và trái cây cho những ngày hè
+                        nóng bức.</p>
                     <a href="/shop" class="btn btn-light">Khám Phá Ngay</a>
                 </div>
             </div>
@@ -462,8 +478,8 @@
                         <form th:action="@{/wishlist/add}" method="post"
                               th:if="${!bestSellingProductInWishlistMap[product.productId]}"
                               class="d-inline">
-                            <input type="hidden" name="productId" th:value="${product.productId}" />
-                            <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                            <input type="hidden" name="productId" th:value="${product.productId}"/>
+                            <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}"/>
                             <button type="submit" class="action-btn" title="Yêu thích">
                                 <i class="far fa-heart"></i>
                             </button>
@@ -560,8 +576,8 @@
                         <form th:action="@{/wishlist/add}" method="post"
                               th:if="${!bestSellingProductInWishlistMap[product.productId]}"
                               class="d-inline">
-                            <input type="hidden" name="productId" th:value="${product.productId}" />
-                            <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+                            <input type="hidden" name="productId" th:value="${product.productId}"/>
+                            <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}"/>
                             <button type="submit" class="action-btn" title="Yêu thích">
                                 <i class="far fa-heart"></i>
                             </button>
@@ -639,8 +655,10 @@
     <div class="row align-items-center">
         <div class="col-md-6 mb-4 mb-md-0">
             <h2 class="section-title">Về APH Perfume</h2>
-            <p>APH Perfume là cửa hàng nước hoa cao cấp chuyên cung cấp những sản phẩm nước hoa tốt nhất từ khắp nơi trên thế giới. Chúng tôi tự hào mang đến cho khách hàng những sản phẩm chất lượng cao và độc đáo.</p>
-            <p>Đội ngũ chuyên gia về nước hoa của chúng tôi luôn nhiệt tình giúp bạn tìm ra mùi hương hoàn hảo, phù hợp với phong cách và cá tính của bạn.</p>
+            <p>APH Perfume là cửa hàng nước hoa cao cấp chuyên cung cấp những sản phẩm nước hoa tốt nhất từ khắp nơi
+                trên thế giới. Chúng tôi tự hào mang đến cho khách hàng những sản phẩm chất lượng cao và độc đáo.</p>
+            <p>Đội ngũ chuyên gia về nước hoa của chúng tôi luôn nhiệt tình giúp bạn tìm ra mùi hương hoàn hảo, phù hợp
+                với phong cách và cá tính của bạn.</p>
             <a href="/about" class="btn btn-outline-dark">Tìm Hiểu Thêm</a>
         </div>
         <div class="col-md-6">

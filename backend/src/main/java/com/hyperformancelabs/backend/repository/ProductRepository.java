@@ -115,4 +115,213 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             Pageable pageable
     );
 
+    // Lọc sản phẩm theo giá min
+    @Query(value = """
+    SELECT DISTINCT p.*, pvmin.min_price
+    FROM Product p
+    JOIN Brand b ON p.brand_id = b.brand_id
+    LEFT JOIN ProductDetail pd ON p.product_id = pd.product_id
+    LEFT JOIN (
+        SELECT product_id, MIN(price) AS min_price
+        FROM ProductVariant
+        GROUP BY product_id
+    ) pvmin ON p.product_id = pvmin.product_id
+    LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id
+    
+    WHERE 
+        (:genderList IS NULL OR (
+            pd.detail_name = 'suitable_gender' AND 
+            EXISTS (
+                SELECT 1 FROM STRING_SPLIT(:genderList, ',') s 
+                WHERE LTRIM(RTRIM(s.value)) = pd.detail_value
+            )
+        ))
+        AND (:brandList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:brandList, ',') s 
+            WHERE LTRIM(RTRIM(s.value)) = b.brand_name
+        ))
+        AND ((:minPrice IS NULL OR :maxPrice IS NULL) 
+             OR pv.price BETWEEN :minPrice AND :maxPrice)
+        AND (:seasonList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:seasonList, ',') s 
+            WHERE p.description LIKE '%' + LTRIM(RTRIM(s.value)) + '%'
+        ))
+        
+    ORDER BY pvmin.min_price ASC
+    """,
+
+            countQuery = """
+    SELECT COUNT(DISTINCT p.product_id)
+    FROM Product p
+    JOIN Brand b ON p.brand_id = b.brand_id
+    LEFT JOIN ProductDetail pd ON p.product_id = pd.product_id
+    LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id
+    
+    WHERE 
+        (:genderList IS NULL OR (
+            pd.detail_name = 'suitable_gender' AND 
+            EXISTS (
+                SELECT 1 FROM STRING_SPLIT(:genderList, ',') s 
+                WHERE LTRIM(RTRIM(s.value)) = pd.detail_value
+            )
+        ))
+        AND (:brandList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:brandList, ',') s 
+            WHERE LTRIM(RTRIM(s.value)) = b.brand_name
+        ))
+        AND ((:minPrice IS NULL OR :maxPrice IS NULL) 
+             OR pv.price BETWEEN :minPrice AND :maxPrice)
+        AND (:seasonList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:seasonList, ',') s 
+            WHERE p.description LIKE '%' + LTRIM(RTRIM(s.value)) + '%'
+        ))
+    """,
+            nativeQuery = true)
+    Page<Product> filterOrderByMinVariantPriceAsc(
+            @Param("genderList") String genderList,
+            @Param("brandList") String brandList,
+            @Param("seasonList") String seasonList,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            Pageable pageable
+    );
+
+    // Lọc sản phẩm theo giá max
+    @Query(value = """
+    SELECT DISTINCT p.*, pvmax.max_price
+    FROM Product p
+    JOIN Brand b ON p.brand_id = b.brand_id
+    LEFT JOIN ProductDetail pd ON p.product_id = pd.product_id
+    LEFT JOIN (
+        SELECT product_id, MAX(price) AS max_price
+        FROM ProductVariant
+        GROUP BY product_id
+    ) pvmax ON p.product_id = pvmax.product_id
+    LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id
+
+    WHERE 
+        (:genderList IS NULL OR (
+            pd.detail_name = 'suitable_gender' AND 
+            EXISTS (
+                SELECT 1 FROM STRING_SPLIT(:genderList, ',') s 
+                WHERE LTRIM(RTRIM(s.value)) = pd.detail_value
+            )
+        ))
+        AND (:brandList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:brandList, ',') s 
+            WHERE LTRIM(RTRIM(s.value)) = b.brand_name
+        ))
+        AND ((:minPrice IS NULL OR :maxPrice IS NULL) 
+             OR pv.price BETWEEN :minPrice AND :maxPrice)
+        AND (:seasonList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:seasonList, ',') s 
+            WHERE p.description LIKE '%' + LTRIM(RTRIM(s.value)) + '%'
+        ))
+
+    ORDER BY pvmax.max_price DESC
+    """,
+
+            countQuery = """
+    SELECT COUNT(DISTINCT p.product_id)
+    FROM Product p
+    JOIN Brand b ON p.brand_id = b.brand_id
+    LEFT JOIN ProductDetail pd ON p.product_id = pd.product_id
+    LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id
+
+    WHERE 
+        (:genderList IS NULL OR (
+            pd.detail_name = 'suitable_gender' AND 
+            EXISTS (
+                SELECT 1 FROM STRING_SPLIT(:genderList, ',') s 
+                WHERE LTRIM(RTRIM(s.value)) = pd.detail_value
+            )
+        ))
+        AND (:brandList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:brandList, ',') s 
+            WHERE LTRIM(RTRIM(s.value)) = b.brand_name
+        ))
+        AND ((:minPrice IS NULL OR :maxPrice IS NULL) 
+             OR pv.price BETWEEN :minPrice AND :maxPrice)
+        AND (:seasonList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:seasonList, ',') s 
+            WHERE p.description LIKE '%' + LTRIM(RTRIM(s.value)) + '%'
+        ))
+    """,
+            nativeQuery = true)
+    Page<Product> filterOrderByMaxVariantPriceDesc(
+            @Param("genderList") String genderList,
+            @Param("brandList") String brandList,
+            @Param("seasonList") String seasonList,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            Pageable pageable
+    );
+
+    @Query(value = """
+    SELECT 
+        p.product_id, p.brand_id, p.product_name, p.description, p.image_url,
+        SUM(ISNULL(oi.quantity, 0)) AS total_quantity
+    FROM Product p
+    JOIN Brand b ON p.brand_id = b.brand_id
+    LEFT JOIN ProductDetail pd ON p.product_id = pd.product_id
+    LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id
+    LEFT JOIN OrderItem oi ON pv.product_variant_id = oi.product_variant_id
+    WHERE 
+        (:genderList IS NULL OR (
+            pd.detail_name = 'suitable_gender' AND 
+            EXISTS (
+                SELECT 1 FROM STRING_SPLIT(:genderList, ',') s 
+                WHERE LTRIM(RTRIM(s.value)) = pd.detail_value
+            )
+        ))
+        AND (:brandList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:brandList, ',') s 
+            WHERE LTRIM(RTRIM(s.value)) = b.brand_name
+        ))
+        AND ((:minPrice IS NULL OR :maxPrice IS NULL) 
+             OR pv.price BETWEEN :minPrice AND :maxPrice)
+        AND (:seasonList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:seasonList, ',') s 
+            WHERE p.description LIKE '%' + LTRIM(RTRIM(s.value)) + '%'
+        ))
+    GROUP BY 
+        p.product_id, p.brand_id, p.product_name, p.description, p.image_url
+    ORDER BY 
+        total_quantity DESC
+    """,
+            countQuery = """
+    SELECT COUNT(DISTINCT p.product_id)
+    FROM Product p
+    JOIN Brand b ON p.brand_id = b.brand_id
+    LEFT JOIN ProductDetail pd ON p.product_id = pd.product_id
+    LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id
+    LEFT JOIN OrderItem oi ON pv.product_variant_id = oi.product_variant_id
+    WHERE 
+        (:genderList IS NULL OR (
+            pd.detail_name = 'suitable_gender' AND 
+            EXISTS (
+                SELECT 1 FROM STRING_SPLIT(:genderList, ',') s 
+                WHERE LTRIM(RTRIM(s.value)) = pd.detail_value
+            )
+        ))
+        AND (:brandList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:brandList, ',') s 
+            WHERE LTRIM(RTRIM(s.value)) = b.brand_name
+        ))
+        AND ((:minPrice IS NULL OR :maxPrice IS NULL) 
+             OR pv.price BETWEEN :minPrice AND :maxPrice)
+        AND (:seasonList IS NULL OR EXISTS (
+            SELECT 1 FROM STRING_SPLIT(:seasonList, ',') s 
+            WHERE p.description LIKE '%' + LTRIM(RTRIM(s.value)) + '%'
+        ))
+    """,
+            nativeQuery = true)
+    Page<Product> filterTopSellingProducts(
+            @Param("genderList") String genderList,
+            @Param("brandList") String brandList,
+            @Param("seasonList") String seasonList,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            Pageable pageable);
+
 }

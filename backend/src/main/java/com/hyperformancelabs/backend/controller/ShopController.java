@@ -11,6 +11,8 @@ import com.hyperformancelabs.backend.service.ProductVariantService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,7 +46,8 @@ public class ShopController {
             @RequestParam(required = false) String seasons,
             @RequestParam(required = false) BigDecimal min,
             @RequestParam(required = false) BigDecimal max,
-            Model model) {
+            Model model,
+            HttpServletRequest request) {
 
         Pageable pageable = PageRequest.of(page, size);
 
@@ -114,6 +117,8 @@ public class ShopController {
             }
         }
 
+        model.addAttribute("currentUri", request.getRequestURI());
+
         model.addAttribute("products", products);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productPage.getTotalPages());
@@ -131,6 +136,294 @@ public class ShopController {
         return "shop/product-list";
     }
 
+    @GetMapping("/sort/min-price")
+    public String showProductListOrderByMinVariantPriceAsc(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(required = false) String genders,
+            @RequestParam(required = false) String brands,
+            @RequestParam(required = false) String seasons,
+            @RequestParam(required = false) BigDecimal min,
+            @RequestParam(required = false) BigDecimal max,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        // Lấy khoảng giá toàn bộ sản phẩm
+        List<Object[]> resultList = productVariantService.getMinAndMaxVariantPrice();
+        BigDecimal minPrice = BigDecimal.ZERO;
+        BigDecimal maxPrice = BigDecimal.ZERO;
+
+        if (!resultList.isEmpty()) {
+            Object[] result = resultList.get(0);
+            if (result[0] instanceof BigDecimal) minPrice = (BigDecimal) result[0];
+            if (result[1] instanceof BigDecimal) maxPrice = (BigDecimal) result[1];
+        }
+
+        if (min == null) min = minPrice;
+        if (max == null) max = maxPrice;
+
+
+        // Xử lý chuỗi rỗng thành null để tránh lỗi lọc
+        if (genders != null && genders.trim().isEmpty()) genders = null;
+        if (brands != null && brands.trim().isEmpty()) brands = null;
+        if (seasons != null && seasons.trim().isEmpty()) seasons = null;
+
+        // Xử lý min/max rỗng hoặc không hợp lệ
+        if (min.compareTo(BigDecimal.ZERO) < 0) min = minPrice;
+        if (max.compareTo(BigDecimal.ZERO) < 0) max = maxPrice;
+
+
+        List<BrandDTO> brandDTOs = brandService.getAllBrands();
+
+        Page<ProductDTO> productPage = productService.getAllProductsOrderByMinVariantPriceAsc(
+                genders, brands, seasons, min, max, pageable
+        );
+
+        List<ProductDTO> products = productPage.getContent();
+
+        // Biến map dữ liệu sản phẩm
+        Map<Integer, List<ProductVariantDTO>> productVariantMap = products.stream()
+                .map(product -> productVariantService.getProductVariantsByProductId(product.getProductId()))
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .collect(Collectors.groupingBy(ProductVariantDTO::getProductId));
+
+        Map<Integer, BigDecimal[]> productPriceRangeMap = new HashMap<>();
+        Map<Integer, String> productVariantsMap = new HashMap<>();
+        Map<Integer, Integer> productFirstVariantMap = new HashMap<>();
+        Map<Integer, Boolean> productHasStockMap = new HashMap<>();
+
+        for (Map.Entry<Integer, List<ProductVariantDTO>> entry : productVariantMap.entrySet()) {
+            Integer productId = entry.getKey();
+            List<ProductVariantDTO> variants = entry.getValue();
+
+            if (!variants.isEmpty()) {
+                Optional<BigDecimal> minVal = variants.stream().map(ProductVariantDTO::getPrice).min(Comparator.naturalOrder());
+                Optional<BigDecimal> maxVal = variants.stream().map(ProductVariantDTO::getPrice).max(Comparator.naturalOrder());
+
+                minVal.ifPresent(bigDecimal -> productPriceRangeMap.put(productId, new BigDecimal[]{bigDecimal, maxVal.get()}));
+
+                productVariantsMap.put(productId, convertVariantsToJson(variants));
+
+                Optional<ProductVariantDTO> firstInStock = variants.stream()
+                        .filter(v -> v.getQuantityInStock() > 0)
+                        .findFirst();
+
+                productFirstVariantMap.put(productId, firstInStock.map(ProductVariantDTO::getProductVariantId).orElse(null));
+                productHasStockMap.put(productId, firstInStock.isPresent());
+            }
+        }
+        model.addAttribute("currentSort", "min-price");
+
+        model.addAttribute("products", products);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", productPage.getTotalPages());
+        model.addAttribute("totalItems", productPage.getTotalElements());
+
+        model.addAttribute("productPriceRangeMap", productPriceRangeMap);
+        model.addAttribute("productVariantsMap", productVariantsMap);
+        model.addAttribute("productFirstVariantMap", productFirstVariantMap);
+        model.addAttribute("productHasStockMap", productHasStockMap);
+
+        model.addAttribute("brands", brandDTOs);
+        model.addAttribute("minPrice", minPrice);
+        model.addAttribute("maxPrice", maxPrice);
+
+        return "shop/product-list";
+    }
+
+    @GetMapping("/sort/max-price")
+    public String showProductListOrderByMaxVariantPriceDesc(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(required = false) String genders,
+            @RequestParam(required = false) String brands,
+            @RequestParam(required = false) String seasons,
+            @RequestParam(required = false) BigDecimal min,
+            @RequestParam(required = false) BigDecimal max,
+            Model model) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        // Lấy khoảng giá toàn bộ sản phẩm
+        List<Object[]> resultList = productVariantService.getMinAndMaxVariantPrice();
+        BigDecimal minPrice = BigDecimal.ZERO;
+        BigDecimal maxPrice = BigDecimal.ZERO;
+
+        if (!resultList.isEmpty()) {
+            Object[] result = resultList.get(0);
+            if (result[0] instanceof BigDecimal) minPrice = (BigDecimal) result[0];
+            if (result[1] instanceof BigDecimal) maxPrice = (BigDecimal) result[1];
+        }
+
+        if (min == null) min = minPrice;
+        if (max == null) max = maxPrice;
+
+
+        // Xử lý chuỗi rỗng thành null để tránh lỗi lọc
+        if (genders != null && genders.trim().isEmpty()) genders = null;
+        if (brands != null && brands.trim().isEmpty()) brands = null;
+        if (seasons != null && seasons.trim().isEmpty()) seasons = null;
+
+        // Xử lý min/max rỗng hoặc không hợp lệ
+        if (min.compareTo(BigDecimal.ZERO) < 0) min = minPrice;
+        if (max.compareTo(BigDecimal.ZERO) < 0) max = maxPrice;
+
+
+        List<BrandDTO> brandDTOs = brandService.getAllBrands();
+
+        Page<ProductDTO> productPage = productService.getAllProductsOrderByMaxVariantPriceDesc(
+                genders, brands, seasons, min, max, pageable
+        );
+
+        List<ProductDTO> products = productPage.getContent();
+
+        // Biến map dữ liệu sản phẩm
+        Map<Integer, List<ProductVariantDTO>> productVariantMap = products.stream()
+                .map(product -> productVariantService.getProductVariantsByProductId(product.getProductId()))
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .collect(Collectors.groupingBy(ProductVariantDTO::getProductId));
+
+        Map<Integer, BigDecimal[]> productPriceRangeMap = new HashMap<>();
+        Map<Integer, String> productVariantsMap = new HashMap<>();
+        Map<Integer, Integer> productFirstVariantMap = new HashMap<>();
+        Map<Integer, Boolean> productHasStockMap = new HashMap<>();
+
+        for (Map.Entry<Integer, List<ProductVariantDTO>> entry : productVariantMap.entrySet()) {
+            Integer productId = entry.getKey();
+            List<ProductVariantDTO> variants = entry.getValue();
+
+            if (!variants.isEmpty()) {
+                Optional<BigDecimal> minVal = variants.stream().map(ProductVariantDTO::getPrice).min(Comparator.naturalOrder());
+                Optional<BigDecimal> maxVal = variants.stream().map(ProductVariantDTO::getPrice).max(Comparator.naturalOrder());
+
+                minVal.ifPresent(bigDecimal -> productPriceRangeMap.put(productId, new BigDecimal[]{bigDecimal, maxVal.get()}));
+
+                productVariantsMap.put(productId, convertVariantsToJson(variants));
+
+                Optional<ProductVariantDTO> firstInStock = variants.stream()
+                        .filter(v -> v.getQuantityInStock() > 0)
+                        .findFirst();
+
+                productFirstVariantMap.put(productId, firstInStock.map(ProductVariantDTO::getProductVariantId).orElse(null));
+                productHasStockMap.put(productId, firstInStock.isPresent());
+            }
+        }
+        model.addAttribute("currentSort", "max-price");
+
+        model.addAttribute("products", products);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", productPage.getTotalPages());
+        model.addAttribute("totalItems", productPage.getTotalElements());
+
+        model.addAttribute("productPriceRangeMap", productPriceRangeMap);
+        model.addAttribute("productVariantsMap", productVariantsMap);
+        model.addAttribute("productFirstVariantMap", productFirstVariantMap);
+        model.addAttribute("productHasStockMap", productHasStockMap);
+
+        model.addAttribute("brands", brandDTOs);
+        model.addAttribute("minPrice", minPrice);
+        model.addAttribute("maxPrice", maxPrice);
+
+        return "shop/product-list";
+    }
+
+    @GetMapping("/sort/top-selling")
+    public String showProductListOrderByTopSelling(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(required = false) String genders,
+            @RequestParam(required = false) String brands,
+            @RequestParam(required = false) String seasons,
+            @RequestParam(required = false) BigDecimal min,
+            @RequestParam(required = false) BigDecimal max,
+            Model model) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        // Lấy khoảng giá toàn bộ sản phẩm
+        List<Object[]> resultList = productVariantService.getMinAndMaxVariantPrice();
+        BigDecimal minPrice = BigDecimal.ZERO;
+        BigDecimal maxPrice = BigDecimal.ZERO;
+
+        if (!resultList.isEmpty()) {
+            Object[] result = resultList.get(0);
+            if (result[0] instanceof BigDecimal) minPrice = (BigDecimal) result[0];
+            if (result[1] instanceof BigDecimal) maxPrice = (BigDecimal) result[1];
+        }
+
+        if (min == null) min = minPrice;
+        if (max == null) max = maxPrice;
+
+
+        // Xử lý chuỗi rỗng thành null để tránh lỗi lọc
+        if (genders != null && genders.trim().isEmpty()) genders = null;
+        if (brands != null && brands.trim().isEmpty()) brands = null;
+        if (seasons != null && seasons.trim().isEmpty()) seasons = null;
+
+        // Xử lý min/max rỗng hoặc không hợp lệ
+        if (min.compareTo(BigDecimal.ZERO) < 0) min = minPrice;
+        if (max.compareTo(BigDecimal.ZERO) < 0) max = maxPrice;
+
+
+        List<BrandDTO> brandDTOs = brandService.getAllBrands();
+
+        Page<ProductDTO> productPage = productService.getAllProductsOrderByTopSelling(
+                genders, brands, seasons, min, max, pageable
+        );
+
+        List<ProductDTO> products = productPage.getContent();
+
+        // Biến map dữ liệu sản phẩm
+        Map<Integer, List<ProductVariantDTO>> productVariantMap = products.stream()
+                .map(product -> productVariantService.getProductVariantsByProductId(product.getProductId()))
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .collect(Collectors.groupingBy(ProductVariantDTO::getProductId));
+
+        Map<Integer, BigDecimal[]> productPriceRangeMap = new HashMap<>();
+        Map<Integer, String> productVariantsMap = new HashMap<>();
+        Map<Integer, Integer> productFirstVariantMap = new HashMap<>();
+        Map<Integer, Boolean> productHasStockMap = new HashMap<>();
+
+        for (Map.Entry<Integer, List<ProductVariantDTO>> entry : productVariantMap.entrySet()) {
+            Integer productId = entry.getKey();
+            List<ProductVariantDTO> variants = entry.getValue();
+
+            if (!variants.isEmpty()) {
+                Optional<BigDecimal> minVal = variants.stream().map(ProductVariantDTO::getPrice).min(Comparator.naturalOrder());
+                Optional<BigDecimal> maxVal = variants.stream().map(ProductVariantDTO::getPrice).max(Comparator.naturalOrder());
+
+                minVal.ifPresent(bigDecimal -> productPriceRangeMap.put(productId, new BigDecimal[]{bigDecimal, maxVal.get()}));
+
+                productVariantsMap.put(productId, convertVariantsToJson(variants));
+
+                Optional<ProductVariantDTO> firstInStock = variants.stream()
+                        .filter(v -> v.getQuantityInStock() > 0)
+                        .findFirst();
+
+                productFirstVariantMap.put(productId, firstInStock.map(ProductVariantDTO::getProductVariantId).orElse(null));
+                productHasStockMap.put(productId, firstInStock.isPresent());
+            }
+        }
+        model.addAttribute("currentSort", "top-selling");
+
+        model.addAttribute("products", products);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", productPage.getTotalPages());
+        model.addAttribute("totalItems", productPage.getTotalElements());
+
+        model.addAttribute("productPriceRangeMap", productPriceRangeMap);
+        model.addAttribute("productVariantsMap", productVariantsMap);
+        model.addAttribute("productFirstVariantMap", productFirstVariantMap);
+        model.addAttribute("productHasStockMap", productHasStockMap);
+
+        model.addAttribute("brands", brandDTOs);
+        model.addAttribute("minPrice", minPrice);
+        model.addAttribute("maxPrice", maxPrice);
+
+        return "shop/product-list";
+    }
 
     @GetMapping("/product/{id}")
     public String showProductDetail(@PathVariable Integer id, Model model) {
@@ -186,35 +479,7 @@ public class ShopController {
         return "shop/product-detail";
     }
 
-    @GetMapping("/top-selling")
-    public String showTopSellingProducts(
-            @RequestParam(required = false) String category,
-            Model model) {
 
-        List<ProductDTO> topProducts = productService.getTopSellingProducts(10);
-
-        model.addAttribute("products", topProducts);
-        model.addAttribute("category", category);
-
-        return "shop/top-selling";
-    }
-
-    @GetMapping("/random")
-    public String showRandomProducts(Model model) {
-        // For now, we'll just use the top selling products as a placeholder
-        // In a real implementation, you would have a method to get random products
-        List<ProductDTO> randomProducts = productService.getTopSellingProducts(5);
-
-        model.addAttribute("products", randomProducts);
-
-        return "shop/random-products";
-    }
-
-    /**
-     * Chuyển đổi danh sách biến thể thành chuỗi JSON
-     * @param variants Danh sách biến thể
-     * @return Chuỗi JSON
-     */
     private String convertVariantsToJson(List<ProductVariantDTO> variants) {
         if (variants == null || variants.isEmpty()) {
             return "[]";

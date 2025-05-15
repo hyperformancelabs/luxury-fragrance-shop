@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
+                console.error('Lỗi khi thêm vào giỏ hàng:', response.statusText);
                 throw new Error('Lỗi khi thêm vào giỏ hàng');
             }
             return response.json();
