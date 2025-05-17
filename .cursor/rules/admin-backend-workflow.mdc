@@ -1,5 +1,7 @@
 ---
-description: Details the structured approach for implementing new server-side API endpoints that serve administrative functions. It focuses on secure data processing, adherence to architectural principles, and proper testing of administrative APIs.
+description: 
+globs: 
+alwaysApply: false
 ---
 
 # Workflow: Create Admin Backend API Endpoint
@@ -12,7 +14,7 @@ description: Details the structured approach for implementing new server-side AP
    - Read `database_schema.txt` (lines 1–380) and `rbac_definition.txt` (lines 1–382) for relevant entities and permission rules.
 3. Create or update Controller, Service, and Repository classes under `backend/src/main/java` following existing package structure.
 4. Implement business logic, input validation, and exception handling.
-5. **API Testing:** Use `run_in_terminal` to execute `curl` commands with `/api/v1` prefix, e.g.:
+5. **API Testing:** First, call `localhost:8080/api/v1/auth/emp/login` api to employee `vhphat0807` with password `admin@123`. Then use terminal tool call to execute `curl` commands with `/api/v1` prefix directly on cursor integrated terminal, e.g.:
    ```bash
    curl -X GET http://localhost:8080/api/v1/emp/example
    ```

@@ -1,5 +1,7 @@
 ---
-description: Guides the systematic creation of new visual components for the administrative section of the frontend application. It emphasizes adherence to established design patterns and data handling practices relevant to administrative interfaces.
+description: 
+globs: 
+alwaysApply: false
 ---
 
 # Workflow: Create Admin Frontend Component

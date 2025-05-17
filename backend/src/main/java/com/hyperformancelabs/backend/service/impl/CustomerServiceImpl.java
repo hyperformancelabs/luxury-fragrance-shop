@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -95,7 +96,9 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public String loginAndGenerateToken(LoginRequest request) {
         Customer customer = login(request);
-        return jwtUtil.generateToken(customer.getUsername());
+        // Define a default role for customers
+        List<String> customerRoles = List.of("CUSTOMER"); 
+        return jwtUtil.generateToken(customer.getUsername(), customerRoles);
     }
 
     @Override

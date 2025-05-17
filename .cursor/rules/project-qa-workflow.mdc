@@ -1,5 +1,7 @@
 ---
-description: Defines a protocol for effectively responding to inquiries regarding the project. It involves leveraging project documentation, codebase analysis, and contextual understanding to provide accurate and relevant information.
+description: 
+globs: 
+alwaysApply: false
 ---
 
 # Workflow: Project Q&A

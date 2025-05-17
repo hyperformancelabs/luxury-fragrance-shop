@@ -1,7 +1,9 @@
 package com.hyperformancelabs.backend.service.impl;
 
 import com.hyperformancelabs.backend.dto.ProductDTO;
+import com.hyperformancelabs.backend.dto.ProductListResponse;
 import com.hyperformancelabs.backend.dto.Random10Product;
+import com.hyperformancelabs.backend.dto.SearchResponseDto;
 import com.hyperformancelabs.backend.dto.TopSellingProductDTO;
 import com.hyperformancelabs.backend.model.Product;
 import com.hyperformancelabs.backend.model.ProductVariant;
@@ -12,7 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -59,6 +64,48 @@ public class ProductServiceImpl implements ProductService {
         Pageable pageable = PageRequest.of(page, 25);
         Page<Product> productPage = productRepository.findAll(pageable);
         return productPage.map(this::convertToDTO);
+    }
+    
+    /**
+     * Get all products with pagination, sorting, and filtering
+     *
+     * @param page             Page number (0-based)
+     * @param size             Page size
+     * @param sortBy           Field to sort by
+     * @param sortDirection    Sort direction (ASC/DESC)
+     * @param filters          Map of filter criteria
+     * @return                 ProductListResponse containing products and pagination info
+     */
+    @Override
+    public ProductListResponse getAllProducts(int page, int size, String sortBy, Sort.Direction sortDirection, Map<String, String> filters) {
+        // This method should be implemented by the ProductManagementService
+        // For now, returning a minimal implementation to satisfy the interface
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Page<Product> productPage = productRepository.findAll(pageable);
+        
+        List<ProductDTO> productDTOs = productPage.getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        
+        return new ProductListResponse(
+                productDTOs,
+                productPage.getTotalElements(),
+                productPage.getTotalPages(),
+                productPage.getNumber()
+        );
+    }
+    
+    /**
+     * Get a specific product by ID
+     *
+     * @param productId        Product ID
+     * @return                 Product details
+     */
+    @Override
+    public ProductDTO getProductById(Integer productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+        return convertToDTO(product);
     }
 
     // Phân trang theo brand
@@ -144,6 +191,58 @@ public class ProductServiceImpl implements ProductService {
                     );
                 })
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * Search products by name for autocomplete
+     * 
+     * @param searchTerm The search term to match against product names
+     * @param limit Maximum number of results to return
+     * @return SearchResponseDto containing matching products and whether there's an exact match
+     */
+    @Override
+    public SearchResponseDto<ProductDTO> searchProductsByName(String searchTerm, int limit) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            // If search term is empty, return recent products
+            List<ProductDTO> recentProducts = productRepository.findAll(PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "productId")))
+                    .getContent()
+                    .stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+            return new SearchResponseDto<>(recentProducts, false);
+        }
+        
+        // Search for products matching the search term - should match any part of the name
+        List<Product> matchingProducts = productRepository.findByProductNameContainingIgnoreCase(
+                searchTerm.trim(), Pageable.unpaged()).getContent();
+        
+        // Check if there's an exact match - only consider it exact if it matches the complete product name
+        boolean hasExactMatch = matchingProducts.stream()
+                .anyMatch(product -> product.getProductName().equalsIgnoreCase(searchTerm.trim()));
+        
+        // Sort by relevance and convert to DTOs
+        List<ProductDTO> productDtos = matchingProducts.stream()
+                .sorted((a, b) -> {
+                    // Exact matches first
+                    boolean aExact = a.getProductName().equalsIgnoreCase(searchTerm.trim());
+                    boolean bExact = b.getProductName().equalsIgnoreCase(searchTerm.trim());
+                    if (aExact && !bExact) return -1;
+                    if (!aExact && bExact) return 1;
+                    
+                    // Starts with matches next
+                    boolean aStartsWith = a.getProductName().toLowerCase().startsWith(searchTerm.trim().toLowerCase());
+                    boolean bStartsWith = b.getProductName().toLowerCase().startsWith(searchTerm.trim().toLowerCase());
+                    if (aStartsWith && !bStartsWith) return -1;
+                    if (!aStartsWith && bStartsWith) return 1;
+                    
+                    // Alphabetical order for the rest
+                    return a.getProductName().compareToIgnoreCase(b.getProductName());
+                })
+                .limit(limit)
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        
+        return new SearchResponseDto<>(productDtos, hasExactMatch);
     }
 
 }

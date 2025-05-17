@@ -1,6 +1,7 @@
 package com.hyperformancelabs.backend.repository;
 
 import com.hyperformancelabs.backend.model.Product;
+import com.hyperformancelabs.backend.model.Brand;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,8 +21,19 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     // Tìm kiếm sản phẩm theo brand với phân trang
     Page<Product> findByBrand_BrandName(String brandName, Pageable pageable);
+    
+    // Tìm kiếm sản phẩm theo brand
+    Page<Product> findByBrand(Brand brand, Pageable pageable);
 
+    // Tìm kiếm sản phẩm theo tên (không phân biệt hoa thường)
     Page<Product> findByProductNameContainingIgnoreCase(String productName, Pageable pageable);
+    
+    // Tìm kiếm sản phẩm theo tên cho autocomplete (không phân trang, giới hạn kết quả)
+    @Query(value = "SELECT p FROM Product p WHERE LOWER(p.productName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) ORDER BY p.productName ASC")
+    List<Product> searchProductsByName(@Param("searchTerm") String searchTerm, Pageable pageable);
+    
+    // Kiểm tra sản phẩm tồn tại với tên và thương hiệu
+    boolean existsByProductNameAndBrand(String productName, Brand brand);
 
     @Query(value = """
     SELECT pv.product_variant_id, p.product_name, b.brand_name, pv.volume, pv.price, p.image_url, SUM(oi.quantity)

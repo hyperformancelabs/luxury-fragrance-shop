@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "@nivo/bar": "^0.96.0",
+    "@nivo/bump": "^0.96.0",
+    "@nivo/core": "^0.96.0",
+    "@nivo/line": "^0.96.0",
+    "@nivo/pie": "^0.96.0",
+    "@nivo/scatterplot": "^0.96.0",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
+    "react-grid-layout": "^1.5.1",
+    "uuid": "^11.1.0"
+  }
+}

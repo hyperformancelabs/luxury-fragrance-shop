@@ -1,5 +1,7 @@
 ---
-description: Describes the methodical procedure for establishing new server-side API endpoints catering to end-user operations. This workflow prioritizes efficient data retrieval, robust business logic implementation, and thorough validation of user-centric APIs.
+description: 
+globs: 
+alwaysApply: false
 ---
 
 # Workflow: Create User Backend API Endpoint

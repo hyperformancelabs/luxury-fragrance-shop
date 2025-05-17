@@ -201,13 +201,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeRepository.save(emp);
         
         // Tạo token
-        String token = jwtUtil.generateToken(request.getUsername());
-        
         // Lấy danh sách vai trò từ repository thay vì từ entity
         List<String> roles = employeeRepository.findRoleNamesByEmployeeId(emp.getEmployeeId());
         if (roles == null) {
             roles = new ArrayList<>();
         }
+        String token = jwtUtil.generateToken(emp.getUsername(), roles); // Updated to pass roles
         
         // Sử dụng constructor đầy đủ để trả về tất cả thông tin nhân viên
         return new LoginResponse(

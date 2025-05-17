@@ -4,11 +4,15 @@ import com.hyperformancelabs.backend.dto.EmployeeListResponse;
 import com.hyperformancelabs.backend.dto.EmployeeRegisterRequest;
 import com.hyperformancelabs.backend.dto.EmployeeUpdateRequest;
 import com.hyperformancelabs.backend.dto.EmployeeRoleRequest;
+import com.hyperformancelabs.backend.dto.BrandDto;
+import com.hyperformancelabs.backend.dto.BrandRequestDto;
+import com.hyperformancelabs.backend.dto.SearchResponseDto;
 import com.hyperformancelabs.backend.exception.DuplicateResourceException;
 import com.hyperformancelabs.backend.exception.InvalidRequestException;
 import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
 import com.hyperformancelabs.backend.payload.ApiResponse;
 import com.hyperformancelabs.backend.payload.ApiResponseStatus;
+import com.hyperformancelabs.backend.service.BrandService;
 import com.hyperformancelabs.backend.service.EmployeeManagementService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -24,6 +29,9 @@ public class EmployeeManagementController {
 
     @Autowired
     private EmployeeManagementService employeeManagementService;
+
+    @Autowired
+    private BrandService brandService;
 
     /**
      * Lấy danh sách nhân viên với bộ lọc và phân trang
@@ -273,6 +281,141 @@ public class EmployeeManagementController {
                     "Lỗi khi xóa vĩnh viễn nhân viên: " + e.getMessage(),
                     null
                 )
+            );
+        }
+    }
+
+    // New method to get all brands
+    @GetMapping("/brands")
+    public ResponseEntity<ApiResponse<List<BrandDto>>> getAllBrands() {
+        try {
+            List<BrandDto> brands = brandService.getAllBrands();
+            return ResponseEntity.ok(
+                new ApiResponse<>(
+                    ApiResponseStatus.SUCCESS_CODE,
+                    ApiResponseStatus.SUCCESS_STATUS,
+                    "Lấy danh sách thương hiệu thành công",
+                    brands
+                )
+            );
+        } catch (Exception e) {
+            String errorMsg = e.getMessage() != null && !e.getMessage().isBlank() ? e.getMessage() : "Lấy danh sách thương hiệu thất bại";
+            return ResponseEntity.badRequest().body(
+                new ApiResponse<>(
+                    ApiResponseStatus.BAD_REQUEST_CODE,
+                    ApiResponseStatus.ERROR_STATUS,
+                    errorMsg,
+                    null
+                )
+            );
+        }
+    }
+
+    /**
+     * Search brands by name for autocomplete
+     * 
+     * @param query The search term to match against brand names
+     * @param limit Maximum number of results to return
+     * @return SearchResponseDto containing matching brands and whether there's an exact match
+     */
+    @GetMapping("/brands/search")
+    public ResponseEntity<ApiResponse<SearchResponseDto<BrandDto>>> searchBrands(
+            @RequestParam(required = false) String query,
+            @RequestParam(defaultValue = "10") int limit) {
+        try {
+            SearchResponseDto<BrandDto> searchResults = brandService.searchBrandsByName(query, limit);
+            return ResponseEntity.ok(
+                new ApiResponse<>(
+                    ApiResponseStatus.SUCCESS_CODE,
+                    ApiResponseStatus.SUCCESS_STATUS,
+                    "Tìm kiếm thương hiệu thành công",
+                    searchResults
+                )
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ApiResponse<>(
+                    ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE,
+                    ApiResponseStatus.ERROR_STATUS,
+                    "Lỗi khi tìm kiếm thương hiệu: " + e.getMessage(),
+                    null
+                )
+            );
+        }
+    }
+    
+    @GetMapping("/brands/{brandId}")
+    public ResponseEntity<ApiResponse<BrandDto>> getBrandById(@PathVariable Integer brandId) {
+        try {
+            BrandDto brandDto = brandService.getBrandById(brandId);
+            return ResponseEntity.ok(
+                new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, "Lấy thương hiệu thành công", brandDto)
+            );
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new ApiResponse<>(ApiResponseStatus.NOT_FOUND_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ApiResponse<>(ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE, ApiResponseStatus.ERROR_STATUS, "Lỗi khi lấy thương hiệu: " + e.getMessage(), null)
+            );
+        }
+    }
+
+    @PostMapping("/brands")
+    public ResponseEntity<ApiResponse<BrandDto>> createBrand(@Valid @RequestBody BrandRequestDto brandRequestDto) {
+        try {
+            BrandDto createdBrand = brandService.createBrand(brandRequestDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, "Tạo thương hiệu thành công", createdBrand)
+            );
+        } catch (DuplicateResourceException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                new ApiResponse<>(ApiResponseStatus.CONFLICT_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ApiResponse<>(ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE, ApiResponseStatus.ERROR_STATUS, "Lỗi khi tạo thương hiệu: " + e.getMessage(), null)
+            );
+        }
+    }
+
+    @PutMapping("/brands/{brandId}")
+    public ResponseEntity<ApiResponse<BrandDto>> updateBrand(@PathVariable Integer brandId, @Valid @RequestBody BrandRequestDto brandRequestDto) {
+        try {
+            BrandDto updatedBrand = brandService.updateBrand(brandId, brandRequestDto);
+            return ResponseEntity.ok(
+                new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, "Cập nhật thương hiệu thành công", updatedBrand)
+            );
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new ApiResponse<>(ApiResponseStatus.NOT_FOUND_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        } catch (DuplicateResourceException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                new ApiResponse<>(ApiResponseStatus.CONFLICT_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ApiResponse<>(ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE, ApiResponseStatus.ERROR_STATUS, "Lỗi khi cập nhật thương hiệu: " + e.getMessage(), null)
+            );
+        }
+    }
+
+    @DeleteMapping("/brands/{brandId}")
+    public ResponseEntity<ApiResponse<Void>> deleteBrand(@PathVariable Integer brandId) {
+        try {
+            brandService.deleteBrand(brandId);
+            return ResponseEntity.ok(
+                new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, "Xóa thương hiệu thành công", null)
+            );
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new ApiResponse<>(ApiResponseStatus.NOT_FOUND_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ApiResponse<>(ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE, ApiResponseStatus.ERROR_STATUS, "Lỗi khi xóa thương hiệu: " + e.getMessage(), null)
             );
         }
     }

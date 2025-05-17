@@ -4,36 +4,42 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 public class ProductDTO {
 
     private Integer productId;
 
-    private String brandName; // Thay vì Brand object, dùng brandId cho DTO
+    private Integer brandId; // Brand ID for reference
+    
+    private String brandName; // Brand name for display
 
     @NotBlank(message = "Product name cannot be empty")
     private String productName;
 
     private String description;
 
-    @NotNull(message = "Volume cannot be empty")
-    @Positive(message = "Volume must be positive")
+    // Volume, price, and stock fields are for product variants
+    // These can be null for the main product DTO
     private Integer volume;
-
-    @NotNull(message = "Price cannot be empty")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Price cannot be negative")
+    
     private BigDecimal price;
-
-    @DecimalMin(value = "0.0", inclusive = true, message = "Discount price cannot be negative")
+    
     private BigDecimal discountPrice;
-
-    @NotNull(message = "Quantity in stock cannot be empty")
-    @Min(value = 0, message = "Quantity in stock cannot be negative")
+    
     private Integer quantityInStock;
-
-    @Min(value = 0, message = "Reorder level cannot be negative")
+    
     private Integer reorderLevel;
+
+    // For aggregate information from variants
+    private BigDecimal minPrice;
+    private BigDecimal maxPrice;
+    private BigDecimal minDiscountPrice;
+    private BigDecimal maxDiscountPrice;
+    private Integer totalInventory;
+    private List<Integer> volumes;
+    private Integer variantCount;
 
     private String imageUrl;
 }

@@ -1,5 +1,7 @@
 ---
-description: Outlines the standardized process for developing new user-facing visual components. This workflow ensures consistency in user experience and interaction by following project-specific UI/UX guidelines and data integration methods.
+description: 
+globs: 
+alwaysApply: false
 ---
 
 # Workflow: Create User Frontend Component

@@ -720,26 +720,6 @@ const EmployeeProfile = () => {
                 <div>
                   <div className="flex items-center mb-1">
                     <label className="block text-sm font-medium text-gray-700">
-                      Địa chỉ
-                    </label>
-                    <FieldHelper text="Địa chỉ liên hệ của nhân viên" />
-                  </div>
-                  <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleAddressChange}
-                    onBlur={handleAddressBlur}
-                    placeholder="Nhập địa chỉ"
-                    autoComplete="street-address"
-                    className={`w-full p-2 border ${errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md`}
-                  />
-                  {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
-                </div>
-                
-                <div>
-                  <div className="flex items-center mb-1">
-                    <label className="block text-sm font-medium text-gray-700">
                       Ngày sinh
                     </label>
                     <FieldHelper text="Ngày sinh phải trước ngày hiện tại" />
@@ -759,13 +739,17 @@ const EmployeeProfile = () => {
                 </div>
                 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Địa chỉ
-                  </label>
+                  <div className="flex items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Địa chỉ
+                    </label>
+                    <FieldHelper text="Địa chỉ liên hệ của nhân viên" />
+                  </div>
                   <textarea
                     name="address"
                     value={formData.address}
-                    onChange={handleChange}
+                    onChange={handleAddressChange}
+                    onBlur={handleAddressBlur}
                     rows="3"
                     placeholder="Nhập địa chỉ đầy đủ"
                     autoComplete="street-address"
