@@ -23,4 +23,16 @@ public interface ProductVariantService {
 
 //    // Lấy biến thể theo ID
 //    ProductVariantDTO getProductVariantById(Integer productVariantId);
+
+    // Tìm biến thể theo sản phẩm và dung tích
+    ProductVariantDTO findByProduct_ProductIdAndVolume(Integer productId, Integer volume);
+
+    // Thêm biến thể
+    void addProductVariant(ProductVariantDTO productVariant);
+
+    // Cập nhật biến thể
+    void updateProductVariant(ProductVariantDTO productVariant);
+
+    // Xóa biến thể
+    void deleteProductVariant(Integer productVariantId);
 }

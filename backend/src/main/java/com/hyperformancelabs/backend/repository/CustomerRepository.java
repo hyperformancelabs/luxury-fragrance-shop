@@ -3,7 +3,10 @@ package com.hyperformancelabs.backend.repository;
 import com.hyperformancelabs.backend.model.Cart;
 import com.hyperformancelabs.backend.model.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,5 +18,51 @@ public interface  CustomerRepository extends JpaRepository<Customer, Integer> {
     Optional<Customer> findByCustomerId(Integer customerId);
     List<Customer> findByUsername(String username);
     Optional<Customer> findByEmailOrPhoneNumber(String email, String phone);
+
+    // -------------------------------------- ADMIN -----------------------------------------------------
+
+    // Số khách hàng mới hôm nay
+    @Query(value = """
+    SELECT COUNT_BIG(*) 
+    FROM [Customer] c 
+    WHERE CAST(c.create_at AS DATE) = CAST(GETDATE() AS DATE)
+""", nativeQuery = true)
+    Long countCustomersToday();
+
+    // Số khách hàng mới trong tháng hiện tại
+    @Query(value = """
+    SELECT COUNT_BIG(*) 
+    FROM [Customer] c 
+    WHERE MONTH(c.create_at) = MONTH(GETDATE())
+      AND YEAR(c.create_at) = YEAR(GETDATE())
+""", nativeQuery = true)
+    Long countCustomersThisMonth();
+
+    // Số khách hàng mới trong năm hiện tại
+    @Query(value = """
+    SELECT COUNT_BIG(*) 
+    FROM [Customer] c 
+    WHERE YEAR(c.create_at) = YEAR(GETDATE())
+""", nativeQuery = true)
+    Long countCustomersThisYear();
+
+    // Số khách hàng mới theo tháng và năm
+    @Query(value = """
+    SELECT COUNT_BIG(*) 
+    FROM [Customer] c 
+    WHERE MONTH(c.create_at) = :month
+      AND YEAR(c.create_at) = :year
+""", nativeQuery = true)
+    Long countCustomersByMonthAndYear(@Param("month") int month, @Param("year") int year);
+
+    // Số khách hàng mới trong khoảng ngày
+    @Query(value = """
+    SELECT COUNT_BIG(*) 
+    FROM [Customer] c 
+    WHERE c.create_at BETWEEN :startDate AND :endDate
+""", nativeQuery = true)
+    Long countCustomersBetweenDates(@Param("startDate") LocalDate startDate,
+                                    @Param("endDate") LocalDate endDate);
+
 }
 

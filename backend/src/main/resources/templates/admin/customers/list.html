@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{admin/layout/layout :: html(
+        title='Quản lý khách hàng - Shop Nước Hoa Xa Xỉ',
+        activeMenu='customers',
+        content=~{::content},
+        additionalCss=~{::additionalCss},
+        additionalJs=~{::additionalJs}
+      )}">
+<head>
+    <additionalCss>
+        <style>
+            .status-badge {
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+            
+            .status-active {
+                background-color: #e8f5e9;
+                color: #2e7d32;
+            }
+            
+            .status-inactive {
+                background-color: #f5f5f5;
+                color: #616161;
+            }
+            
+            .status-banned {
+                background-color: #ffebee;
+                color: #c62828;
+            }
+        </style>
+    </additionalCss>
+</head>
+<body>
+    <content>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Quản lý khách hàng</h2>
+            <button class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Thêm khách hàng mới
+            </button>
+        </div>
+        
+        <!-- Filters and Search -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <form th:action="@{/admin/customers}" method="get" class="d-flex">
+                            <input type="text" class="form-control me-2" name="search" th:value="${search}" placeholder="Tìm kiếm khách hàng...">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="col-md-6 d-flex justify-content-end">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-filter me-1"></i> Lọc
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Tất cả khách hàng</a></li>
+                                <li><a class="dropdown-item" href="#">Khách hàng hoạt động</a></li>
+                                <li><a class="dropdown-item" href="#">Khách hàng không hoạt động</a></li>
+                                <li><a class="dropdown-item" href="#">Khách hàng bị cấm</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#">Khách hàng VIP</a></li>
+                                <li><a class="dropdown-item" href="#">Khách hàng mới</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-sort me-1"></i> Sắp xếp
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#">Tên (A-Z)</a></li>
+                                <li><a class="dropdown-item" href="#">Tên (Z-A)</a></li>
+                                <li><a class="dropdown-item" href="#">Điểm tích lũy (Cao-Thấp)</a></li>
+                                <li><a class="dropdown-item" href="#">Điểm tích lũy (Thấp-Cao)</a></li>
+                                <li><a class="dropdown-item" href="#">Ngày đăng ký (Mới-Cũ)</a></li>
+                                <li><a class="dropdown-item" href="#">Ngày đăng ký (Cũ-Mới)</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Customers Table -->
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Tên khách hàng</th>
+                                <th>Số điện thoại</th>
+                                <th>Email</th>
+                                <th>Trạng thái</th>
+                                <th>Điểm tích lũy</th>
+                                <th style="width: 100px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="customer, stat : ${customers}">
+                                <td th:text="${stat.count + currentPage * 10}">1</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar me-3 bg-light rounded-circle text-center" style="width: 40px; height: 40px; line-height: 40px;">
+                                            <i class="fas fa-user text-secondary"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0" th:text="${customer.name}">Nguyễn Văn A</h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td th:text="${customer.phone}">0912345678</td>
+                                <td th:text="${customer.email}">nguyenvana@email.com</td>
+                                <td>
+                                    <span th:class="${
+                                        customer.status == 'active' ? 'status-badge status-active' :
+                                        customer.status == 'inactive' ? 'status-badge status-inactive' :
+                                        customer.status == 'banned' ? 'status-badge status-banned' :
+                                        'status-badge'
+                                    }" th:text="${
+                                        customer.status == 'active' ? 'Hoạt động' :
+                                        customer.status == 'inactive' ? 'Không hoạt động' :
+                                        customer.status == 'banned' ? 'Bị cấm' :
+                                        customer.status
+                                    }">Hoạt động</span>
+                                </td>
+                                <td th:text="${customer.loyaltyPoints}">120</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a th:href="@{/admin/customers/{id}(id=${customer.id})}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- If no customers, show a message -->
+                            <tr th:if="${#lists.isEmpty(customers)}">
+                                <td colspan="7" class="text-center py-4">
+                                    <p class="mb-0 text-muted">Không tìm thấy khách hàng nào</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <div>
+                    <span>Hiển thị <span th:text="${#lists.size(customers)}">5</span> / <span>100</span> khách hàng</span>
+                </div>
+                
+                <nav th:if="${totalPages > 1}">
+                    <ul class="pagination mb-0">
+                        <li th:class="${currentPage == 0 ? 'page-item disabled' : 'page-item'}">
+                            <a class="page-link" th:href="@{/admin/customers(page=${currentPage - 1}, search=${search})}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        
+                        <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}" 
+                            th:class="${currentPage == i ? 'page-item active' : 'page-item'}">
+                            <a class="page-link" th:href="@{/admin/customers(page=${i}, search=${search})}" th:text="${i + 1}">1</a>
+                        </li>
+                        
+                        <li th:class="${currentPage == totalPages - 1 ? 'page-item disabled' : 'page-item'}">
+                            <a class="page-link" th:href="@{/admin/customers(page=${currentPage + 1}, search=${search})}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </content>
+    
+    <additionalJs>
+        <script>
+            // Additional JavaScript if needed
+        </script>
+    </additionalJs>
+</body>
+</html>

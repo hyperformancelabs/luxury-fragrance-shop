@@ -8,6 +8,7 @@ import com.hyperformancelabs.backend.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Service
@@ -59,6 +60,45 @@ public class CustomerServiceImpl implements CustomerService {
         return customerRepository.findByEmailOrPhoneNumber(email, phone)
                 .map(this::convertToCustomerDTO)
                 .orElse(null);
+    }
+
+    // -------------------------------------------------- ADMIN -----------------------------------------------------
+
+    @Override
+    public Long countNewCustomersToday(){
+        return customerRepository.countCustomersToday();
+    }
+
+    @Override
+    public Long countNewCustomersThisMonth(){
+        return customerRepository.countCustomersThisMonth();
+    }
+
+    @Override
+    public Long countNewCustomersThisYear(){
+        return customerRepository.countCustomersThisYear();
+    }
+
+    @Override
+    public Long countNewCustomersByMonthAndYear(int month, int year){
+        return customerRepository.countCustomersByMonthAndYear(month, year);
+    }
+
+    @Override
+    public Long countNewCustomersBetweenDates(LocalDate startDate, LocalDate endDate){
+        return customerRepository.countCustomersBetweenDates(startDate, endDate);
+    }
+
+    @Override
+    public void updateCustomerInfo(String customerId, String name, String email, String phoneNumber) {
+        Customer customer = customerRepository.findByCustomerId(Integer.parseInt(customerId)).orElse(null);
+        if (customer == null) {
+            return;
+        }
+        customer.setName(name);
+        customer.setEmail(email);
+        customer.setPhoneNumber(phoneNumber);
+        customerRepository.save(customer);
     }
 
     private CustomerDTO convertToCustomerDTO(Customer customer) {

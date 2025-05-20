@@ -1,7 +1,9 @@
 package com.hyperformancelabs.backend.service;
 
 import com.hyperformancelabs.backend.dto.FlashSaleProductDTO;
+import com.hyperformancelabs.backend.dto.ProductAdminDisplayDTO;
 import com.hyperformancelabs.backend.dto.ProductDTO;
+import com.hyperformancelabs.backend.dto.TopSellingProductDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -27,6 +29,8 @@ public interface ProductService {
     
     // Lấy top sản phẩm bán chạy
     List<ProductDTO> getTopSellingProducts(int limit);
+
+    List<TopSellingProductDTO> getTopSellingProducts(String category, int limit);
 
     // Lấy danh sách sản phẩm trong flash sale
     List<FlashSaleProductDTO> getFlashSaleProducts();
@@ -59,4 +63,25 @@ public interface ProductService {
                                                       BigDecimal minPrice,
                                                       BigDecimal maxPrice,
                                                       Pageable pageable);
+
+    Page<ProductDTO> findByProductNameContainingIgnoreCase(String productName, Pageable pageable);
+
+    // --------------------------------------- ADMIN -----------------------------------------------------
+
+    // Lọc sản phẩm
+    Page<ProductAdminDisplayDTO> filterAdminProductsPaged(String category,
+                                                     String keyword,
+                                                     String sortBy,
+                                                     String sortDir,
+                                                     String stockStatus,
+                                                     Pageable pageable);
+
+    // Thêm sản phẩm
+    ProductDTO addProduct(ProductDTO productDTO);
+
+    // Cập nhật sản phẩm
+    ProductDTO updateProduct(ProductDTO productDTO);
+
+    // Xóa sản phẩm
+    void deleteProduct(Integer productId);
 }

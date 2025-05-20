@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{admin/layout/layout :: html(
+        title='Chi tiết khách hàng - Shop Nước Hoa Xa Xỉ',
+        activeMenu='customers',
+        content=~{::content},
+        additionalCss=~{::additionalCss},
+        additionalJs=~{::additionalJs}
+      )}">
+<head>
+    <additionalCss>
+        <style>
+            .status-badge {
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+            
+            .status-active {
+                background-color: #e8f5e9;
+                color: #2e7d32;
+            }
+            
+            .status-inactive {
+                background-color: #f5f5f5;
+                color: #616161;
+            }
+            
+            .status-banned {
+                background-color: #ffebee;
+                color: #c62828;
+            }
+            
+            .customer-avatar {
+                width: 120px;
+                height: 120px;
+                border-radius: 50%;
+                background-color: #f5f5f5;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 3rem;
+                color: #6c757d;
+                margin: 0 auto 1rem;
+            }
+            
+            .info-label {
+                font-weight: 600;
+                color: #6c757d;
+            }
+            
+            .order-status-badge {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                display: inline-block;
+                margin-right: 5px;
+            }
+            
+            .order-completed {
+                background-color: #2e7d32;
+            }
+            
+            .order-processing {
+                background-color: #f57f17;
+            }
+            
+            .order-cancelled {
+                background-color: #c62828;
+            }
+        </style>
+    </additionalCss>
+</head>
+<body>
+    <content>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Chi tiết khách hàng</h2>
+            <div>
+                <a href="/admin/customers" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left me-1"></i> Quay lại
+                </a>
+                <button class="btn btn-primary">
+                    <i class="fas fa-edit me-1"></i> Chỉnh sửa
+                </button>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Customer Information -->
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-body text-center">
+                        <div class="customer-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h4 class="mb-1" th:text="${customer.name}">Nguyễn Văn A</h4>
+                        <p class="text-muted mb-3">
+                            <span th:class="${
+                                customer.status == 'active' ? 'status-badge status-active' :
+                                customer.status == 'inactive' ? 'status-badge status-inactive' :
+                                customer.status == 'banned' ? 'status-badge status-banned' :
+                                'status-badge'
+                            }" th:text="${
+                                customer.status == 'active' ? 'Hoạt động' :
+                                customer.status == 'inactive' ? 'Không hoạt động' :
+                                customer.status == 'banned' ? 'Bị cấm' :
+                                customer.status
+                            }">Hoạt động</span>
+                        </p>
+                        
+                        <div class="d-flex justify-content-center mb-3">
+                            <button class="btn btn-outline-primary me-2">
+                                <i class="fas fa-envelope me-1"></i> Gửi email
+                            </button>
+                            <button class="btn btn-outline-success">
+                                <i class="fas fa-phone me-1"></i> Gọi điện
+                            </button>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <h5 class="mb-0" th:text="${customer.loyaltyPoints}">120</h5>
+                                <small class="text-muted">Điểm tích lũy</small>
+                            </div>
+                            <div class="col-4">
+                                <h5 class="mb-0">5</h5>
+                                <small class="text-muted">Đơn hàng</small>
+                            </div>
+                            <div class="col-4">
+                                <h5 class="mb-0">4.8</h5>
+                                <small class="text-muted">Đánh giá</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Thông tin liên hệ</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <p class="info-label mb-1">Số điện thoại</p>
+                            <p class="mb-0" th:text="${customer.phone}">0912345678</p>
+                        </div>
+                        <div class="mb-3">
+                            <p class="info-label mb-1">Email</p>
+                            <p class="mb-0" th:text="${customer.email}">nguyenvana@email.com</p>
+                        </div>
+                        <div class="mb-3">
+                            <p class="info-label mb-1">Địa chỉ</p>
+                            <p class="mb-0" th:text="${customer.address}">123 Đường Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Ghi chú</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0" th:text="${customer.note}">Khách hàng VIP, ưu tiên xử lý đơn hàng nhanh.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order History -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Lịch sử đơn hàng</h5>
+                        <a href="#" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Mã đơn</th>
+                                        <th>Ngày đặt</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Trạng thái</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="order : ${orderHistory}">
+                                        <td>
+                                            <a th:href="@{/admin/orders/{id}(id=${order.id.substring(5)})}" class="text-primary" th:text="${order.id}">
+                                                #ORD-12345
+                                            </a>
+                                        </td>
+                                        <td th:text="${order.date}">12/04/2025</td>
+                                        <td th:text="${order.amount}">₫850,000</td>
+                                        <td>
+                                            <span class="d-flex align-items-center">
+                                                <span th:class="${
+                                                    order.status == 'completed' ? 'order-status-badge order-completed' :
+                                                    order.status == 'processing' ? 'order-status-badge order-processing' :
+                                                    order.status == 'cancelled' ? 'order-status-badge order-cancelled' :
+                                                    'order-status-badge'
+                                                }"></span>
+                                                <span th:text="${
+                                                    order.status == 'completed' ? 'Đã hoàn thành' :
+                                                    order.status == 'processing' ? 'Đang xử lý' :
+                                                    order.status == 'cancelled' ? 'Đã hủy' :
+                                                    order.status
+                                                }">Đã hoàn thành</span>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a th:href="@{/admin/orders/{id}(id=${order.id.substring(5)})}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <!-- If no orders, show a message -->
+                                    <tr th:if="${#lists.isEmpty(orderHistory)}">
+                                        <td colspan="5" class="text-center py-3">
+                                            <p class="mb-0 text-muted">Khách hàng chưa có đơn hàng nào</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Hoạt động gần đây</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item completed">
+                                <h6 class="mb-0">Đặt đơn hàng #ORD-12345</h6>
+                                <p class="timeline-date">12/04/2025 08:30</p>
+                                <p class="mb-0 text-muted">Đơn hàng đã được tạo thành công</p>
+                            </div>
+                            
+                            <div class="timeline-item completed">
+                                <h6 class="mb-0">Cập nhật thông tin cá nhân</h6>
+                                <p class="timeline-date">10/04/2025 14:15</p>
+                                <p class="mb-0 text-muted">Khách hàng đã cập nhật địa chỉ giao hàng</p>
+                            </div>
+                            
+                            <div class="timeline-item completed">
+                                <h6 class="mb-0">Đăng nhập</h6>
+                                <p class="timeline-date">10/04/2025 14:00</p>
+                                <p class="mb-0 text-muted">Đăng nhập từ thiết bị mới</p>
+                            </div>
+                            
+                            <div class="timeline-item completed">
+                                <h6 class="mb-0">Đăng ký tài khoản</h6>
+                                <p class="timeline-date">01/01/2025 10:30</p>
+                                <p class="mb-0 text-muted">Tài khoản đã được tạo thành công</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Sản phẩm đã mua</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <img src="https://via.placeholder.com/150" class="card-img-top" alt="Product">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Dior Sauvage EDP</h6>
+                                        <p class="card-text text-muted">100ml</p>
+                                        <p class="card-text">2,500,000 ₫</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <img src="https://via.placeholder.com/150" class="card-img-top" alt="Product">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Chanel Bleu de Chanel EDP</h6>
+                                        <p class="card-text text-muted">50ml</p>
+                                        <p class="card-text">2,200,000 ₫</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <img src="https://via.placeholder.com/150" class="card-img-top" alt="Product">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Tom Ford Tobacco Vanille</h6>
+                                        <p class="card-text text-muted">50ml</p>
+                                        <p class="card-text">3,800,000 ₫</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </content>
+    
+    <additionalJs>
+        <script>
+            // Additional JavaScript if needed
+        </script>
+    </additionalJs>
+</body>
+</html>

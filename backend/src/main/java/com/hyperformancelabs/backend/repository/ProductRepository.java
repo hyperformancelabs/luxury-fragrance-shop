@@ -324,4 +324,96 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             @Param("maxPrice") BigDecimal maxPrice,
             Pageable pageable);
 
+    @Query(value = """
+    SELECT pv.product_variant_id, p.product_name, b.brand_name, pv.volume, pv.price, p.image_url, SUM(oi.quantity)
+    FROM [OrderItem] oi
+    JOIN [ProductVariant] pv ON pv.product_variant_id = oi.product_variant_id
+    JOIN [Product] p ON p.product_id = pv.product_id
+    JOIN [Brand] b ON b.brand_id = p.brand_id
+    JOIN [Order] o ON o.order_id = oi.order_id
+    LEFT JOIN [ProductDetail] pd ON p.product_id = pd.product_id AND pd.detail_name = 'suitable_gender'
+    WHERE o.order_status = 'delivered'
+      AND (:category IS NULL OR pd.detail_value = :category)
+    GROUP BY pv.product_variant_id, p.product_name, b.brand_name, pv.volume, pv.price, p.image_url
+    ORDER BY SUM(oi.quantity) DESC
+    """, nativeQuery = true)
+    List<Object[]> findTop10TopSellingProducts(@Param("category") String category);
+
+    @Query(value = """
+    SELECT pv.product_variant_id, p.product_name, b.brand_name, pv.volume, pv.price, 
+           p.image_url, pv.quantity_in_stock, pv.reorder_level
+    FROM [ProductVariant] pv
+    JOIN [Product] p ON p.product_id = pv.product_id
+    JOIN [Brand] b ON b.brand_id = p.brand_id
+    WHERE pv.quantity_in_stock <= pv.reorder_level
+      AND pv.reorder_level IS NOT NULL
+      AND pv.reorder_level > 0
+    ORDER BY 
+      CASE 
+        WHEN pv.reorder_level = 0 THEN 0 
+        ELSE (pv.quantity_in_stock * 1.0 / pv.reorder_level) 
+      END ASC
+    OFFSET 0 ROWS
+    FETCH NEXT :limit ROWS ONLY
+    """, nativeQuery = true)
+    List<Object[]> findProductsWithLowStock(@Param("limit") int limit);
+
+    // Lọc sản phẩm admin
+    @Query(value = """
+    SELECT 
+        p.product_id,
+        p.brand_id,
+        p.image_url,
+        p.product_name,
+        p.description,
+        pv.volume,
+        pv.price,
+        pv.quantity_in_stock,
+        pv.reorder_level,
+        pv.discount_price,
+        pd.detail_value AS suitable_gender
+    FROM Product p
+    JOIN ProductVariant pv ON p.product_id = pv.product_id
+    LEFT JOIN ProductDetail pd 
+        ON p.product_id = pd.product_id AND pd.detail_name = 'suitable_gender'
+    WHERE 
+        (:gender IS NULL OR pd.detail_value = :gender)
+        AND (:keyword IS NULL OR p.product_name LIKE %:keyword%)
+        AND (
+            :stockStatus IS NULL 
+            OR (:stockStatus = 'out_of_stock' AND pv.quantity_in_stock = 0)
+            OR (:stockStatus = 'low_stock' AND pv.quantity_in_stock > 0 AND pv.quantity_in_stock <= pv.reorder_level)
+        )
+    ORDER BY
+        CASE WHEN :sortBy = 'price' AND :sortDir = 'asc' THEN pv.price END ASC,
+        CASE WHEN :sortBy = 'price' AND :sortDir = 'desc' THEN pv.price END DESC,
+        CASE WHEN :sortBy = 'stock' AND :sortDir = 'asc' THEN pv.quantity_in_stock END ASC,
+        CASE WHEN :sortBy = 'stock' AND :sortDir = 'desc' THEN pv.quantity_in_stock END DESC
+    """,
+            countQuery = """
+    SELECT COUNT(*)
+    FROM Product p
+    JOIN ProductVariant pv ON p.product_id = pv.product_id
+    LEFT JOIN ProductDetail pd 
+        ON p.product_id = pd.product_id AND pd.detail_name = 'suitable_gender'
+    WHERE 
+        (:gender IS NULL OR pd.detail_value = :gender)
+        AND (:keyword IS NULL OR p.product_name LIKE %:keyword%)
+        AND (
+            :stockStatus IS NULL 
+            OR (:stockStatus = 'out_of_stock' AND pv.quantity_in_stock = 0)
+            OR (:stockStatus = 'low_stock' AND pv.quantity_in_stock > 0 AND pv.quantity_in_stock <= pv.reorder_level)
+        )
+    """,
+            nativeQuery = true)
+    Page<Object[]> findFilteredProductsWithSort(
+            @Param("gender") String gender,                 // Men, Women, Unisex
+            @Param("keyword") String keyword,               // Search keyword
+            @Param("sortBy") String sortBy,                 // price, stock
+            @Param("sortDir") String sortDir,               // asc, desc
+            @Param("stockStatus") String stockStatus,       // out_of_stock, low_stock
+            Pageable pageable
+    );
+
+
 }

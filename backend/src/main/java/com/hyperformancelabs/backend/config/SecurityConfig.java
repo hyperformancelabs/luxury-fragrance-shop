@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.config;
 
+import com.hyperformancelabs.backend.service.impl.CustomAdminDetailsService;
 import com.hyperformancelabs.backend.service.impl.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,6 +28,29 @@ public class SecurityConfig {
     @Autowired
     private CustomLogoutSuccessHandler logoutSuccessHandler;
 
+    @Autowired
+    private AdminLogoutSuccessHandler adminLogoutSuccessHandler;
+
+    @Bean
+    public SecurityFilterChain adminSecurity(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository()))
+                .securityMatcher("/admin/**") // Áp dụng cho tất cả /admin/*
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/admin/login", "/admin/css/**", "/admin/js/**", "admin/precheck").permitAll()
+                        .anyRequest().hasRole("ADMIN")
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/admin/logout")
+                        .logoutSuccessHandler(adminLogoutSuccessHandler)
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                );
+
+        return http.build();
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.
@@ -52,7 +76,8 @@ public class SecurityConfig {
                 .requestMatchers("/track-order/**").permitAll()
                 .requestMatchers("/register/**").permitAll()// Cho phép truy cập trang blog
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+//                .requestMatchers("/admin/**").permitAll()
+//                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
@@ -60,14 +85,14 @@ public class SecurityConfig {
                 .defaultSuccessUrl("/") // Chuyển hướng đến trang chủ sau khi đăng nhập thành công
                 .permitAll()
             )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessHandler(logoutSuccessHandler)  // Sử dụng handler tùy chỉnh
-                        .invalidateHttpSession(true)
-                        .clearAuthentication(true)
-                        .deleteCookies("JSESSIONID")
-                        .permitAll()
-                );
+            .logout(logout -> logout
+                    .logoutUrl("/logout")
+                    .logoutSuccessHandler(logoutSuccessHandler)  // Sử dụng handler tùy chỉnh
+                    .invalidateHttpSession(true)
+                    .clearAuthentication(true)
+                    .deleteCookies("JSESSIONID")
+                    .permitAll()
+            );
 
         return http.build();
     }
@@ -87,4 +112,13 @@ public class SecurityConfig {
         return new CustomUserDetailsService();
     }
 
+    @Bean
+    public UserDetailsService adminDetailsService() {
+        return new CustomAdminDetailsService();
+    }
+
+    @Bean
+    public CsrfTokenRepository csrfTokenRepository() {
+        return new CookieCsrfTokenRepository();
+    }
 }

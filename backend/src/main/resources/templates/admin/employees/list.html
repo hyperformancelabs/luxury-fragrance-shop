@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{admin/layout/layout :: html(
+        title='Quản lý nhân viên - Shop Nước Hoa Xa Xỉ',
+        activeMenu='employees',
+        content=~{::content},
+        additionalCss=~{::additionalCss},
+        additionalJs=~{::additionalJs}
+      )}">
+<head>
+    <additionalCss>
+        <style>
+            .status-badge {
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+            
+            .status-active {
+                background-color: #e8f5e9;
+                color: #2e7d32;
+            }
+            
+            .status-inactive {
+                background-color: #f5f5f5;
+                color: #616161;
+            }
+            
+            .status-on-leave {
+                background-color: #fff8e1;
+                color: #f57f17;
+            }
+            
+            .employee-avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background-color: #f5f5f5;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1rem;
+                color: #6c757d;
+            }
+            
+            .role-badge {
+                font-size: 0.7rem;
+                padding: 0.15rem 0.4rem;
+                border-radius: 0.25rem;
+                background-color: #e3f2fd;
+                color: #1565c0;
+                margin-right: 0.25rem;
+                margin-bottom: 0.25rem;
+                display: inline-block;
+            }
+        </style>
+    </additionalCss>
+</head>
+<body>
+    <content>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Quản lý nhân viên</h2>
+            <button class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Thêm nhân viên mới
+            </button>
+        </div>
+        
+        <!-- Filters and Search -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <form th:action="@{/admin/employees}" method="get" class="d-flex">
+                            <input type="text" class="form-control me-2" name="search" th:value="${search}" placeholder="Tìm kiếm nhân viên...">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="col-md-6 d-flex justify-content-end">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-filter me-1"></i> Lọc
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Tất cả nhân viên</a></li>
+                                <li><a class="dropdown-item" href="#">Nhân viên đang làm việc</a></li>
+                                <li><a class="dropdown-item" href="#">Nhân viên nghỉ phép</a></li>
+                                <li><a class="dropdown-item" href="#">Nhân viên không hoạt động</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#">Admin</a></li>
+                                <li><a class="dropdown-item" href="#">Quản lý</a></li>
+                                <li><a class="dropdown-item" href="#">Nhân viên bán hàng</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-sort me-1"></i> Sắp xếp
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#">Tên (A-Z)</a></li>
+                                <li><a class="dropdown-item" href="#">Tên (Z-A)</a></li>
+                                <li><a class="dropdown-item" href="#">Ngày bắt đầu (Mới-Cũ)</a></li>
+                                <li><a class="dropdown-item" href="#">Ngày bắt đầu (Cũ-Mới)</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Employees Table -->
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Nhân viên</th>
+                                <th>Tên đăng nhập</th>
+                                <th>Số điện thoại</th>
+                                <th>Email</th>
+                                <th>Vai trò</th>
+                                <th>Trạng thái</th>
+                                <th style="width: 100px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="employee, stat : ${employees}">
+                                <td th:text="${stat.count + currentPage * 10}">1</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="employee-avatar me-3">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0" th:text="${employee.fullName}">Admin User</h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td th:text="${employee.username}">admin</td>
+                                <td th:text="${employee.phoneNumber}">0912345678</td>
+                                <td th:text="${employee.email}">admin@shop.com</td>
+                                <td>
+                                    <span class="role-badge">ADMIN</span>
+                                </td>
+                                <td>
+                                    <span th:class="${
+                                        employee.status == 'active' ? 'status-badge status-active' :
+                                        employee.status == 'inactive' ? 'status-badge status-inactive' :
+                                        employee.status == 'on_leave' ? 'status-badge status-on-leave' :
+                                        'status-badge'
+                                    }" th:text="${
+                                        employee.status == 'active' ? 'Đang làm việc' :
+                                        employee.status == 'inactive' ? 'Không hoạt động' :
+                                        employee.status == 'on_leave' ? 'Nghỉ phép' :
+                                        employee.status
+                                    }">Đang làm việc</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a th:href="@{/admin/employees/{id}(id=${employee.id})}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- If no employees, show a message -->
+                            <tr th:if="${#lists.isEmpty(employees)}">
+                                <td colspan="8" class="text-center py-4">
+                                    <p class="mb-0 text-muted">Không tìm thấy nhân viên nào</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <div>
+                    <span>Hiển thị <span th:text="${#lists.size(employees)}">5</span> / <span>20</span> nhân viên</span>
+                </div>
+                
+                <nav th:if="${totalPages > 1}">
+                    <ul class="pagination mb-0">
+                        <li th:class="${currentPage == 0 ? 'page-item disabled' : 'page-item'}">
+                            <a class="page-link" th:href="@{/admin/employees(page=${currentPage - 1}, search=${search})}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        
+                        <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}" 
+                            th:class="${currentPage == i ? 'page-item active' : 'page-item'}">
+                            <a class="page-link" th:href="@{/admin/employees(page=${i}, search=${search})}" th:text="${i + 1}">1</a>
+                        </li>
+                        
+                        <li th:class="${currentPage == totalPages - 1 ? 'page-item disabled' : 'page-item'}">
+                            <a class="page-link" th:href="@{/admin/employees(page=${currentPage + 1}, search=${search})}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </content>
+    
+    <additionalJs>
+        <script>
+            // Additional JavaScript if needed
+        </script>
+    </additionalJs>
+</body>
+</html>

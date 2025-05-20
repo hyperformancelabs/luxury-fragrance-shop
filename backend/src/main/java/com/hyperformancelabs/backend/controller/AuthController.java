@@ -62,7 +62,6 @@ public class AuthController {
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
 
-            // 👇 Rất quan trọng để đồng bộ context này với HttpSession
             request.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
             return "redirect:/";
