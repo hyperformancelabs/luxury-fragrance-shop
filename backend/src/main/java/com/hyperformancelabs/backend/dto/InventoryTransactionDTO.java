@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,8 @@ public class InventoryTransactionDTO {
     private Integer performedById;
     private String performedByName;
     private String transactionType;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     private LocalDateTime transactionDate;
     private Integer beforeQuantity;
     private Integer quantity;

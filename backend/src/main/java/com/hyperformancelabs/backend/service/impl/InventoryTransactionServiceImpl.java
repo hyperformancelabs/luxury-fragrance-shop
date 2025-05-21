@@ -13,6 +13,7 @@ import com.hyperformancelabs.backend.repository.EmployeeRepository;
 import com.hyperformancelabs.backend.repository.InventoryTransactionRepository;
 import com.hyperformancelabs.backend.repository.ProductVariantRepository;
 import com.hyperformancelabs.backend.service.InventoryTransactionService;
+import com.hyperformancelabs.backend.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +27,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 
 @Service
 public class InventoryTransactionServiceImpl implements InventoryTransactionService {
@@ -42,6 +49,9 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Override
     public SellTransactionSummaryDTO getSellTransactionSummary(){
@@ -99,11 +109,25 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
             if (filters != null && !filters.isEmpty()) {
                 Specification<InventoryTransaction> spec = null;
                 
-                // Filter by transaction type if provided
+                // Filter by transaction type if provided (supports multiple types with OR)
                 if (filters.containsKey("transactionType")) {
                     String transactionType = filters.get("transactionType");
-                    spec = (root, query, criteriaBuilder) -> 
-                        criteriaBuilder.equal(root.get("transactionType"), transactionType);
+                    
+                    // Handle multiple transaction types with OR
+                    List<String> transactionTypes = Arrays.asList(transactionType.split(","));
+                    if (!transactionTypes.isEmpty()) {
+                        Specification<InventoryTransaction> transactionTypeSpec = (root, query, criteriaBuilder) -> {
+                            // For a single type, use equals
+                            if (transactionTypes.size() == 1) {
+                                return criteriaBuilder.equal(root.get("transactionType"), transactionTypes.get(0));
+                            }
+                            
+                            // For multiple types, use in() predicate (OR operation)
+                            return root.get("transactionType").in(transactionTypes);
+                        };
+                        
+                        spec = spec == null ? transactionTypeSpec : spec.and(transactionTypeSpec);
+                    }
                 }
                 
                 // Filter by product variant ID if provided
@@ -115,6 +139,14 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
                     spec = spec == null ? productVariantSpec : spec.and(productVariantSpec);
                 }
                 
+                // Filter by product ID if provided (include all variants of a product)
+                if (filters.containsKey("productId")) {
+                    Integer productId = Integer.parseInt(filters.get("productId"));
+                    Specification<InventoryTransaction> productSpec = (root, query, criteriaBuilder) ->
+                        criteriaBuilder.equal(root.get("productVariant").get("product").get("productId"), productId);
+                    spec = spec == null ? productSpec : spec.and(productSpec);
+                }
+                
                 // Filter by performed by employee ID if provided
                 if (filters.containsKey("performedBy")) {
                     Integer performedBy = Integer.parseInt(filters.get("performedBy"));
@@ -122,6 +154,83 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
                         criteriaBuilder.equal(root.get("performedBy").get("employeeId"), performedBy);
                     
                     spec = spec == null ? performedBySpec : spec.and(performedBySpec);
+                }
+                
+                // Filter by date range if provided
+                if (filters.containsKey("startDate") && filters.containsKey("endDate")) {
+                    try {
+                        // Parse dates using DateTimeFormatter for more flexibility
+                        String startDateStr = filters.get("startDate");
+                        String endDateStr = filters.get("endDate");
+                        
+                        // Define formatters
+                        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME;
+                        
+                        // Parse start date
+                        LocalDateTime finalStartDate;
+                        try {
+                            // Check if it contains time component
+                            if (startDateStr.contains("T")) {
+                                finalStartDate = LocalDateTime.parse(startDateStr, dateTimeFormatter);
+                            } else {
+                                // Parse as date and set time to start of day
+                                finalStartDate = LocalDateTime.parse(startDateStr + "T00:00:00");
+                            }
+                        } catch (DateTimeParseException e) {
+                            // Fallback: parse as date only
+                            finalStartDate = LocalDateTime.parse(startDateStr + "T00:00:00");
+                        }
+                        
+                        // Parse end date
+                        LocalDateTime finalEndDate;
+                        try {
+                            // Check if it contains time component
+                            if (endDateStr.contains("T")) {
+                                finalEndDate = LocalDateTime.parse(endDateStr, dateTimeFormatter);
+                            } else {
+                                // Parse as date and set time to end of day
+                                finalEndDate = LocalDateTime.parse(endDateStr + "T23:59:59");
+                            }
+                        } catch (DateTimeParseException e) {
+                            // Fallback: parse as date only
+                            finalEndDate = LocalDateTime.parse(endDateStr + "T23:59:59");
+                        }
+                        
+                        // Create the specification with the final variables
+                        final LocalDateTime specStartDate = finalStartDate;
+                        final LocalDateTime specEndDate = finalEndDate;
+                        
+                        Specification<InventoryTransaction> dateRangeSpec = (root, query, criteriaBuilder) ->
+                            criteriaBuilder.and(
+                                criteriaBuilder.greaterThanOrEqualTo(root.get("transactionDate"), specStartDate),
+                                criteriaBuilder.lessThanOrEqualTo(root.get("transactionDate"), specEndDate)
+                            );
+                        
+                        spec = spec == null ? dateRangeSpec : spec.and(dateRangeSpec);
+                        
+                        logger.info("Applied date filter: {} to {}", finalStartDate, finalEndDate);
+                        
+                    } catch (Exception e) {
+                        logger.error("Error parsing date range: {}", e.getMessage());
+                        // Continue without applying date filter if parsing fails
+                    }
+                }
+                
+                // Add search filter across multiple columns
+                if (filters.containsKey("search")) {
+                    String searchValue = filters.get("search").toLowerCase();
+                    Specification<InventoryTransaction> searchSpec = (root, query, criteriaBuilder) -> {
+                        String pattern = "%" + searchValue + "%";
+                        return criteriaBuilder.or(
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("transactionType")), pattern),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("reason")), pattern),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("note")), pattern),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("productVariant").get("product").get("productName")), pattern),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("performedBy").get("fullName")), pattern)
+                        );
+                    };
+                    spec = spec == null ? searchSpec : spec.and(searchSpec);
                 }
                 
                 // Apply specification if any filters were added
@@ -190,15 +299,40 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
             transaction.setPerformedBy(employee);
             transaction.setTransactionType(request.getTransactionType());
             
-            // Đảm bảo transaction_date không vượt quá GETDATE() của SQL Server
+            // Xử lý thời gian giao dịch
             LocalDateTime transactionTime;
+            
             if (request.getTransactionDate() != null) {
-                // Sử dụng ngày từ request và thiết lập thời gian là 10 giờ sáng
-                transactionTime = request.getTransactionDate().atTime(10, 0, 0);
+                // Kết hợp ngày từ request với thời gian hiện tại
+                transactionTime = request.getTransactionDate().atStartOfDay();
+                transactionTime = DateTimeUtil.combineDateWithCurrentTime(transactionTime);
+                logger.info("Using date from request with current time: {}", transactionTime);
             } else {
-                // Sử dụng ngày hôm qua để tránh vấn đề với ràng buộc CHECK
-                transactionTime = LocalDateTime.now().minusDays(1).withHour(10).withMinute(0).withSecond(0);
+                // Sử dụng thời gian hiện tại
+                transactionTime = DateTimeUtil.getCurrentDateTime();
+                logger.info("Using current date and time: {}", transactionTime);
             }
+            
+            // Kiểm tra xem thời gian giao dịch có thể gây ra lỗi với ràng buộc SQL Server không
+            try {
+                // Thử lấy thời gian hiện tại của SQL Server để so sánh
+                Query query = entityManager.createNativeQuery("SELECT GETDATE()");
+                java.sql.Timestamp currentDBTime = (java.sql.Timestamp) query.getSingleResult();
+                LocalDateTime dbNow = currentDBTime.toLocalDateTime();
+                
+                logger.info("Current DB time: {}", dbNow);
+                
+                // Nếu thời gian giao dịch lớn hơn thời gian DB, điều chỉnh lại
+                if (transactionTime.isAfter(dbNow)) {
+                    logger.warn("Transaction time is after DB time, adjusting to DB time");
+                    transactionTime = dbNow;
+                }
+            } catch (Exception e) {
+                logger.warn("Could not get DB time for comparison: {}", e.getMessage());
+                // Nếu không lấy được thời gian DB, sử dụng thời gian đã tính toán
+            }
+            
+            logger.info("Final transaction time: {}", transactionTime);
             transaction.setTransactionDate(transactionTime);
             
             transaction.setBeforeQuantity(productVariant.getQuantityInStock());
@@ -238,6 +372,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
             // Save transaction
             InventoryTransaction savedTransaction = inventoryTransactionRepository.save(transaction);
             logger.info("Created inventory transaction with ID: {}", savedTransaction.getInventoryTransactionId());
+            logger.info("Transaction date set to: {}", savedTransaction.getTransactionDate());
             
             return mapToDTO(savedTransaction);
             
@@ -412,7 +547,13 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
         dto.setPerformedById(transaction.getPerformedBy().getEmployeeId());
         dto.setPerformedByName(transaction.getPerformedBy().getFullName());
         dto.setTransactionType(transaction.getTransactionType());
-        dto.setTransactionDate(transaction.getTransactionDate());
+        
+        // Điều chỉnh múi giờ (thêm 7 giờ cho múi giờ Việt Nam)
+        LocalDateTime adjustedTime = transaction.getTransactionDate().plusHours(7);
+        logger.info("Original transaction date: {}, Adjusted date: {}", 
+                transaction.getTransactionDate(), adjustedTime);
+        dto.setTransactionDate(adjustedTime);
+        
         dto.setBeforeQuantity(transaction.getBeforeQuantity());
         dto.setQuantity(transaction.getQuantity());
         dto.setAfterQuantity(transaction.getAfterQuantity());

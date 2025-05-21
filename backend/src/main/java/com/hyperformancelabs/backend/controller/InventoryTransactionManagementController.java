@@ -20,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -43,7 +44,11 @@ public class InventoryTransactionManagementController {
      * @param sortDir Sort direction ("asc" or "desc", default: "desc")
      * @param transactionType Filter by transaction type (optional)
      * @param productVariantId Filter by product variant ID (optional)
+     * @param productId Filter by product ID (optional)
      * @param performedBy Filter by performed by employee ID (optional)
+     * @param search Search query (optional)
+     * @param startDate Filter by start date (format: yyyy-MM-dd) (optional)
+     * @param endDate Filter by end date (format: yyyy-MM-dd) (optional)
      * @return Paginated list of inventory transactions
      */
     @GetMapping
@@ -53,26 +58,44 @@ public class InventoryTransactionManagementController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "transactionDate") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
-            @RequestParam(required = false) String transactionType,
+            @RequestParam(required = false) List<String> transactionType,
             @RequestParam(required = false) Integer productVariantId,
-            @RequestParam(required = false) Integer performedBy) {
+            @RequestParam(required = false) Integer productId,
+            @RequestParam(required = false) Integer performedBy,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
         
         try {
-            logger.info("Getting inventory transactions, page={}, size={}", page, size);
+            logger.info("Getting inventory transactions, page={}, size={}...", page, size);
             
             // Create sort direction
             Sort.Direction direction = sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
             
             // Create filters map
             Map<String, String> filters = new HashMap<>();
-            if (transactionType != null) {
-                filters.put("transactionType", transactionType);
+            if (transactionType != null && !transactionType.isEmpty()) {
+                // Join multiple transaction types with comma for backend processing
+                filters.put("transactionType", String.join(",", transactionType));
+                logger.info("Filtering by transaction types: {}", transactionType);
             }
             if (productVariantId != null) {
                 filters.put("productVariantId", productVariantId.toString());
             }
+            if (productId != null) {
+                filters.put("productId", productId.toString());
+            }
             if (performedBy != null) {
                 filters.put("performedBy", performedBy.toString());
+            }
+            if (search != null && !search.trim().isEmpty()) {
+                filters.put("search", search.trim());
+            }
+            
+            // Add date range filters
+            if (startDate != null && endDate != null) {
+                filters.put("startDate", startDate);
+                filters.put("endDate", endDate);
             }
             
             // Get transactions

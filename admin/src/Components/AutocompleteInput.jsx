@@ -59,6 +59,20 @@ const AutocompleteInput = ({
           else if (valueField === 'productName' && typeof value === 'string') {
             setInputValue(value);
           }
+          // For productId selection, fetch product details to display name
+          else if (valueField === 'productId' && !isNaN(value)) {
+            const baseUrl = searchUrl.split('?')[0].replace(/\/search$/, '');
+            try {
+              const response = await axios.get(`${baseUrl}/${value}`);
+              if (response.data && response.data.status === 'success' && response.data.data) {
+                const product = response.data.data;
+                setInputValue(product[displayField] || '');
+                setSelectedItem(product);
+              }
+            } catch (err) {
+              console.error('Error fetching product initial data:', err);
+            }
+          }
         } catch (error) {
           console.error('Error fetching initial data:', error);
         }
@@ -165,7 +179,14 @@ const AutocompleteInput = ({
   const handleSelectSuggestion = (suggestion) => {
     setInputValue(suggestion[displayField]);
     setSelectedItem(suggestion);
-    onChange({ target: { name, value: suggestion[valueField] } });
+    onChange({ 
+      target: { 
+        name, 
+        value: suggestion[valueField], 
+        selectedItem: suggestion,
+        selectedLabel: suggestion[displayField] 
+      } 
+    });
     setShowSuggestions(false);
   };
   

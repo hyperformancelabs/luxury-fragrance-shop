@@ -8,6 +8,9 @@ import com.hyperformancelabs.backend.exception.DuplicateResourceException;
 import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
 import com.hyperformancelabs.backend.model.Product;
 import com.hyperformancelabs.backend.model.ProductVariant;
+import com.hyperformancelabs.backend.model.Wishlist;
+import com.hyperformancelabs.backend.model.CartItem;
+import com.hyperformancelabs.backend.model.InventoryTransaction;
 import com.hyperformancelabs.backend.repository.ProductRepository;
 import com.hyperformancelabs.backend.repository.ProductVariantRepository;
 import com.hyperformancelabs.backend.service.ProductVariantService;
@@ -21,10 +24,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class ProductVariantServiceImpl implements ProductVariantService {
@@ -36,6 +43,9 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     
     @Autowired
     private ProductVariantRepository productVariantRepository;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
     
     @Override
     @PreAuthorize("hasAuthority('product.view')")
@@ -251,14 +261,57 @@ public class ProductVariantServiceImpl implements ProductVariantService {
             Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại với ID: " + productId));
             
-            // Tìm biến thể
-            ProductVariant variant = productVariantRepository.findByProductAndProductVariantId(product, variantId)
-                .orElseThrow(() -> new ResourceNotFoundException("Biến thể không tồn tại với ID: " + variantId 
-                    + " cho sản phẩm ID: " + productId));
+            // Using direct SQL to delete related entities first before deleting the variant
+            // This avoids the ConcurrentModificationException during cascade operations
             
-            // Xóa biến thể
-            productVariantRepository.delete(variant);
-            logger.info("Đã xóa biến thể với ID: {}", variantId);
+            // 1. First check for order items - we can't delete variants that are in orders
+            // We use native SQL for this to avoid Hibernate cascade issues
+            Integer orderItemCount = (Integer) entityManager
+                .createNativeQuery("SELECT COUNT(*) FROM [OrderItem] WHERE product_variant_id = :variantId")
+                .setParameter("variantId", variantId)
+                .getSingleResult();
+                
+            if (orderItemCount > 0) {
+                logger.error("Cannot delete variant ID: {} because it has {} order items", variantId, orderItemCount);
+                throw new IllegalStateException("Không thể xóa biến thể vì nó đã được sử dụng trong đơn hàng");
+            }
+            
+            // 2. Delete related wishlist items
+            int wishlistDeleted = entityManager
+                .createNativeQuery("DELETE FROM [Wishlist] WHERE product_variant_id = :variantId")
+                .setParameter("variantId", variantId)
+                .executeUpdate();
+            logger.info("Deleted {} wishlist items for variant ID: {}", wishlistDeleted, variantId);
+            
+            // 3. Delete related cart items  
+            int cartItemsDeleted = entityManager
+                .createNativeQuery("DELETE FROM [CartItem] WHERE product_variant_id = :variantId")
+                .setParameter("variantId", variantId)
+                .executeUpdate();
+            logger.info("Deleted {} cart items for variant ID: {}", cartItemsDeleted, variantId);
+            
+            // 4. Delete related inventory transactions
+            int transactionsDeleted = entityManager
+                .createNativeQuery("DELETE FROM [InventoryTransaction] WHERE product_variant_id = :variantId")
+                .setParameter("variantId", variantId)
+                .executeUpdate();
+            logger.info("Deleted {} inventory transactions for variant ID: {}", transactionsDeleted, variantId);
+            
+            // 5. Now delete the variant directly using native SQL
+            int variantsDeleted = entityManager
+                .createNativeQuery("DELETE FROM [ProductVariant] WHERE product_variant_id = :variantId")
+                .setParameter("variantId", variantId)
+                .executeUpdate();
+                
+            if (variantsDeleted > 0) {
+                logger.info("Successfully deleted variant ID: {}", variantId);
+            } else {
+                logger.warn("No variants were deleted for ID: {}", variantId);
+                throw new ResourceNotFoundException("Không tìm thấy biến thể với ID: " + variantId);
+            }
+        } catch (IllegalStateException e) {
+            logger.error("Không thể xóa biến thể có đơn hàng liên kết: " + e.getMessage());
+            throw e;
         } catch (Exception e) {
             logger.error("Lỗi khi xóa biến thể với ID: " + variantId + " cho sản phẩm ID: " + productId, e);
             throw e;

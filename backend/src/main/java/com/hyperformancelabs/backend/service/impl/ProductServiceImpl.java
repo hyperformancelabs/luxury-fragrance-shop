@@ -207,20 +207,28 @@ public class ProductServiceImpl implements ProductService {
             List<ProductDTO> recentProducts = productRepository.findAll(PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "productId")))
                     .getContent()
                     .stream()
-                    .map(this::convertToDTO)
+                    // Map minimal fields for autocomplete without loading variants
+                    .map(p -> {
+                        ProductDTO dto = new ProductDTO();
+                        dto.setProductId(p.getProductId());
+                        dto.setProductName(p.getProductName());
+                        dto.setBrandName(p.getBrand().getBrandName());
+                        return dto;
+                    })
                     .collect(Collectors.toList());
             return new SearchResponseDto<>(recentProducts, false);
         }
-        
-        // Search for products matching the search term - should match any part of the name
-        List<Product> matchingProducts = productRepository.findByProductNameContainingIgnoreCase(
-                searchTerm.trim(), Pageable.unpaged()).getContent();
-        
+
+        // Search for products matching the search term using built-in method with pagination
+        Page<Product> productPage = productRepository.findByProductNameContainingIgnoreCase(
+                searchTerm.trim(), PageRequest.of(0, limit));
+        List<Product> matchingProducts = productPage.getContent();
+
         // Check if there's an exact match - only consider it exact if it matches the complete product name
         boolean hasExactMatch = matchingProducts.stream()
                 .anyMatch(product -> product.getProductName().equalsIgnoreCase(searchTerm.trim()));
-        
-        // Sort by relevance and convert to DTOs
+
+        // Sort by relevance and convert to DTOs without loading variants
         List<ProductDTO> productDtos = matchingProducts.stream()
                 .sorted((a, b) -> {
                     // Exact matches first
@@ -228,20 +236,27 @@ public class ProductServiceImpl implements ProductService {
                     boolean bExact = b.getProductName().equalsIgnoreCase(searchTerm.trim());
                     if (aExact && !bExact) return -1;
                     if (!aExact && bExact) return 1;
-                    
+
                     // Starts with matches next
                     boolean aStartsWith = a.getProductName().toLowerCase().startsWith(searchTerm.trim().toLowerCase());
                     boolean bStartsWith = b.getProductName().toLowerCase().startsWith(searchTerm.trim().toLowerCase());
                     if (aStartsWith && !bStartsWith) return -1;
                     if (!aStartsWith && bStartsWith) return 1;
-                    
+
                     // Alphabetical order for the rest
                     return a.getProductName().compareToIgnoreCase(b.getProductName());
                 })
                 .limit(limit)
-                .map(this::convertToDTO)
+                // Map minimal fields for autocomplete
+                .map(p -> {
+                    ProductDTO dto = new ProductDTO();
+                    dto.setProductId(p.getProductId());
+                    dto.setProductName(p.getProductName());
+                    dto.setBrandName(p.getBrand().getBrandName());
+                    return dto;
+                })
                 .collect(Collectors.toList());
-        
+
         return new SearchResponseDto<>(productDtos, hasExactMatch);
     }
 
