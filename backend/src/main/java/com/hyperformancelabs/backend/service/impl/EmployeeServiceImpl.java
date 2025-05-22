@@ -7,6 +7,8 @@ import com.hyperformancelabs.backend.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
@@ -24,6 +26,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.findByUsername(username)
                 .map(this::convertToEmployeeDTO)
                 .orElse(null);
+    }
+
+    @Override
+    public List<String> findActiveRoleNamesByEmployeeId(Integer employeeId) {
+        return employeeRepository.findActiveRoleNamesByEmployeeId(employeeId);
     }
 
     private EmployeeDTO convertToEmployeeDTO(Employee employee) {

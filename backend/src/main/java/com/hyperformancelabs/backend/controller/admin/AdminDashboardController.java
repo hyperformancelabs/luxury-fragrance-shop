@@ -7,6 +7,7 @@ import com.hyperformancelabs.backend.service.CustomerService;
 import com.hyperformancelabs.backend.service.InventoryService;
 import com.hyperformancelabs.backend.service.OrderService;
 import com.hyperformancelabs.backend.service.ProductService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -41,94 +42,80 @@ public class AdminDashboardController {
     public String dashboard(Model model,
                             @RequestParam(value = "range", required = false, defaultValue = "today") String range,
                             @RequestParam(value = "start", required = false) String startDateStr,
-                            @RequestParam(value = "end", required = false) String endDateStr) {
-        // Get today's date
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        
-        // Revenue data
-        Map<String, Object> revenueData = new HashMap<>();
-        // Total orders data
-        Map<String, Object> totalOrdersData = new HashMap<>();
-        // New customer data
-        Map<String, Object> newCustomerData = new HashMap<>();
+                            @RequestParam(value = "end", required = false) String endDateStr,
+                            HttpSession session) {
 
-        if (range.equals("custom") && startDateStr != null && endDateStr != null) {
-            LocalDate start = LocalDate.parse(startDateStr);
-            LocalDate end = LocalDate.parse(endDateStr);
+        // Lấy role từ session
+        List<String> roles = (List<String>) session.getAttribute("ROLES");
 
-            revenueData.put("custom", orderService.getTotalRevenueBetweenDates(start, end));
-            totalOrdersData.put("custom", orderService.countOrdersBetweenDates(start, end));
-            newCustomerData.put("custom", customerService.countNewCustomersBetweenDates(start, end));
-            model.addAttribute("startDate", startDateStr);
-            model.addAttribute("endDate", endDateStr);
-
-        }
-        else {
-            // Doanh thu hôm nay
-            revenueData.put("today", orderService.getTotalRevenueToday());
-            // Doanh thu tháng hiện tại
-            revenueData.put("thisMonth", orderService.getTotalRevenueCurrentMonth());
-            // Doanh thu năm hiện tại
-            revenueData.put("thisYear", orderService.getTotalRevenueCurrentYear());
-
-
-            // Tổng số đơn hàng hôm nay
-            totalOrdersData.put("today", orderService.countOrdersToday());
-            // Tổng số đơn hàng tháng hiện tại
-            totalOrdersData.put("thisMonth", orderService.countOrdersThisMonth());
-            // Tổng số đơn hàng năm hiện tại
-            totalOrdersData.put("thisYear", orderService.countOrdersThisYear());
-
-            // Số khách hàng mới hôm nay
-            newCustomerData.put("today", customerService.countNewCustomersToday());
-            // Số khách hàng mới tháng hiện tại
-            newCustomerData.put("thisMonth", customerService.countNewCustomersThisMonth());
-            // Số khách hàng mới năm hiện tại
-            newCustomerData.put("thisYear", customerService.countNewCustomersThisYear());
+        if (roles == null) {
+            return "redirect:/admin/login";
         }
 
-        // Sample sales data for chart
-//        Map<String, BigDecimal> salesData = new HashMap<>();
-//        salesData.put("T1", BigDecimal.valueOf(4500000));
-//        salesData.put("T2", BigDecimal.valueOf(5200000));
-//        salesData.put("T3", BigDecimal.valueOf(4800000));
-//        salesData.put("T4", BigDecimal.valueOf(6100000));
-//        salesData.put("T5", BigDecimal.valueOf(7200000));
-//        salesData.put("T6", BigDecimal.valueOf(6700000));
-        
-        // Get top selling products
-        // Sales Data
-        Map<String, BigDecimal> salesMonthlyData = new HashMap<>();
-        salesMonthlyData = orderService.getMonthlyRevenueTillNowOfCurrentYear();
-        Map<String, BigDecimal> salesYearlyData = new HashMap<>();
-        salesYearlyData = orderService.getRevenueByYearRange(2023, 2025);
+        // ✅ Điều hướng theo phân quyền
+        if (roles.contains("System Admin")) {
+            // Tiếp tục xử lý dashboard như cũ
+            LocalDate today = LocalDate.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-        // Get top selling products
-        List<TopSellingProductDTO> topProducts = productService.getTopSellingProducts(null, 5);
-        
-        // Get low stock products
-        List<LowStockProductDTO> lowStockProducts = inventoryService.getLowStockProducts(5);
+            Map<String, Object> revenueData = new HashMap<>();
+            Map<String, Object> totalOrdersData = new HashMap<>();
+            Map<String, Object> newCustomerData = new HashMap<>();
 
-        // Get recent orders
-        List<RecentOrderDTO> recentOrders = orderService.findTop3ByOrderByOrderDateDesc();
+            if (range.equals("custom") && startDateStr != null && endDateStr != null) {
+                LocalDate start = LocalDate.parse(startDateStr);
+                LocalDate end = LocalDate.parse(endDateStr);
+                revenueData.put("custom", orderService.getTotalRevenueBetweenDates(start, end));
+                totalOrdersData.put("custom", orderService.countOrdersBetweenDates(start, end));
+                newCustomerData.put("custom", customerService.countNewCustomersBetweenDates(start, end));
+                model.addAttribute("startDate", startDateStr);
+                model.addAttribute("endDate", endDateStr);
+            } else {
+                revenueData.put("today", orderService.getTotalRevenueToday());
+                revenueData.put("thisMonth", orderService.getTotalRevenueCurrentMonth());
+                revenueData.put("thisYear", orderService.getTotalRevenueCurrentYear());
 
-        model.addAttribute("today", today.format(formatter));
-        model.addAttribute("totalOrdersData", totalOrdersData);
-        model.addAttribute("newCustomerData", newCustomerData);
-        model.addAttribute("revenueData", revenueData);
-        model.addAttribute("range", range);
-        model.addAttribute("salesMonthlyData", salesMonthlyData);
-        model.addAttribute("salesYearlyData", salesYearlyData);
-        model.addAttribute("topProducts", topProducts);
-        model.addAttribute("lowStockProducts", lowStockProducts);
-        model.addAttribute("recentOrders", recentOrders);
+                totalOrdersData.put("today", orderService.countOrdersToday());
+                totalOrdersData.put("thisMonth", orderService.countOrdersThisMonth());
+                totalOrdersData.put("thisYear", orderService.countOrdersThisYear());
 
-//        System.out.println("Range: " + range);
-//        System.out.println("Start: " + LocalDate.parse(startDateStr));
-//        System.out.println("End: " + LocalDate.parse(endDateStr));
-//        System.out.println("total revenue: " + orderService.getTotalRevenueBetweenDates(LocalDate.parse(startDateStr), LocalDate.parse(endDateStr)));
-        
-        return "admin/dashboard";
+                newCustomerData.put("today", customerService.countNewCustomersToday());
+                newCustomerData.put("thisMonth", customerService.countNewCustomersThisMonth());
+                newCustomerData.put("thisYear", customerService.countNewCustomersThisYear());
+            }
+
+            Map<String, BigDecimal> salesMonthlyData = orderService.getMonthlyRevenueTillNowOfCurrentYear();
+            Map<String, BigDecimal> salesYearlyData = orderService.getRevenueByYearRange(2023, 2025);
+
+            List<TopSellingProductDTO> topProducts = productService.getTopSellingProducts(null, 5);
+            List<LowStockProductDTO> lowStockProducts = inventoryService.getLowStockProducts(5);
+            List<RecentOrderDTO> recentOrders = orderService.findTop3ByOrderByOrderDateDesc();
+
+            model.addAttribute("roles", roles);
+            model.addAttribute("activeMenu", "dashboard");
+            model.addAttribute("today", today.format(formatter));
+            model.addAttribute("revenueData", revenueData);
+            model.addAttribute("totalOrdersData", totalOrdersData);
+            model.addAttribute("newCustomerData", newCustomerData);
+            model.addAttribute("salesMonthlyData", salesMonthlyData);
+            model.addAttribute("salesYearlyData", salesYearlyData);
+            model.addAttribute("topProducts", topProducts);
+            model.addAttribute("lowStockProducts", lowStockProducts);
+            model.addAttribute("recentOrders", recentOrders);
+
+            return "admin/dashboard";
+        }
+
+        // ✅ Nếu không phải system admin → điều hướng theo quyền đầu tiên
+        if (roles.contains("Order Staff")) {
+            return "redirect:/admin/dashboard";
+        }
+
+        if (roles.contains("Material Staff")) {
+            return "redirect:/admin/products";
+        }
+
+        // ❌ Không có quyền phù hợp
+        return "redirect:/admin/access-denied";
     }
 }

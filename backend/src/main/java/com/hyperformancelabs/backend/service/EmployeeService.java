@@ -2,6 +2,8 @@ package com.hyperformancelabs.backend.service;
 
 import com.hyperformancelabs.backend.dto.*;
 
+import java.util.List;
+
 public interface EmployeeService {
 //    void registerEmployee(EmployeeRegisterRequest request);
 //    LoginResponse login(EmployeeLoginRequest request);
@@ -13,4 +15,7 @@ public interface EmployeeService {
 
     // Lấy thông tin nhân viên theo username
     EmployeeDTO getEmployeeByUsername(String username);
+
+    // Lấy role của nhân viên theo id
+    List<String> findActiveRoleNamesByEmployeeId(Integer employeeId);
 }

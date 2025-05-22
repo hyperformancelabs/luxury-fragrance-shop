@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/admin")
 public class AdminAuthController {
@@ -63,6 +65,10 @@ public class AdminAuthController {
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
         request.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+
+        // Truy vấn và lưu role vào session
+        List<String> roles = employeeService.findActiveRoleNamesByEmployeeId(employee.getEmployeeId());
+        request.getSession().setAttribute("ROLES", roles);
 
         return "redirect:/admin/dashboard";
     }
