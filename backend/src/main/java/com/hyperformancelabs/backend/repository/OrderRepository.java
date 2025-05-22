@@ -1,5 +1,6 @@
 package com.hyperformancelabs.backend.repository;
 
+import com.hyperformancelabs.backend.dto.ProductPurchaseInfoDTO;
 import com.hyperformancelabs.backend.dto.TopSellingDisplayDTO;
 import com.hyperformancelabs.backend.model.Customer;
 import com.hyperformancelabs.backend.model.Order;
@@ -21,8 +22,8 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 //
     Order findByOrderId(Integer orderId);
 
-    // Lấy danh sách đơn hàng của khách hàng
-    List<Order> findOrdersByCustomer_CustomerId(Integer customerId);
+    // Lấy danh sách đơn hàng của khách hàng sắp xếp theo ngày đặt giảm dần
+    List<Order> findByCustomer_CustomerIdOrderByOrderDateDesc(Integer customerId);
 
     // lấy danh sách đơn hàng theo số điện thoại
     List<Order> findByCustomer_PhoneNumber(String phone);
@@ -477,5 +478,50 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     WHERE oi.order_id = :orderId
     """, nativeQuery = true)
     List<Object[]> findOrderItemsByOrderId(@Param("orderId") Integer orderId);
+
+    // Lấy tổng chi tiêu của khách hàng theo tháng và năm
+    @Query("""
+    SELECT COALESCE(SUM(o.totalAmount), 0)
+    FROM Order o
+    WHERE o.customer.customerId = :customerId
+      AND o.orderStatus IN ('delivered', 'shipping')
+      AND FUNCTION('MONTH', o.orderDate) = :month
+      AND FUNCTION('YEAR', o.orderDate) = :year
+""")
+    BigDecimal getTotalSpendingByMonthAndYear(
+            @Param("customerId") Integer customerId,
+            @Param("month") int month,
+            @Param("year") int year
+    );
+
+    // Lấy tổng chi tiêu theo năm
+    @Query("""
+    SELECT COALESCE(SUM(o.totalAmount), 0)
+    FROM Order o
+    WHERE o.customer.customerId = :customerId
+      AND o.orderStatus IN ('delivered', 'shipping')
+      AND FUNCTION('YEAR', o.orderDate) = :year
+""")
+    BigDecimal getTotalSpendingByYear(
+            @Param("customerId") Integer customerId,
+            @Param("year") int year
+    );
+
+    @Query(value = """
+        SELECT 
+            p.product_id AS productId,
+            p.product_name AS productName,
+            p.image_url AS imageUrl,
+            pv.volume AS volume,
+            pv.price AS price
+        FROM [Order] o
+        JOIN OrderItem oi ON o.order_id = oi.order_id
+        JOIN ProductVariant pv ON oi.product_variant_id = pv.product_variant_id
+        JOIN Product p ON pv.product_id = p.product_id
+        WHERE o.customer_id = :customerId
+          AND o.order_status != 'cancelled'
+        ORDER BY o.order_date DESC
+    """, nativeQuery = true)
+    List<ProductPurchaseInfoDTO> findPurchasedProductsByCustomerId(@Param("customerId") Integer customerId);
 
 }

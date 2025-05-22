@@ -95,4 +95,13 @@ public interface OrderService {
 
     // Cập nhật địa chỉ giao hàng
     void updateShippingAddress(Integer orderId, String shippingAddress);
+
+    // Lấy tổng chi tiêu của khách hàng theo tháng và năm
+    BigDecimal getTotalSpentByCustomerInMonthAndYear(Integer customerId, int month, int year);
+
+    // Lấy tổng chi tiêu của khách hàng theo năm
+    BigDecimal getTotalSpentByCustomerInYear(Integer customerId, int year);
+
+    // Lấy thông tin sản phẩm đã mua của khách hàng theo id
+    List<ProductPurchaseInfoDTO> findPurchasedProductsByCustomerId(Integer customerId);
 }

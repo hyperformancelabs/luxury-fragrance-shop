@@ -2,6 +2,8 @@ package com.hyperformancelabs.backend.repository;
 
 import com.hyperformancelabs.backend.model.Cart;
 import com.hyperformancelabs.backend.model.Customer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -64,5 +66,45 @@ public interface  CustomerRepository extends JpaRepository<Customer, Integer> {
     Long countCustomersBetweenDates(@Param("startDate") LocalDate startDate,
                                     @Param("endDate") LocalDate endDate);
 
+    // Lọc khách hàng
+    @Query(value = """
+    SELECT *
+    FROM Customer
+    WHERE 
+        (:status IS NULL OR status = :status)
+        AND (
+            :keyword IS NULL OR 
+            name LIKE %:keyword% OR 
+            phone_number LIKE %:keyword% OR 
+            email LIKE %:keyword%
+        )
+    ORDER BY
+        CASE WHEN :sortBy = 'name' AND :sortDir = 'ASC' THEN name END ASC,
+        CASE WHEN :sortBy = 'name' AND :sortDir = 'DESC' THEN name END DESC,
+        CASE WHEN :sortBy = 'loyalty_points' AND :sortDir = 'ASC' THEN loyalty_points END ASC,
+        CASE WHEN :sortBy = 'loyalty_points' AND :sortDir = 'DESC' THEN loyalty_points END DESC,
+        CASE WHEN :sortBy = 'create_at' AND :sortDir = 'ASC' THEN create_at END ASC,
+        CASE WHEN :sortBy = 'create_at' AND :sortDir = 'DESC' THEN create_at END DESC
+    """,
+            countQuery = """
+    SELECT COUNT(*)
+    FROM Customer
+    WHERE 
+        (:status IS NULL OR status = :status)
+        AND (
+            :keyword IS NULL OR 
+            name LIKE %:keyword% OR 
+            phone_number LIKE %:keyword% OR 
+            email LIKE %:keyword%
+        )
+    """,
+            nativeQuery = true)
+    Page<Customer> findCustomersWithOptionalStatusAndSort(
+            @Param("keyword") String keyword,     // Search keyword
+            @Param("status") String status,       // active, inactive, banned
+            @Param("sortBy") String sortBy,       // name, loyalty_points, create_at
+            @Param("sortDir") String sortDir,     // ASC, DESC
+            Pageable pageable
+    );
 }
 

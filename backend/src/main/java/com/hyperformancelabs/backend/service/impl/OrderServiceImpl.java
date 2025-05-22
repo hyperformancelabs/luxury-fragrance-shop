@@ -33,7 +33,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderDTO> findOrdersByCustomerId(Integer customerId) {
-        return orderRepository.findOrdersByCustomer_CustomerId(customerId)
+        return orderRepository.findByCustomer_CustomerIdOrderByOrderDateDesc(customerId)
                 .stream()
                 .map(this::convertToOrderDTO)
                 .collect(Collectors.toList());
@@ -225,6 +225,7 @@ public class OrderServiceImpl implements OrderService {
         return revenueMap;
     }
 
+    // Lấy doanh thu theo thương hiệu
     @Override
     public Map<String, BigDecimal> getRevenueByBrand(int year) {
         List<Object[]> results = orderRepository.getTopBrandsDominatingRevenue(year);
@@ -309,6 +310,24 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found"));
         order.setShippingAddress(shippingAddress);
         orderRepository.save(order);
+    }
+
+    // Lấy tổng chi tiêu của khách hàng theo tháng và năm
+    @Override
+    public BigDecimal getTotalSpentByCustomerInMonthAndYear(Integer customerId, int month, int year) {
+        return orderRepository.getTotalSpendingByMonthAndYear(customerId, month, year);
+    }
+
+    // Lấy tổng chi tiêu của khách hàng theo năm
+    @Override
+    public BigDecimal getTotalSpentByCustomerInYear(Integer customerId, int year) {
+        return orderRepository.getTotalSpendingByYear(customerId, year);
+    }
+
+    // Lấy danh sách sản phẩm đã mua của khách hàng theo id
+    @Override
+    public List<ProductPurchaseInfoDTO> findPurchasedProductsByCustomerId(Integer customerId) {
+        return orderRepository.findPurchasedProductsByCustomerId(customerId);
     }
 
     private OrderItemDisplayDTO convertToOrderCustomerDisplayDTO(Object[] result) {

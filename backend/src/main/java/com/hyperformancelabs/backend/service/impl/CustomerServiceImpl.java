@@ -2,10 +2,11 @@ package com.hyperformancelabs.backend.service.impl;
 
 import com.hyperformancelabs.backend.dto.CustomerDTO;
 import com.hyperformancelabs.backend.model.Customer;
-import com.hyperformancelabs.backend.model.Order;
 import com.hyperformancelabs.backend.repository.CustomerRepository;
 import com.hyperformancelabs.backend.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -32,15 +33,39 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public void addCustomer(CustomerDTO customerDTO) {
+        Customer customer = new Customer();
+        customer.setName(customerDTO.getName());
+        customer.setPhoneNumber(customerDTO.getPhoneNumber());
+        customer.setEmail(customerDTO.getEmail());
+        customer.setUsername(customerDTO.getUsername());
+        customer.setPassword(customerDTO.getPassword());
+        customer.setStreet(customerDTO.getStreet());
+        customer.setWard(customerDTO.getWard());
+        customer.setDistrict(customerDTO.getDistrict());
+        customer.setCity(customerDTO.getCity());
+        customer.setShippingNote(customerDTO.getShippingNote());
+        customer.setNote(customerDTO.getNote());
+        customer.setRating(0);
+        customer.setStatus(customerDTO.getStatus());
+        customer.setLoyaltyPoints(0);
+        customer.setCreateAt(LocalDateTime.now());
+        customerRepository.save(customer);
+        convertToCustomerDTO(customer);
+    }
+
+    @Override
     public void updateCustomer(CustomerDTO customer) {
         Customer customerEntity = customerRepository.findByCustomerId(customer.getCustomerId()).orElse(null);
         if (customerEntity == null) {
+            System.err.println("Không tìm thấy khách hàng với ID: " + customer.getCustomerId());
             return;
         }
 
         customerEntity.setName(customer.getName());
         customerEntity.setPhoneNumber(customer.getPhoneNumber());
         customerEntity.setEmail(customer.getEmail());
+        customerEntity.setUsername(customer.getUsername());
         customerEntity.setPassword(customer.getPassword());
         customerEntity.setStreet(customer.getStreet());
         customerEntity.setWard(customer.getWard());
@@ -48,11 +73,26 @@ public class CustomerServiceImpl implements CustomerService {
         customerEntity.setCity(customer.getCity());
         customerEntity.setShippingNote(customer.getShippingNote());
         customerEntity.setNote(customer.getNote());
-        customerEntity.setRating(customer.getRating());
+
+        // Không để rating null
+        if (customer.getRating() != null) {
+            customerEntity.setRating(customer.getRating());
+        }
+
+        // loyaltyPoints cũng không được null
+        if (customer.getLoyaltyPoints() != null) {
+            customerEntity.setLoyaltyPoints(customer.getLoyaltyPoints());
+        }
+
         customerEntity.setStatus(customer.getStatus());
-        customerEntity.setLoyaltyPoints(customer.getLoyaltyPoints());
         customerEntity.setUpdateAt(LocalDateTime.now());
+
         customerRepository.save(customerEntity);
+    }
+
+    @Override
+    public void deleteCustomer(Integer customerId) {
+        customerRepository.deleteById(customerId);
     }
 
     @Override
@@ -99,6 +139,12 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setEmail(email);
         customer.setPhoneNumber(phoneNumber);
         customerRepository.save(customer);
+    }
+
+    @Override
+    public Page<CustomerDTO> findCustomersWithOptionalStatusAndSort(String keyword, String status, String sortBy, String sortDir, Pageable pageable) {
+        return customerRepository.findCustomersWithOptionalStatusAndSort(keyword, status, sortBy, sortDir, pageable)
+                .map(this::convertToCustomerDTO);
     }
 
     private CustomerDTO convertToCustomerDTO(Customer customer) {
