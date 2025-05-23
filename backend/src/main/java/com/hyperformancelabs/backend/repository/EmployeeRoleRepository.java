@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface EmployeeRoleRepository extends JpaRepository<EmployeeRole, Integer> {
+
+    // Xóa role của nhân viên
+    void deleteByEmployee_EmployeeId(Integer employeeId);
 }

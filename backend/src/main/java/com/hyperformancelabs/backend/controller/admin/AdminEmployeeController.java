@@ -1,13 +1,18 @@
 package com.hyperformancelabs.backend.controller.admin;
 
+import com.hyperformancelabs.backend.dto.EmployeeAdminDisplayDTO;
+import com.hyperformancelabs.backend.dto.EmployeeDTO;
+import com.hyperformancelabs.backend.service.EmployeeRoleService;
 import com.hyperformancelabs.backend.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -22,31 +27,44 @@ public class AdminEmployeeController {
     @Autowired
     private EmployeeService employeeService;
 
+    @Autowired
+    private EmployeeRoleService employeeRoleService;
+
     @GetMapping
     public String listEmployees(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String roleName,
+            @RequestParam(required = false) String sortField,
+            @RequestParam(required = false) String sortDir,
             Model model) {
 
-        // In a real application, this would use employeeService.getEmployees(page, search)
-        // For now, we'll use sample data
+        // Làm sạch tham số
+        keyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+        status = (status != null && !status.trim().isEmpty()) ? status.trim() : null;
+        roleName = (roleName != null && !roleName.trim().isEmpty()) ? roleName.trim() : null;
+        sortField = (sortField != null && !sortField.trim().isEmpty()) ? sortField.trim() : null;
+        sortDir = (sortDir != null && !sortDir.trim().isEmpty()) ? sortDir.trim() : null;
 
-        List<Map<String, Object>> employees = new ArrayList<>();
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<EmployeeAdminDisplayDTO> employeesPage = employeeService.findEmployeesWithFilters(
+                status, roleName, keyword, sortField, sortDir, pageable
+        );
 
-        // Sample employee data
-        employees.add(createSampleEmployee(1, "admin", "Admin User", "0912345678", "admin@shop.com", "active"));
-        employees.add(createSampleEmployee(2, "manager", "Manager User", "0923456789", "manager@shop.com", "active"));
-        employees.add(createSampleEmployee(3, "staff1", "Staff User 1", "0934567890", "staff1@shop.com", "active"));
-        employees.add(createSampleEmployee(4, "staff2", "Staff User 2", "0945678901", "staff2@shop.com", "inactive"));
-        employees.add(createSampleEmployee(5, "staff3", "Staff User 3", "0956789012", "staff3@shop.com", "on_leave"));
-
-        model.addAttribute("employees", employees);
+        model.addAttribute("employees", employeesPage.getContent());
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", 2); // Sample value
-        model.addAttribute("search", search);
+        model.addAttribute("totalPages", employeesPage.getTotalPages());
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("status", status);
+        model.addAttribute("roleName", roleName);
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
 
         return "admin/employees/list";
     }
+
+
 
     @GetMapping("/{id}")
     public String viewEmployee(@PathVariable("id") Integer id, Model model) {
@@ -70,6 +88,33 @@ public class AdminEmployeeController {
         model.addAttribute("performance", performance);
 
         return "admin/employees/detail";
+    }
+
+    @Transactional
+    @PostMapping("/add")
+    public String addEmployee(@ModelAttribute EmployeeAdminDisplayDTO dto, RedirectAttributes redirectAttributes) {
+        try {
+            System.out.println("Adding employee: " + dto);
+            EmployeeDTO employee = employeeService.addEmployee(dto);
+            employeeRoleService.addEmployeeRole(employee.getEmployeeId(), dto.getRole());
+            redirectAttributes.addFlashAttribute("success", "Thêm nhân viên thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi khi thêm nhân viên: " + e.getMessage());
+        }
+        return "redirect:/admin/employees";
+    }
+
+    @Transactional
+    @PostMapping("/delete")
+    public String deleteEmployee(@RequestParam("id") Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            employeeService.deleteEmployee(id);
+            employeeRoleService.deleteEmployeeRoleByEmployeeId(id);
+            redirectAttributes.addFlashAttribute("success", "Xóa nhân viên thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi khi xóa nhân viên: " + e.getMessage());
+        }
+        return "redirect:/admin/employees";
     }
 
     private Map<String, Object> createSampleEmployee(int id, String username, String fullName, String phone, String email, String status) {

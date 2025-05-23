@@ -9,4 +9,6 @@ import java.util.List;
 
 @Repository
 public interface RoleRepository extends JpaRepository<Role, Integer> {
+    // Tìm role theo tên role
+    Role findByRoleName(String roleName);
 }
