@@ -20,7 +20,7 @@ public interface EmployeeService {
     EmployeeDTO addEmployee(EmployeeAdminDisplayDTO employee);
 
     // Cập nhật nhân viên
-    void updateEmployee(Employee employee);
+    void updateEmployee(EmployeeDTO employee);
 
     // Xóa nhân viên
     void deleteEmployee(Integer employeeId);

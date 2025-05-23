@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin/employees")
@@ -68,24 +69,17 @@ public class AdminEmployeeController {
 
     @GetMapping("/{id}")
     public String viewEmployee(@PathVariable("id") Integer id, Model model) {
-        // In a real application, this would use employeeService.getEmployeeById(id)
-        // For now, we'll use sample data
+        EmployeeDTO employee = employeeService.getEmployeeById(id);
 
-        Map<String, Object> employee = createSampleEmployee(id, "admin", "Admin User", "0912345678", "admin@shop.com", "active");
-        employee.put("address", "123 Đường Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM");
-        employee.put("startDate", LocalDate.now().minusYears(1));
-        employee.put("dateOfBirth", LocalDate.now().minusYears(30));
-        employee.put("roles", List.of("ADMIN", "MANAGER"));
+        List<String> roles = employeeService.findActiveRoleNamesByEmployeeId(id);
+
+        // Get role Order staff or Material staff
+        List<String> filteredRoles = roles.stream()
+                .filter(role -> role.equals("Order Staff") || role.equals("Material Staff"))
+                .toList();
 
         model.addAttribute("employee", employee);
-
-        // Sample performance data
-        Map<String, Object> performance = new HashMap<>();
-        performance.put("processedOrdersCount", 156);
-        performance.put("inventoryOperationsCount", 78);
-        performance.put("performanceScore", 92);
-
-        model.addAttribute("performance", performance);
+        model.addAttribute("employeeRoles", filteredRoles);
 
         return "admin/employees/detail";
     }
@@ -102,6 +96,18 @@ public class AdminEmployeeController {
             redirectAttributes.addFlashAttribute("error", "Lỗi khi thêm nhân viên: " + e.getMessage());
         }
         return "redirect:/admin/employees";
+    }
+
+    @Transactional
+    @PostMapping("/update")
+    public String updateEmployee(@ModelAttribute EmployeeDTO dto, RedirectAttributes redirectAttributes) {
+        try {
+            employeeService.updateEmployee(dto);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật nhân viên thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật nhân viên: " + e.getMessage());
+        }
+        return "redirect:/admin/employees/" + dto.getEmployeeId();
     }
 
     @Transactional
