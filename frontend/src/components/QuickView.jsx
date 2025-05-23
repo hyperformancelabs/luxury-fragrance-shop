@@ -1,7 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext";
 import { Toaster, toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
+import ErrorMessages from "../constants/ErrorMessages.js";
+import SuccessMessages from "../constants/SuccessMessages.js";
+import { useWishlist } from "../context/WishlistContext.jsx";
+import { useNavigate } from "react-router-dom";
 
 const QuickView = ({ selectedProduct, handleClosePopup }) => {
   const [quantity, setQuantity] = useState(1);
@@ -9,12 +13,19 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
   const [error, setError] = useState("");
   const { addToCart, localCart, setLocalCart } = useCart();
   const { user } = useAuth();
+  const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist();
 
   const sizes = selectedProduct.volumePrices.map((item) => ({
     value: `${item.volume}ml`,
     label: `${item.volume}ml`,
     price: item.price,
   }));
+
+  useEffect(() => {
+    if (sizes.length === 1) {
+      setSelectedSize(sizes[0].value);
+    }
+  }, [sizes]);
 
   const handleIncrement = () => {
     setQuantity(quantity + 1);
@@ -60,7 +71,7 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-      toast.error("Vui lòng chọn dung tích");
+      toast.error(ErrorMessages.SIZE_REQUIRED);
       return;
     }
 
@@ -68,10 +79,11 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
       (v) => `${v.volume}ml` === selectedSize
     );
 
-    const variantId = variant?.variantId || variant?.productVariantId || variant?.id;
+    const variantId =
+      variant?.variantId || variant?.productVariantId || variant?.id;
 
     if (!variant || !variantId) {
-      toast.error("Không tìm thấy dung tích phù hợp!");
+      toast.error(ErrorMessages.VARIANT_NOT_FOUND);
       return;
     }
 
@@ -88,31 +100,74 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
 
     if (user) {
       addToCart(item);
-      toast.success("Sản phẩm đã được thêm vào giỏ hàng");
+      toast.success(SuccessMessages.ADD_TO_CART_SUCCESS);
       handleClosePopup();
     } else {
       const isProductInCart = localCart.some(
-        (product) => product.productVariantId === item.productVariantId && product.selectedSize === item.selectedSize
+        (product) =>
+          product.productVariantId === item.productVariantId &&
+          product.selectedSize === item.selectedSize
       );
 
-    if (isProductInCart) {
-      setLocalCart((prevCart) =>
-        prevCart.map((product) =>
-          product.productVariantId === item.productVariantId && product.selectedSize === item.selectedSize
-            ? { ...product, quantity: product.quantity + quantity }
-            : product
-        )
-      );
-      toast.success("Cập nhật số lượng giỏ hàng");
-    } else {
-      setLocalCart((prevCart) => [...prevCart, item]);
-      toast.success("Đã thêm vào giỏ hàng");
+      if (isProductInCart) {
+        setLocalCart((prevCart) =>
+          prevCart.map((product) =>
+            product.productVariantId === item.productVariantId &&
+            product.selectedSize === item.selectedSize
+              ? { ...product, quantity: product.quantity + quantity }
+              : product
+          )
+        );
+        toast.success(SuccessMessages.UPDATE_CART_SUCCESS);
+      } else {
+        setLocalCart((prevCart) => [...prevCart, item]);
+        toast.success(SuccessMessages.ADD_TO_CART_LOCAL_SUCCESS);
+      }
+
+      handleClosePopup();
     }
-}
-    
-
-    handleClosePopup();
   };
+
+  const handleAddToWishlist = () => {
+    try {
+      if (!selectedSize) {
+        toast.error(ErrorMessages.SIZE_REQUIRED);
+        return;
+      }
+
+      const variant = selectedProduct.volumePrices.find(
+        (v) => `${v.volume}ml` === selectedSize
+      );
+
+      const variantId =
+        variant?.productVariantId || variant?.variantId || variant?.id;
+
+      if (!variantId) {
+        toast.error(ErrorMessages.VARIANT_NOT_FOUND);
+        return;
+      }
+
+      if (isInWishlist(variantId)) {
+        removeFromWishlist(variantId);
+        toast.success(SuccessMessages.REMOVE_FROM_WISHLIST_SUCCESS);
+      } else {
+        addToWishlist(variantId);
+        toast.success(SuccessMessages.ADD_TO_WISHLIST_SUCCESS);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(ErrorMessages.ADD_TO_WISHLIST_FAIL);
+    }
+  };
+
+  const navigate = useNavigate()
+  const handleClickBuy = () => {
+    handleAddToCart()
+    setTimeout(() => {
+      toast.success('Đang chuyển đến trang thanh toán')
+      navigate('/checkout')
+    }, 1000)
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -153,11 +208,11 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
           </p>
           <div className="flex flex-row justify-between items-start md:items-center w-full">
             <p className="text-sm md:text-base">
-              Thương hiệu:{" "}
+              Thương hiệu: {selectedProduct.brandName}
               <span className="text-red-600 font-semibold"></span>
             </p>
             <p className="text-sm md:text-base">
-              Quốc gia:{" "}
+              Quốc gia: {selectedProduct.countryOfOrigin}
               <span className="text-red-600 font-semibold"></span>
             </p>
           </div>
@@ -234,16 +289,36 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
           </div>
 
           <div className="flex flex-wrap gap-2 w-full my-2 justify-between">
-            <button className="bg-gray-200 text-black px-4 py-2 text-xs md:text-sm rounded-md hover:bg-gray-300 transition duration-300">
-              Yêu thích
+            <button
+              className={`px-4 py-2 text-xs md:text-sm rounded-md transition duration-300 ${
+                selectedSize &&
+                selectedProduct.volumePrices.some(
+                  (v) =>
+                    `${v.volume}ml` === selectedSize &&
+                    isInWishlist(v.productVariantId)
+                )
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "bg-gray-200 text-black hover:bg-gray-300"
+              }`}
+              onClick={handleAddToWishlist}
+            >
+              {selectedSize &&
+              selectedProduct.volumePrices.some(
+                (v) =>
+                  `${v.volume}ml` === selectedSize &&
+                  isInWishlist(v.productVariantId)
+              )
+                ? "Bỏ yêu thích"
+                : "Yêu thích ❤️"}
             </button>
+
             <button
               className="bg-red-600 text-white px-4 py-2 text-xs md:text-sm rounded-md hover:bg-red-700 transition duration-300"
               onClick={handleAddToCart}
             >
               Thêm vào giỏ hàng
             </button>
-            <button className="bg-black text-white px-4 py-2 text-xs md:text-sm rounded-md hover:bg-gray-800 transition duration-300">
+            <button className="bg-black text-white px-4 py-2 text-xs md:text-sm rounded-md hover:bg-gray-800 transition duration-300" onClick={handleClickBuy}>
               Mua ngay
             </button>
           </div>

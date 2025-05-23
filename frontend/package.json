@@ -17,6 +17,7 @@
     "frontend-perfume-ecommerce": "file:",
     "i": "^0.3.7",
     "jwt-decode": "^4.0.0",
+    "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.487.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

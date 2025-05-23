@@ -1,90 +1,43 @@
-import React, { useState } from 'react';
-import { ShoppingBag, Package, RefreshCw, Check, X, Truck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShoppingBag, Package, RefreshCw, Check, X, Truck, Clock } from 'lucide-react';
 
 const OrderHistory = () => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
-  const [orders] = useState([
-    {
-      id: 'ORD10015624',
-      date: '23/04/2025',
-      total: 1250000,
-      status: 'delivered',
-      items: [
-        {
-          id: 1,
-          name: 'Chanel No.5 Eau de Parfum',
-          image: '/products/perfume1.jpg',
-          price: 750000,
-          quantity: 1,
-          variation: '50ml'
-        },
-        {
-          id: 2,
-          name: 'Dior Sauvage Eau de Toilette',
-          image: '/products/perfume2.jpg',
-          price: 500000,
-          quantity: 1,
-          variation: '100ml'
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+  
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:8080/api/v1/orders/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+  
+        const result = await response.json();
+  
+        if (result.status === 'success') {
+          setOrders(result.data);
+        } else {
+          setError('Failed to load orders');
         }
-      ]
-    },
-    {
-      id: 'ORD10015590',
-      date: '20/04/2025',
-      total: 899000,
-      status: 'processing',
-      items: [
-        {
-          id: 3,
-          name: 'Gucci Bloom Eau de Parfum',
-          image: '/products/perfume3.jpg',
-          price: 899000,
-          quantity: 1,
-          variation: '75ml'
-        }
-      ]
-    },
-    {
-      id: 'ORD10015532',
-      date: '15/04/2025',
-      total: 1649000,
-      status: 'cancelled',
-      items: [
-        {
-          id: 4,
-          name: 'Tom Ford Black Orchid',
-          image: '/products/perfume4.jpg',
-          price: 1649000,
-          quantity: 1,
-          variation: '100ml'
-        }
-      ]
-    },
-    {
-      id: 'ORD10015498',
-      date: '10/04/2025',
-      total: 2150000,
-      status: 'delivered',
-      items: [
-        {
-          id: 5,
-          name: 'Versace Eros Eau de Parfum',
-          image: '/products/perfume5.jpg',
-          price: 1350000,
-          quantity: 1,
-          variation: '100ml'
-        },
-        {
-          id: 6,
-          name: 'Jo Malone English Pear & Freesia',
-          image: '/products/perfume6.jpg',
-          price: 800000,
-          quantity: 1,
-          variation: '30ml'
-        }
-      ]
-    }
-  ]);
+      } catch (err) {
+        setError('Error connecting to server');
+        console.error('Error fetching orders:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchOrders();
+  }, []);
+  
 
   const TabItem = ({ label, active, onClick }) => (
     <button
@@ -105,24 +58,32 @@ const OrderHistory = () => {
     const statusMap = {
       'processing': 'processing',
       'shipping': 'shipping',
-      'delivered': 'delivered',
+      'completed': 'completed',
+      'pending': 'pending',
       'cancelled': 'cancelled'
     };
     
-    return orders.filter(order => order.status === statusMap[activeTab]);
+    return orders.filter(order => order.orderStatus === statusMap[activeTab]);
   };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN');
+  };
+
   const getStatusIcon = (status) => {
     switch (status) {
+      case 'pending':
+        return <Clock size={16} className="text-yellow-500" />;
       case 'processing':
         return <RefreshCw size={16} className="text-blue-500" />;
       case 'shipping':
         return <Truck size={16} className="text-orange-500" />;
-      case 'delivered':
+      case 'completed':
         return <Check size={16} className="text-green-500" />;
       case 'cancelled':
         return <X size={16} className="text-red-500" />;
@@ -133,11 +94,13 @@ const OrderHistory = () => {
 
   const getStatusText = (status) => {
     switch (status) {
+      case 'pending':
+        return 'Chờ thanh toán';
       case 'processing':
         return 'Đang xử lý';
       case 'shipping':
         return 'Đang giao hàng';
-      case 'delivered':
+      case 'completed':
         return 'Đã giao hàng';
       case 'cancelled':
         return 'Đã hủy';
@@ -148,11 +111,13 @@ const OrderHistory = () => {
 
   const getStatusClass = (status) => {
     switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-700';
       case 'processing':
         return 'bg-blue-100 text-blue-700';
       case 'shipping':
         return 'bg-orange-100 text-orange-700';
-      case 'delivered':
+      case 'completed':
         return 'bg-green-100 text-green-700';
       case 'cancelled':
         return 'bg-red-100 text-red-700';
@@ -160,6 +125,56 @@ const OrderHistory = () => {
         return 'bg-gray-100 text-gray-700';
     }
   };
+
+  const getPaymentStatusText = (status) => {
+    switch (status) {
+      case 'completed':
+        return 'Đã thanh toán';
+      case 'pending':
+        return 'Chờ thanh toán';
+      case 'cancelled':
+        return 'Đã hủy';
+      default:
+        return 'Không xác định';
+    }
+  };
+
+  const getPaymentStatusClass = (status) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-700';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-700';
+      case 'cancelled':
+        return 'bg-red-100 text-red-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-screen-lg mx-auto p-4 flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-screen-lg mx-auto p-4">
+        <div className="bg-red-50 p-4 rounded-lg text-red-700">
+          <p>{error}</p>
+          <button 
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition duration-200"
+            onClick={() => window.location.reload()}
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-screen-lg mx-auto p-4">
@@ -178,6 +193,11 @@ const OrderHistory = () => {
               onClick={() => setActiveTab('all')} 
             />
             <TabItem 
+              label="Chờ thanh toán" 
+              active={activeTab === 'pending'} 
+              onClick={() => setActiveTab('pending')} 
+            />
+            <TabItem 
               label="Đang xử lý" 
               active={activeTab === 'processing'} 
               onClick={() => setActiveTab('processing')} 
@@ -189,8 +209,8 @@ const OrderHistory = () => {
             />
             <TabItem 
               label="Đã giao" 
-              active={activeTab === 'delivered'} 
-              onClick={() => setActiveTab('delivered')} 
+              active={activeTab === 'completed'} 
+              onClick={() => setActiveTab('completed')} 
             />
             <TabItem 
               label="Đã hủy" 
@@ -216,63 +236,98 @@ const OrderHistory = () => {
           ) : (
             <div className="space-y-6">
               {filteredOrders().map((order) => (
-                <div key={order.id} className="border rounded-lg overflow-hidden">
+                <div key={order.orderId} className="border rounded-lg overflow-hidden">
                   <div className="bg-gray-50 p-4 border-b flex flex-wrap justify-between items-center">
                     <div>
-                      <span className="font-medium">Đơn hàng #{order.id}</span>
-                      <span className="text-gray-500 text-sm ml-4">Ngày đặt: {order.date}</span>
+                      <span className="font-medium">Đơn hàng #{order.orderId}</span>
+                      <span className="text-gray-500 text-sm ml-4">Ngày đặt: {formatDate(order.orderDate)}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusClass(order.status)}`}>
-                        {getStatusIcon(order.status)}
-                        <span className="ml-1">{getStatusText(order.status)}</span>
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusClass(order.orderStatus)}`}>
+                        {getStatusIcon(order.orderStatus)}
+                        <span className="ml-1">{getStatusText(order.orderStatus)}</span>
                       </span>
+                      
+                      {order.payment && (
+                        <span className={`ml-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getPaymentStatusClass(order.payment.status)}`}>
+                          {order.payment.status === 'completed' ? <Check size={16} /> : <Clock size={16} />}
+                          <span className="ml-1">{getPaymentStatusText(order.payment.status)}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                   
                   {/* Order Items */}
                   <div className="p-4">
-                    {order.items.map((item) => (
-                      <div key={item.id} className="flex py-3 border-b last:border-0">
+                    {order.items.map((item, index) => (
+                      <div key={index} className="flex py-3 border-b last:border-0">
                         <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                            <Package size={24} className="text-gray-400" />
-                          </div>
+                          {item.imageUrl && item.imageUrl !== 'none' ? (
+                            <img 
+                              src={item.imageUrl} 
+                              alt={item.productName} 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.parentNode.innerHTML = `<div class="w-full h-full bg-gray-200 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2.0066446 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" y1="22" x2="12" y2="12"></line></svg></div>`;
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                              <Package size={24} className="text-gray-400" />
+                            </div>
+                          )}
                         </div>
                         <div className="ml-4 flex-grow">
-                          <h4 className="font-medium">{item.name}</h4>
+                          <h4 className="font-medium">{item.productName}</h4>
                           <p className="text-sm text-gray-500">
-                            {item.variation} x {item.quantity}
+                            {item.volume} x {item.quantity}
                           </p>
+                          {item.note && <p className="text-xs text-gray-500 mt-1">{item.note}</p>}
                           <p className="text-sm font-medium mt-1">
-                            {formatCurrency(item.price)}
+                            {formatCurrency(item.unitPrice)}
                           </p>
                         </div>
                       </div>
                     ))}
                   </div>
                   
-                  {/* Order Footer */}
                   <div className="bg-gray-50 p-4 border-t flex flex-col sm:flex-row justify-between items-start sm:items-center">
                     <div className="mb-3 sm:mb-0">
-                      <span className="text-gray-600">Tổng tiền:</span>
-                      <span className="font-bold text-lg ml-2">{formatCurrency(order.total)}</span>
+                      <div>
+                        <span className="text-gray-600">Tổng tiền hàng:</span>
+                        <span className="font-medium ml-2">{formatCurrency(order.totalAmount - order.shippingFee)}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Phí vận chuyển:</span>
+                        <span className="font-medium ml-2">{formatCurrency(order.shippingFee)}</span>
+                      </div>
+                      <div className="mt-1">
+                        <span className="text-gray-600">Tổng thanh toán:</span>
+                        <span className="font-bold text-lg ml-2">{formatCurrency(order.totalAmount)}</span>
+                      </div>
+                      {order.payment && (
+                        <div className="text-sm text-gray-500 mt-1">
+                          Thanh toán qua: {order.payment.method}
+                          {order.payment.transactionId && ` (Mã giao dịch: ${order.payment.transactionId})`}
+                        </div>
+                      )}
                     </div>
                     <div className="flex space-x-3">
                       <a 
-                        href={`/orders/${order.id}`}
+                        href={`/orders/${order.orderId}`}
                         className="px-4 py-2 border border-black text-black rounded hover:bg-gray-50 transition duration-200"
                       >
                         Chi tiết
                       </a>
-                      {order.status === 'delivered' && (
+                      {order.orderStatus === 'completed' && (
                         <button 
                           className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition duration-200"
                         >
                           Mua lại
                         </button>
                       )}
-                      {order.status === 'processing' && (
+                      {(order.orderStatus === 'processing' || order.orderStatus === 'pending') && (
                         <button 
                           className="px-4 py-2 border border-red-500 text-red-500 rounded hover:bg-red-50 transition duration-200"
                         >

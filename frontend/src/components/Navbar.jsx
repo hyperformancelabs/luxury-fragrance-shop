@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { jwtDecode } from "jwt-decode";
 import { Toaster, toast } from "sonner";
+import debounce from "lodash.debounce";
+import axios from "axios";
 
 import {
   ChartBarIcon,
@@ -16,16 +18,21 @@ import {
   X,
   Search,
 } from "lucide-react";
+import { useWishlist } from "../context/WishlistContext";
+import SearchBar from "./SearchBar";
 
 const Navbar = () => {
   const { user, login } = useAuth();
   const { localCart, cartItems, syncCartToServer } = useCart();
+  const { wishlist } = useWishlist();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showCartPopup, setShowCartPopup] = useState(false);
   const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false)
   const [authMode, setAuthMode] = useState("login");
   const [loginData, setLoginData] = useState({
     username: "",
@@ -47,15 +54,51 @@ const Navbar = () => {
   const mobileMenuRef = useRef(null);
   const mobileButtonRef = useRef(null);
   const navigate = useNavigate();
+  const [showDropdown, setShowDropdown] = useState(false);
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
+
+  // const handleSearchChange = (e) => {
+  //   setSearchQuery(e.target.value);
+  //   console.log(searchQuery)
+  // };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    console.log("Tìm kiếm:", searchQuery);
-    setShowMobileSearch(false);
+    if (searchQuery.trim()) {
+      navigate(`/search?keyword=${encodeURIComponent(searchQuery.trim())}`);
+      setShowMobileSearch(false); // ẩn search mobile nếu cần
+      setResults([]); // ẩn dropdown luôn cho gọn
+    }
+  };
+
+  const fetchProducts = useCallback(
+    debounce(async (query) => {
+      if (!query) {
+        setResults([]);
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await axios.get(
+          `http://localhost:8080/api/v1/products/search?keyword=${encodeURIComponent(query)}`
+        );
+        setResults(res.data.data.content); // tuỳ API trả gì
+      console.log(res.data.data.content)
+      } catch (err) {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 400),
+    []
+  );
+
+  // Cập nhật state và gọi hàm search debounce
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    fetchProducts(value);
+    console.log(value)
   };
 
   const cartTotal = (user ? cartItems : localCart).reduce(
@@ -70,6 +113,8 @@ const Navbar = () => {
   };
 
   const cartCount = user ? cartItems?.length || 0 : localCart?.length || 0;
+  const wishlistCount = wishlist?.length || 0;
+
 
   const handleLoginChange = (e) => {
     setLoginData({
@@ -297,46 +342,29 @@ const Navbar = () => {
                 </span>
               </Link>
             </div>
+            <SearchBar
+        searchQuery={searchQuery}
+        handleSearchChange={handleSearchChange}
+        handleSearchSubmit={handleSearchSubmit}
+        results={results}
+        loading={loading}
+        onResultClick={() => {
+          setShowDropdown(false);
+          setResults([]);
+        }}
+        showDropdown={showDropdown}
+        setShowDropdown={setShowDropdown}
+        className="md:w-96"
+      />
 
-            <div className="hidden lg:block flex-grow max-w-xl mx-4">
-              <form onSubmit={handleSearchSubmit} className="relative">
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm sản phẩm, thương hiệu bạn muốn..."
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-300"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 text-gray-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </button>
-              </form>
-            </div>
-
-            <div className="lg:hidden flex items-center ml-2">
-              <button
-                onClick={() => setShowMobileSearch(!showMobileSearch)}
-                className="text-gray-600 focus:outline-none"
-              >
-                <Search className="w-5 h-5" />
-              </button>
-            </div>
+      <div className="lg:hidden flex items-center ml-2">
+        <button
+          onClick={() => setShowMobileSearch(!showMobileSearch)}
+          className="text-gray-600 focus:outline-none"
+        >
+          <Search className="w-5 h-5" />
+        </button>
+      </div>
 
             <div className="flex items-center space-x-4 md:space-x-8">
               <Link
@@ -602,7 +630,7 @@ const Navbar = () => {
               >
                 <Heart className="w-5 h-5 md:w-6 md:h-6" />
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                  0
+                  {wishlistCount}
                 </span>
                 <span className="text-xs mt-1 hidden sm:block">Yêu thích</span>
               </Link>

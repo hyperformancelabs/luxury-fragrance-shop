@@ -17,7 +17,7 @@ const HomePage = () => {
      <Brand />
      <NewProduct />
      <BestSellingProduct />
-     <TopSearchInWeek />
+     {/* <TopSearchInWeek /> */}
      <CollectionSeason />
      <AboutUs />
      <Blog />

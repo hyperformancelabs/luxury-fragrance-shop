@@ -13,6 +13,7 @@ const Cart = () => {
     removeFromServerCart,
     updateQuantityInCart,
     localCart,
+    deleteItemFromCart,
   } = useCart();
 
   const currentCart = user ? cartItems : localCart;
@@ -176,8 +177,8 @@ const Cart = () => {
                   className="p-2 text-gray-500"
                   onClick={() =>
                     user
-                      ? removeFromServerCart(
-                          item.cartItemId,
+                      ? deleteItemFromCart(
+                          // item.cartItemId,
                           item.productVariantId
                         )
                       : removeFromLocalCart(

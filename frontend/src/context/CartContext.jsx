@@ -2,6 +2,8 @@ import { createContext, useState, useEffect, useContext } from 'react';
 import { useAuth } from './AuthContext';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+import { toast } from 'sonner';
+import ErrorMessages from '../constants/ErrorMessages';
 
 export const CartContext = createContext();
 
@@ -157,24 +159,43 @@ export const CartProvider = ({ children }) => {
   };
 
   const updateQuantityInCart = async (cartItemId, newQuantity, productVariantId) => {
+    if (newQuantity < 1 || newQuantity > 10) {
+      toast.error(ErrorMessages.INVALID_QUANTITY);
+      return;
+    }
+  
     try {
       const token = localStorage.getItem("token");
       const response = await axios.put(
         "http://localhost:8080/api/v1/carts/update",
         {
-          cartItemId: cartItemId,
-          newQuantity: newQuantity,
-          productVariantId: productVariantId
+          cartItemId,
+          newQuantity,
+          productVariantId,
         },
         {
-          headers: { Authorization: `Bearer ${token}` }  
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
       loadCart();
     } catch (err) {
       console.error("Error updating quantity:", err.response?.data || err);
+      toast.error("Không thể cập nhật số lượng sản phẩm");
     }
   };
+  const deleteItemFromCart = async (productVariantId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:8080/api/v1/carts/remove-item/${productVariantId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      loadCart();
+      toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
+    } catch (err) {
+      console.error("Error deleting item from cart:", err.response?.data || err);
+      toast.error("Không thể xóa sản phẩm khỏi giỏ hàng");
+    }
+  }
 
   return (
     <CartContext.Provider value={{
@@ -193,6 +214,7 @@ export const CartProvider = ({ children }) => {
       setCartInfo,
       setCartItems,
       updateQuantityInCart,
+      deleteItemFromCart,
       syncCartToServer
     }}>
       {children}
