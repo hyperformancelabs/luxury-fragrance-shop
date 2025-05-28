@@ -20,6 +20,14 @@ public interface CustomerService {
 
     CustomerDTO getCustomerByEmailOrPhone(String email, String phone);
 
+    boolean existsByUsername(String username);
+
+    boolean existsByEmail(String email);
+
+    boolean existsByPhoneNumber(String phone);
+
+    boolean existsByPhoneNumberAndStatusNot(String phone, String status);
+
     // --------------------------------------- ADMIN -----------------------------------------------------
 
     // Số khách hàng mới hôm nay

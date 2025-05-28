@@ -45,6 +45,11 @@ public class AuthController {
             return "redirect:/auth/login";
         }
 
+        if ("banned".equalsIgnoreCase(customer.getStatus())) {
+            redirectAttributes.addFlashAttribute("error", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ với chúng tôi.");
+            return "redirect:/auth/login";
+        }
+
         if ("automatically created".equalsIgnoreCase(customer.getNote())) {
             redirectAttributes.addFlashAttribute("info", "Tài khoản được tạo tự động. Vui lòng đặt lại mật khẩu.");
             redirectAttributes.addFlashAttribute("phoneOrEmail", phoneOrEmail);
@@ -99,6 +104,53 @@ public class AuthController {
     public String register() {
         return "auth/register";
     }
+
+    @PostMapping("/signup")
+    public String register(@RequestParam String name,
+                           @RequestParam String email,
+                           @RequestParam String username,
+                           @RequestParam String phoneNumber,
+                           @RequestParam String password,
+                           @RequestParam String confirmPassword,
+                           RedirectAttributes redirectAttributes) {
+
+        // Kiểm tra trùng username hoặc email
+        if (customerService.existsByUsername(username)) {
+            redirectAttributes.addFlashAttribute("error", "Tên đăng nhập đã tồn tại.");
+            return "redirect:/auth/register";
+        }
+
+        if (customerService.existsByEmail(email)) {
+            redirectAttributes.addFlashAttribute("error", "Email đã được sử dụng.");
+            return "redirect:/auth/register";
+        }
+
+        if (customerService.existsByPhoneNumber(phoneNumber)) {
+            redirectAttributes.addFlashAttribute("error", "Số điện thoại đã được sử dụng.");
+            return "redirect:/auth/register";
+        }
+
+        // Kiểm tra xác nhận mật khẩu
+        if (!password.equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp.");
+            return "redirect:/auth/register";
+        }
+
+        // Tạo khách hàng mới
+        CustomerDTO customer = new CustomerDTO();
+        customer.setName(name);
+        customer.setEmail(email);
+        customer.setUsername(username);
+        customer.setPhoneNumber(phoneNumber);
+        customer.setPassword(passwordEncoder.encode(password));
+        customer.setStatus("active");
+
+        customerService.addCustomer(customer);
+
+        redirectAttributes.addFlashAttribute("success", "Đăng ký thành công! Vui lòng đăng nhập.");
+        return "redirect:/auth/login";
+    }
+
 
     @GetMapping("/reset-password")
     public String resetPassword() {

@@ -312,5 +312,32 @@
             }
         });
     </script>
+
+    <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            /*[[${success}]]*/
+            /*[[${error}]]*/
+            let successMessage = /*[[${success}]]*/ null;
+            let errorMessage = /*[[${error}]]*/ null;
+
+            if (successMessage) {
+                Swal.fire({
+                    icon: 'success',
+                    title: successMessage,
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            }
+
+            if (errorMessage) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: errorMessage,
+                    confirmButtonText: 'Đóng'
+                });
+            }
+        });
+    </script>
 </body>
 </html>

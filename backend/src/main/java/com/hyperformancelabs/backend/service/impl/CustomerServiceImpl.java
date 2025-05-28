@@ -102,6 +102,26 @@ public class CustomerServiceImpl implements CustomerService {
                 .orElse(null);
     }
 
+    @Override
+    public boolean existsByUsername(String username) {
+        return customerRepository.existsByUsername(username);
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return customerRepository.existsByEmail(email);
+    }
+
+    @Override
+    public boolean existsByPhoneNumber(String phone) {
+        return customerRepository.existsByPhoneNumber(phone);
+    }
+
+    @Override
+    public boolean existsByPhoneNumberAndStatusNot(String phone, String status) {
+        return customerRepository.existsByPhoneNumberAndStatusNot(phone, status);
+    }
+
     // -------------------------------------------------- ADMIN -----------------------------------------------------
 
     @Override

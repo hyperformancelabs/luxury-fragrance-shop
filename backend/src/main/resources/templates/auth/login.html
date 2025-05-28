@@ -27,7 +27,7 @@
             <div class="d-flex">
                 <a href="/auth/login" class="btn btn-dark me-2"><i class="fas fa-user me-1"></i> Đăng nhập</a>
                 <a href="/cart" class="btn btn-outline-dark me-2"><i class="fas fa-shopping-cart me-1"></i> Giỏ hàng</a>
-                <a href="/wishlist" class="btn btn-outline-danger"><i class="fas fa-heart me-1"></i> Yêu thích</a>
+<!--                <a href="/wishlist" class="btn btn-outline-danger"><i class="fas fa-heart me-1"></i> Yêu thích</a>-->
             </div>
         </div>
     </div>
@@ -67,6 +67,9 @@
 
             <!-- FORM gửi về /auth/precheck -->
             <form th:action="@{/auth/precheck}" method="post">
+                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+                <div th:if="${info}" class="alert alert-info" th:text="${info}"></div>
+
                 <div th:if="${param.error}" class="alert alert-danger">Tên đăng nhập hoặc mật khẩu không đúng.</div>
                 <div th:if="${param.logout}" class="alert alert-success">Bạn đã đăng xuất thành công.</div>
                 <div th:if="${info}" class="alert alert-info" th:text="${info}"></div>
@@ -95,7 +98,7 @@
             </form>
 
             <div class="auth-footer">
-                <p>Chưa có tài khoản? <a href="/register" class="auth-link">Đăng ký ngay</a></p>
+                <p>Chưa có tài khoản? <a href="/auth/register" class="auth-link">Đăng ký ngay</a></p>
                 <p><a href="#" class="auth-link">Quên mật khẩu?</a></p>
             </div>
         </div>
@@ -179,6 +182,41 @@
         const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
         toast.show();
     }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+        let successMessage = /*[[${success}]]*/ null;
+        let errorMessage = /*[[${error}]]*/ null;
+        let infoMessage = /*[[${info}]]*/ null;
+
+        if (successMessage) {
+            Swal.fire({
+                icon: 'success',
+                title: successMessage,
+                showConfirmButton: false,
+                timer: 2500
+            });
+        }
+
+        if (errorMessage) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: errorMessage,
+                confirmButtonText: 'Đóng'
+            });
+        }
+
+        if (infoMessage) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Thông báo',
+                text: infoMessage,
+                confirmButtonText: 'Đóng'
+            });
+        }
+    });
 </script>
 </body>
 </html>

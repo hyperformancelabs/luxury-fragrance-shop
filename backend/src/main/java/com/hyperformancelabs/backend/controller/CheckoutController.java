@@ -91,7 +91,21 @@ public class CheckoutController {
             List<Customer> customers = customerRepository.findByUsername(username);
             if (!customers.isEmpty()) {
                 Customer customer = customers.get(0);
-                model.addAttribute("firstName", customer.getName());
+                String fullName = customer.getName();
+                String firstName = "";
+                String lastName = "";
+
+                if (fullName != null && fullName.contains(" ")) {
+                    int spaceIndex = fullName.indexOf(" ");
+                    firstName = fullName.substring(0, spaceIndex).trim();
+                    lastName = fullName.substring(spaceIndex + 1).trim();
+                } else {
+                    firstName = fullName; // nếu không có dấu cách thì xem toàn bộ là firstName
+                    lastName = "";
+                }
+
+                model.addAttribute("firstName", firstName);
+                model.addAttribute("lastName", lastName);
                 model.addAttribute("email", customer.getEmail());
                 model.addAttribute("phone", customer.getPhoneNumber());
                 model.addAttribute("address", customer.getStreet());
@@ -121,15 +135,14 @@ public class CheckoutController {
                 throw new IllegalStateException("Không tìm thấy Customer với username: " + username);
             }
 
-            // (Tuỳ chọn) Cập nhật form với thông tin người dùng để hiện lại nếu cần
-            form.setFirstName(customer.getName());
-            form.setLastName(""); // Nếu bạn có logic tách họ tên thì xử lý thêm
-            form.setPhone(customer.getPhoneNumber());
-            form.setEmail(customer.getEmail());
-            form.setAddress(customer.getStreet());
-            form.setWard(customer.getWard());
-            form.setDistrict(customer.getDistrict());
-            form.setProvince(customer.getCity());
+            customer.setName(form.getFirstName() + " " + form.getLastName());
+            customer.setPhoneNumber(form.getPhone());
+            customer.setEmail(form.getEmail());
+            customer.setStreet(form.getAddress());
+            customer.setWard(form.getWard());
+            customer.setDistrict(form.getDistrict());
+            customer.setCity(form.getProvince());
+            customerRepository.save(customer);
         } else {
             // Chưa đăng nhập: tạo tài khoản guest
             PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
