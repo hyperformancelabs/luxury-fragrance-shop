@@ -147,7 +147,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Kiểm tra nếu sản phẩm hết hàng
         if (selectedSize.classList.contains('out-of-stock')) {
-            alert('Sản phẩm đã hết hàng');
+            Swal.fire({
+                icon: 'error',
+                title: 'Hết hàng',
+                text: 'Dung tích bạn chọn hiện đã hết hàng. Vui lòng chọn dung tích khác.',
+                confirmButtonText: 'Đã hiểu',
+                confirmButtonColor: '#d33'
+            });
             return;
         }
 
@@ -206,25 +212,53 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Xử lý thêm vào yêu thích
-    quickviewWishlist.addEventListener('click', function() {
-        const productId = quickviewAddToCart.getAttribute('data-product-id');
+    quickviewWishlist.addEventListener('click', function () {
+        const isLoggedIn = document.querySelector('meta[name="isLoggedIn"]')?.content === 'true';
 
-        // Trong thực tế, bạn sẽ gửi yêu cầu AJAX để thêm sản phẩm vào danh sách yêu thích
-        console.log('Thêm vào yêu thích:', {
-            productId
-        });
-
-        // Thay đổi icon
-        const wishlistIcon = this.querySelector('i');
-        if (wishlistIcon.classList.contains('far')) {
-            wishlistIcon.classList.remove('far');
-            wishlistIcon.classList.add('fas');
-            alert('Đã thêm sản phẩm vào danh sách yêu thích!');
-        } else {
-            wishlistIcon.classList.remove('fas');
-            wishlistIcon.classList.add('far');
-            alert('Đã xóa sản phẩm khỏi danh sách yêu thích!');
+        if (!isLoggedIn) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Vui lòng đăng nhập',
+                text: 'Bạn cần đăng nhập để thêm sản phẩm vào mục yêu thích.',
+                confirmButtonText: 'Đăng nhập',
+                showCancelButton: true,
+                cancelButtonText: 'Hủy',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "/auth/login";
+                }
+            });
+            return;
         }
+
+        const productId = quickviewAddToCart.getAttribute('data-product-id');
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+
+        // Tạo form ẩn
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/wishlist/add';
+
+        // Input productId
+        const inputProductId = document.createElement('input');
+        inputProductId.type = 'hidden';
+        inputProductId.name = 'productId';
+        inputProductId.value = productId;
+        form.appendChild(inputProductId);
+
+        // CSRF token
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_csrf';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+
+        // Append và submit
+        document.body.appendChild(form);
+        form.submit();
     });
 
     // Hàm mở QuickView

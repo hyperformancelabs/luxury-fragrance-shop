@@ -2,6 +2,7 @@ package com.hyperformancelabs.backend.controller;
 
 import com.hyperformancelabs.backend.dto.*;
 import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
+import com.hyperformancelabs.backend.service.CustomerService;
 import com.hyperformancelabs.backend.service.ProductService;
 import com.hyperformancelabs.backend.service.ProductVariantService;
 import com.hyperformancelabs.backend.service.WishlistService;
@@ -35,12 +36,13 @@ public class WishlistController {
     @Autowired
     private ProductVariantService productVariantService;
 
+    @Autowired
+    private CustomerService customerService;
+
     @GetMapping
     public String viewWishlist(Model model, RedirectAttributes redirectAttributes) {
         try {
             String username = getCurrentUsername();
-//            String username = "nguyenvana";
-
 
             List<WishlistDTO> wishlistItems = wishlistService.getWishlistItems(username);
             List<WishlistItemDisplayDTO> wishlistItemDisplays = new ArrayList<>();
@@ -103,7 +105,7 @@ public class WishlistController {
             model.addAttribute("hasInStock", hasInStock);
             model.addAttribute("wishlistItems", wishlistItemDisplays);
 
-
+            System.out.println("hasInStock" + hasInStock);
             return "wishlist/wishlist";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi xảy ra khi tải giỏ hàng: " + e.getMessage());
@@ -166,6 +168,22 @@ public class WishlistController {
         return "redirect:/?wishlistRemoved=success";
     }
 
+    @PostMapping("/clear")
+    @Transactional
+    public String clearWishlist(RedirectAttributes redirectAttributes) {
+        try {
+            String username = getCurrentUsername();
+            CustomerDTO customer = customerService.getCustomerByUsername(username);
+            wishlistService.clearWishlist(customer.getCustomerId());
+            System.out.println("Cleared wishlist for customer: " + customer.getCustomerId());
+            redirectAttributes.addFlashAttribute("wishlistCleared", "success");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể xóa danh sách yêu thích: " + e.getMessage());
+        }
+
+        return "redirect:/wishlist?wishlistCleared=success";
+    }
 
     private static WishlistItemDisplayDTO getWishlistItemDisplayDTO(WishlistDTO wishlistItem, ProductDTO product, ProductVariantDTO productVariant) {
         WishlistItemDisplayDTO displayDTO = new WishlistItemDisplayDTO();

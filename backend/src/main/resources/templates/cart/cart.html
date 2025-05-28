@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="fragments/head :: head('Giỏ hàng', ~{::link})">
     <link rel="stylesheet" href="/css/cart.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -29,13 +32,42 @@
                         <a class="nav-link" href="/contact">Liên hệ</a>
                     </li>
                 </ul>
-                <div class="d-flex">
-                    <a href="/auth/login" class="btn btn-outline-dark me-2">
-                        <i class="fas fa-user me-1"></i> Đăng nhập
-                    </a>
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Nếu đã đăng nhập -->
+                    <div sec:authorize="isAuthenticated()" class="d-flex align-items-center gap-2">
+                    <span class="text-dark">
+                         <a href="/profile" class="text-dark text-decoration-none d-flex align-items-center">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <strong sec:authentication="name">Tên người dùng</strong>
+                         </a>
+
+                     </span>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt me-1"></i> Đăng xuất
+                        </button>
+
+                        <!-- Form logout POST -->
+                        <form id="logout-form" th:action="@{/logout}" method="post" style="display:none;">
+                            <input type="hidden" name="_csrf" th:if="${_csrf != null}" th:value="${_csrf.token}"/>
+                        </form>
+
+                        <!-- Nút yêu thích chỉ hiển thị khi đã đăng nhập -->
+                        <a href="/wishlist" class="btn btn-outline-danger">
+                            <i class="fas fa-heart me-1"></i> Yêu thích
+                        </a>
+                    </div>
+
+
+                    <!-- Nếu chưa đăng nhập -->
+                    <div sec:authorize="isAnonymous()" class="d-flex align-items-center gap-2">
+                        <a href="/auth/login" class="btn btn-outline-dark">
+                            <i class="fas fa-user me-1"></i> Đăng nhập
+                        </a>
+                    </div>
+
+                    <!-- Giỏ hàng luôn hiển thị -->
                     <a href="/cart" class="btn btn-dark">
                         <i class="fas fa-shopping-cart me-1"></i> Giỏ hàng
-                        <span class="badge bg-danger ms-1" th:text="${itemCount}">2</span>
                     </a>
                 </div>
             </div>
@@ -203,5 +235,23 @@
     <th:block th:replace="fragments/scripts :: scripts(~{::script})">
         <script src="/js/cart.js"></script>
     </th:block>
+    <script>
+        function confirmLogout() {
+            Swal.fire({
+                title: 'Xác nhận đăng xuất',
+                text: 'Bạn có chắc chắn muốn đăng xuất không?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Đăng xuất',
+                cancelButtonText: 'Hủy',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('logout-form').submit();
+                }
+            });
+        }
+    </script>
+
 </body>
 </html>

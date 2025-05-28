@@ -123,7 +123,7 @@
                     </div>
 
                     <div class="wishlist-item-actions">
-                        <form th:action="@{/cart/add}" method="post" class="wishlist-add-to-cart-form">
+                        <form th:action="@{/cart/add}" method="post" class="wishlist-add-to-cart-form" th:if="${item.inStock}">
                             <input type="hidden" name="productVariantId" th:value="${item.productVariantId}" />
                             <input type="hidden" name="quantity" value="1" />
                             <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
@@ -131,6 +131,11 @@
                                 <i class="fas fa-shopping-cart me-1"></i> Thêm vào giỏ
                             </button>
                         </form>
+
+                        <!-- Nếu hết hàng thì show nút "Hết hàng" -->
+                        <button class="add-to-cart-btn disabled-like" disabled th:if="${!item.inStock}">
+                            <i class="fas fa-ban me-1"></i> Hết hàng
+                        </button>
 
 
                         <form th:action="@{/wishlist/remove}" method="post" class="d-inline">
@@ -156,9 +161,13 @@
         </div>
 
         <div th:if="${!wishlistItems.isEmpty()}" class="wishlist-footer">
-            <button id="clear-all-btn" class="clear-all-btn">
-                <i class="fas fa-trash-alt me-1"></i> Xóa tất cả
-            </button>
+            <form th:action="@{/wishlist/clear}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tất cả không?')">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                <button type="submit" id="clear-all-btn" class="clear-all-btn">
+                    <i class="fas fa-trash-alt me-1"></i> Xóa tất cả
+                </button>
+            </form>
+
             <button id="add-all-to-cart-btn"
                     class="add-all-to-cart-btn"
                     th:classappend="${!hasInStock} ? ' disabled-like' : ''"
@@ -419,6 +428,20 @@
                 Swal.fire({
                     icon: 'success',
                     title: 'Đã thêm vào danh sách yêu thích!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("wishlistCleared") === "success") {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Đã xóa toàn bộ danh sách yêu thích!',
                     timer: 2000,
                     showConfirmButton: false
                 });

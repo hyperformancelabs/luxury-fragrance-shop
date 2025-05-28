@@ -14,4 +14,6 @@ public interface WishlistService {
     // Xóa sản phẩm khỏi wishlist
     void removeWishlistItem(String username, Integer productVariantId);
 
+    // Xóa toàn bộ wishlist
+    void clearWishlist(Integer customerId);
 }

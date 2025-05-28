@@ -12,4 +12,7 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Integer> {
 
     // Xóa sản phẩm ra khỏi wishlist
     void deleteByCustomer_CustomerIdAndProductVariant_ProductVariantId(Integer customerId, Integer productVariantId);
+
+    // Xóa toàn bộ wishlist
+    void deleteByCustomer_CustomerId(Integer customerId);
 }

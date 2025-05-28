@@ -60,6 +60,11 @@ public class WishlistServiceImpl implements WishlistService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public void clearWishlist(Integer customerId) {
+        wishlistRepository.deleteByCustomer_CustomerId(customerId);
+    }
+
     private Wishlist convertToWishlist(WishlistDTO wishlistDTO) {
         return new Wishlist(
                 wishlistDTO.getWishlistId(),

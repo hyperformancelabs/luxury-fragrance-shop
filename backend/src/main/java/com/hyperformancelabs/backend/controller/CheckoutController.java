@@ -87,6 +87,20 @@ public class CheckoutController {
         model.addAttribute("itemCount", enrichedItems.size());
 
         System.out.println("JsessionId: " + sessionId);
+        if (username != null) {
+            List<Customer> customers = customerRepository.findByUsername(username);
+            if (!customers.isEmpty()) {
+                Customer customer = customers.get(0);
+                model.addAttribute("firstName", customer.getName());
+                model.addAttribute("email", customer.getEmail());
+                model.addAttribute("phone", customer.getPhoneNumber());
+                model.addAttribute("address", customer.getStreet());
+                model.addAttribute("province", customer.getCity());
+                model.addAttribute("district", customer.getDistrict());
+                model.addAttribute("ward", customer.getWard());
+            }
+        }
+
 
         return "checkout/checkout";
     }

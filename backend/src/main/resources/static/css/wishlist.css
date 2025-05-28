@@ -231,4 +231,11 @@
     .add-all-to-cart-btn {
         order: -1;
     }
+
+    .disabled-like {
+        background-color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
 }
