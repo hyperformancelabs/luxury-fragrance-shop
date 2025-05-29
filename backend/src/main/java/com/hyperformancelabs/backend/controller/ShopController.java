@@ -449,8 +449,20 @@ public class ShopController {
         BigDecimal defaultPrice = productVariants.get(0).getPrice();
         BigDecimal originalPrice = defaultPrice.multiply(new BigDecimal("1.2")).setScale(0, RoundingMode.HALF_UP);
 
+        // Tìm variant đầu tiên còn hàng
+        Optional<ProductVariantDTO> firstAvailableVariant = productVariants.stream()
+                .filter(v -> v.getQuantityInStock() > 0)
+                .findFirst();
+        // Nếu không có variant còn hàng, chọn variant đầu tiên
+        ProductVariantDTO selectedVariant = firstAvailableVariant.orElse(productVariants.get(0));
+
+        boolean allVariantsOutOfStock = productVariants.stream().allMatch(v -> v.getQuantityInStock() == 0);
+        model.addAttribute("allVariantsOutOfStock", allVariantsOutOfStock);
+
+
         // Thêm dữ liệu vào model
         model.addAttribute("product", product);
+        model.addAttribute("selectedVariantId", selectedVariant.getProductVariantId());
         model.addAttribute("relatedProducts", relatedProducts);
         model.addAttribute("productVariants", productVariants);
         model.addAttribute("rating", 4.5);
