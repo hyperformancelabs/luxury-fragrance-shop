@@ -106,21 +106,22 @@ const ProductVariantFormModal = ({
               <span className="text-xs text-gray-500">Để trống nếu không có khuyến mãi</span>
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Số lượng tồn kho <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="quantityInStock"
-                value={formData.quantityInStock}
-                onChange={onChange}
-                required
-                min="0"
-                step="any"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+            {/* Remove the quantity input field for new variants, and make it read-only for existing variants */}
+            {variantToEdit && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Số lượng tồn kho
+                </label>
+                <input
+                  type="number"
+                  name="quantityInStock"
+                  value={formData.quantityInStock}
+                  disabled={true}
+                  className="w-full px-3 py-2 border border-gray-300 bg-gray-100 rounded-md focus:outline-none text-gray-600 cursor-not-allowed"
+                />
+                <span className="text-xs text-gray-500">Sử dụng chức năng nhập/xuất kho để thay đổi tồn kho</span>
+              </div>
+            )}
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

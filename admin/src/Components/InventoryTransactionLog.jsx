@@ -30,7 +30,7 @@ const InventoryTransactionLog = ({ productId, productVariantId, hideTitle }) => 
   const [filters, setFilters] = useState({
     transactionType: '',
     productVariantId: productVariantId || '',
-    productId: '',
+    productId: productId || '',
     startDate: '',
     endDate: '',
   });
@@ -39,7 +39,7 @@ const InventoryTransactionLog = ({ productId, productVariantId, hideTitle }) => 
   const [tempFilters, setTempFilters] = useState({
     transactionType: '',
     productVariantId: productVariantId || '',
-    productId: '',
+    productId: productId || '',
     startDate: '',
     endDate: '',
   });
@@ -59,6 +59,21 @@ const InventoryTransactionLog = ({ productId, productVariantId, hideTitle }) => 
 
   // Initialize product info storage for displaying products in filters
   const [productInfo, setProductInfo] = useState({});
+
+  // Update filters when props change
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      productVariantId: productVariantId || '',
+      productId: productId || ''
+    }));
+    
+    setTempFilters(prev => ({
+      ...prev,
+      productVariantId: productVariantId || '',
+      productId: productId || ''
+    }));
+  }, [productId, productVariantId]);
 
   // Effect to fetch transactions when needed
   useEffect(() => {
@@ -301,7 +316,7 @@ const InventoryTransactionLog = ({ productId, productVariantId, hideTitle }) => 
     setTempFilters({
       transactionType: '',
       productVariantId: productVariantId || '',
-      productId: '',
+      productId: productId || '',
       startDate: '',
       endDate: '',
     });
@@ -314,7 +329,7 @@ const InventoryTransactionLog = ({ productId, productVariantId, hideTitle }) => 
     setFilters({
       transactionType: '',
       productVariantId: productVariantId || '',
-      productId: '',
+      productId: productId || '',
       startDate: '',
       endDate: '',
     });
