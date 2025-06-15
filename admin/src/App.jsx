@@ -4,7 +4,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
 import Statistics from './pages/Statistics';
-import Orders from './pages/Orders';
+import OrderManagement from './pages/OrderManagement';
 import Products from './pages/Products';
 import DefaultContent from './components/DeafaultContent';
 import Customer from './pages/Customer';
@@ -29,7 +29,7 @@ const AppLayout = () => {
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/statistics" element={<Statistics />} />
-            <Route path="/orders" element={<Orders />} />
+            <Route path="/orders" element={<OrderManagement />} />
             <Route path="/products" element={<Products />} />
             <Route path="/customers" element={<Customer />} />
             <Route path="/materials" element={<Materials />} />

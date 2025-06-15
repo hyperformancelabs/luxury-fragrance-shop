@@ -18,7 +18,8 @@ public class OrderDetailDTO {
     private String shippingAddress;
     private String shippingOption;
     private List<OrderItemDTO> items;
-
-
+    private ShipmentDTO shipment;
+    private PaymentDTO payment;
+    private java.util.List<PromotionDTO> promotions;
 }
 

@@ -120,7 +120,9 @@ public class OrderServiceImpl implements OrderService {
                         item.getProductVariant().getVolume(),
                         item.getProductVariant().getProduct().getBrand().getBrandName(),
                         item.getQuantity(),
-                        item.getUnitPrice()
+                        item.getUnitPrice(),
+                        item.getOrderItemId(),
+                        item.getProductVariant().getProductVariantId()
                 )
         ).toList();
         System.out.println("Order items count: " + order.getOrderItems().size());
@@ -133,7 +135,10 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderStatus(),
                 order.getShippingAddress(),
                 order.getShippingOption(),
-                itemDTOs
+                itemDTOs,
+                null,
+                null,
+                java.util.Collections.emptyList()
         );
     }
 
@@ -233,8 +238,16 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        order.setOrderStatus(status);
-        orderRepository.save(order);
+        // Normalize status to lower-case for consistent storage
+        String normalizedStatus = status == null ? "" : status.toLowerCase();
+
+        java.util.Set<String> allowedStatuses = java.util.Set.of("pending", "processing", "shipping", "delivered", "cancelled");
+        if (!allowedStatuses.contains(normalizedStatus)) {
+            throw new IllegalArgumentException("Invalid order status: " + status);
+        }
+
+        // Use repository query to bypass Bean Validation issues
+        orderRepository.updateOrderStatus(orderId, normalizedStatus);
     }
     
     /**

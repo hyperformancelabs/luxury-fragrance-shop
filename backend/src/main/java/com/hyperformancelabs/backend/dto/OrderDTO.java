@@ -24,6 +24,8 @@ public class OrderDTO {
     private String shippingOption;
     private String note;
     private LocalDate estimatedDeliveryDate;
+    private String customerName;
+    private Integer itemsCount;
 
 //    private List<OrderItemSummaryDTO> orderItems;
 //    private List<PaymentDTO> payments;
@@ -42,7 +44,9 @@ public class OrderDTO {
                 order.getShippingAddress(),
                 order.getShippingOption(),
                 order.getNote(),
-                order.getEstimatedDeliveryDate()
+                order.getEstimatedDeliveryDate(),
+                order.getCustomer() != null ? order.getCustomer().getName() : null,
+                order.getOrderItems().size()
 //                order.getOrderItems().stream().map(OrderItemSummaryDTO::toDTO).toList(),
 //                order.getPayments().stream().map(PaymentDTO::toDTO).toList(),
 //                order.getShipments().stream().map(ShipmentDTO::toDTO).toList(),
