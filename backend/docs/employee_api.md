@@ -1,0 +1,12 @@
+| Tên API | Method | Endpoint | Params | Request Body | Response | Status Code | Ghi chú |
+|---------|--------|----------|--------|--------------|----------|-------------|---------|
+| Lấy danh sách nhân viên | GET | `/api/v1/emp/employees` | `page` (int, default 0), `size` (int, default 10), `status` (string, optional), `search` (string, optional), `roleId` (int, optional) | _None_ | `ApiResponse<Map>` chứa: `data.content` (mảng nhân viên), `data.totalPages`, ... | 200 OK, 400 Bad Request | Phân trang & lọc |
+| Lấy nhân viên theo ID | GET | `/api/v1/emp/employees/{employeeId}` | `employeeId` (path) | _None_ | `ApiResponse<EmployeeListResponse>` | 200 OK, 404 Not Found, 400 Bad Request |  |
+| Tạo mới nhân viên | POST | `/api/v1/emp/employees` | _None_ | `EmployeeRegisterRequest` gồm: `username`, `password`, `fullName`, `phoneNumber`, `email`, `address`, `dateOfBirth`, `profilePictureUrl`, `startDate` | `ApiResponse<Integer>` (ID nhân viên mới) | 201 Created, 400 Bad Request, 500 Internal Server Error |  |
+| Cập nhật nhân viên | PUT | `/api/v1/emp/employees/{employeeId}` | `employeeId` (path) | `EmployeeUpdateRequest` gồm: `fullName`, `phoneNumber`, `email`, `address`, `dateOfBirth`, `profilePictureUrl`, `status`, `currentPassword`,`newPassword` | `ApiResponse<String>` | 200 OK, 404 Not Found, 400 Bad Request, 500 Internal Server Error |  |
+| Gán vai trò cho nhân viên | POST | `/api/v1/emp/employees/{employeeId}/roles` | `employeeId` (path) | `EmployeeRoleRequest` chứa `roleIds` (List<Integer>) | `ApiResponse<Void>` | 200 OK |  |
+| Xóa vai trò khỏi nhân viên | DELETE | `/api/v1/emp/employees/{employeeId}/roles` | `employeeId` (path) | `EmployeeRoleRequest` chứa `roleIds` | `ApiResponse<Void>` | 200 OK |  |
+| Cập nhật toàn bộ vai trò nhân viên | PUT | `/api/v1/emp/employees/{employeeId}/roles` | `employeeId` (path) | `EmployeeRoleRequest` chứa `roleIds` | `ApiResponse<Void>` | 200 OK, 404 Not Found, 500 Internal Server Error | Thay thế toàn bộ danh sách vai trò |
+| Xóa nhân viên (hard delete) | DELETE | `/api/v1/emp/employees/{employeeId}` | `employeeId` (path), `force` (query, boolean, default=false) | _None_ | `ApiResponse<String>` | 200 OK | Xóa vĩnh viễn khỏi DB |
+| Đăng nhập nhân viên | POST | `/api/v1/auth/emp/login` | _None_ | `EmployeeLoginRequest` gồm: `username`, `password` | `ApiResponse<LoginResponse>` chứa `token`, `employeeInfo` | 200 OK, 400 Bad Request | |
+| Lấy nhân viên theo vai trò | GET | `/api/v1/emp/roles/{roleId}/employees` | `roleId` (path) | _None_ | `ApiResponse<List<Map>>` | 200 OK, 404 Not Found | | 

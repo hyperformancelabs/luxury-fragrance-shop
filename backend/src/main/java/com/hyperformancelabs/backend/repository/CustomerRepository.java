@@ -2,13 +2,16 @@ package com.hyperformancelabs.backend.repository;
 
 import com.hyperformancelabs.backend.model.Cart;
 import com.hyperformancelabs.backend.model.Customer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface CustomerRepository extends JpaRepository<Customer, Integer> {
+public interface CustomerRepository extends JpaRepository<Customer, Integer>, JpaSpecificationExecutor<Customer> {
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
     boolean existsByPhoneNumber(String phone);
@@ -43,5 +46,28 @@ public interface CustomerRepository extends JpaRepository<Customer, Integer> {
         @Param("startDate") String startDate,  // format: dd/MM/yyyy
         @Param("endDate") String endDate       // format: dd/MM/yyyy
     );
+
+    // NEW CODE: listing & search for admin
+    @Query("""
+        SELECT c FROM Customer c
+        WHERE (:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')))
+          AND (:phone IS NULL OR c.phoneNumber LIKE CONCAT('%', :phone, '%'))
+          AND (:email IS NULL OR LOWER(c.email) LIKE LOWER(CONCAT('%', :email, '%')))
+          AND (:status IS NULL OR c.status = :status)
+    """)
+    Page<Customer> findByFilters(@Param("name") String name,
+                                 @Param("phone") String phone,
+                                 @Param("email") String email,
+                                 @Param("status") String status,
+                                 Pageable pageable);
+
+    @Query("""
+        SELECT c FROM Customer c
+        WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR LOWER(c.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR LOWER(c.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR c.phoneNumber LIKE CONCAT('%', :keyword, '%')
+    """)
+    Page<Customer> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }
 

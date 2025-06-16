@@ -2,6 +2,8 @@ package com.hyperformancelabs.backend.repository;
 
 import com.hyperformancelabs.backend.model.Cart;
 import com.hyperformancelabs.backend.model.Customer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -19,4 +21,6 @@ public interface CartRepository extends JpaRepository<Cart, Integer> {
     Optional<Cart> findTopByCustomerAndStatusOrderByCartIdDesc(Customer customer, String status);
     Optional<Cart> findTopBySessionIdOrderByCartIdDesc(String sessionId);
 
+    Page<Cart> findByCustomer_CustomerId(Integer customerId, Pageable pageable);
+    Page<Cart> findByCustomer_CustomerIdAndStatus(Integer customerId, String status, Pageable pageable);
 }
