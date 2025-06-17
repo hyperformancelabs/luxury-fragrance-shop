@@ -27,15 +27,20 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
     }
   }, [sizes]);
 
-  const handleIncrement = () => {
-    setQuantity(quantity + 1);
-  };
+  const MAX_QUANTITY = 10;
 
+  const handleIncrement = () => {
+    if (quantity < MAX_QUANTITY) {
+      setQuantity(quantity + 1);
+    }
+  };
+  
   const handleDecrement = () => {
     if (quantity > 1) {
       setQuantity(quantity - 1);
     }
   };
+  
 
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
@@ -245,48 +250,31 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
           <div className="my-2 flex gap-4 items-center">
             <label className="block text-base font-medium">Số lượng:</label>
             <div className="inline-flex rounded-md border border-gray-300 overflow-hidden">
-              <button
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
-                onClick={handleDecrement}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M20 12H4"
-                  ></path>
-                </svg>
-              </button>
-              <span className="flex items-center justify-center w-12 font-medium">
-                {quantity}
-              </span>
-              <button
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
-                onClick={handleIncrement}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 4v16m8-8H4"
-                  ></path>
-                </svg>
-              </button>
-            </div>
+  <button
+    className={`px-4 py-2 ${quantity <= 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
+    onClick={handleDecrement}
+    disabled={quantity <= 1}
+  >
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4"></path>
+    </svg>
+  </button>
+
+  <span className="flex items-center justify-center w-12 font-medium">
+    {quantity}
+  </span>
+
+  <button
+    className={`px-4 py-2 ${quantity >= MAX_QUANTITY ? 'bg-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
+    onClick={handleIncrement}
+    disabled={quantity >= MAX_QUANTITY}
+  >
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
+    </svg>
+  </button>
+</div>
+
           </div>
 
           <div className="flex flex-wrap gap-2 w-full my-2 justify-between">

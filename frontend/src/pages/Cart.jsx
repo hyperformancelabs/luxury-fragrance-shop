@@ -20,6 +20,8 @@ const Cart = () => {
 
   const currentCart = user ? cartItems : localCart;
 
+  const MAX_QUANTITY = 10;
+
   const cartTotal = currentCart.reduce(
     (sum, item) => sum + item.unitPrice * item.quantity,
     0
@@ -34,26 +36,25 @@ const Cart = () => {
   };
 
   const handleQuantityChange = (cartItemId, newQuantity, productVariantId) => {
-    // console.log("Handle Quantity Change:");
-    // console.log("Cart Item ID:", cartItemId);
-    // console.log("New Quantity:", newQuantity);
-    // console.log("Product Variant ID:", productVariantId);
-
+    if (newQuantity < 1) {
+      toast.error("Số lượng không thể nhỏ hơn 1");
+      return;
+    }
+    if (newQuantity > MAX_QUANTITY) {
+      toast.error(`Chỉ được mua tối đa ${MAX_QUANTITY} sản phẩm cho mỗi mặt hàng`);
+      newQuantity = MAX_QUANTITY;
+    }
+  
     setQuantity(newQuantity);
     if (user) {
       toast.success("Cập nhật số lượng sản phẩm thành công");
       updateQuantityInCart(cartItemId, newQuantity, productVariantId);
     } else {
-      if (newQuantity < 1) {
-        toast.error("Số lượng không thể nhỏ hơn 1");
-        return;
-      }
-      // For anonymous users, update the local cart
       updateLocalCartQuantity(productVariantId, newQuantity);
       toast.success("Cập nhật số lượng sản phẩm thành công");
     }
   };
-
+  
   if (currentCart.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
@@ -122,59 +123,44 @@ const Cart = () => {
               </div>
 
               <div className="md:col-span-3 flex items-center justify-center">
-                <div className="flex border border-gray-300">
-                  <button
-                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
-                    onClick={() =>
-                      handleQuantityChange(
-                        item.cartItemId,
-                        item.quantity - 1,
-                        item.productVariantId
-                      )
-                    }
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M20 12H4"
-                      ></path>
-                    </svg>
-                  </button>
-                  <span className="flex items-center justify-center w-12 font-medium">
-                    {item.quantity}
-                  </span>
-                  <button
-                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
-                    onClick={() =>
-                      handleQuantityChange(
-                        item.cartItemId,
-                        item.quantity + 1,
-                        item.productVariantId
-                      )
-                    }
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 4v16m8-8H4"
-                      ></path>
-                    </svg>
-                  </button>
-                </div>
+              <div className="flex border border-gray-300">
+  <button
+    className={`px-4 py-2 ${item.quantity <= 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
+    onClick={() =>
+      handleQuantityChange(
+        item.cartItemId,
+        item.quantity - 1,
+        item.productVariantId
+      )
+    }
+    disabled={item.quantity <= 1}
+  >
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4"></path>
+    </svg>
+  </button>
+
+  <span className="flex items-center justify-center w-12 font-medium">
+    {item.quantity}
+  </span>
+
+  <button
+    className={`px-4 py-2 ${item.quantity >= MAX_QUANTITY ? 'bg-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
+    onClick={() =>
+      handleQuantityChange(
+        item.cartItemId,
+        item.quantity + 1,
+        item.productVariantId
+      )
+    }
+    disabled={item.quantity >= MAX_QUANTITY}
+  >
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
+    </svg>
+  </button>
+</div>
+
               </div>
 
               <div className="md:col-span-3 flex justify-between items-center">
