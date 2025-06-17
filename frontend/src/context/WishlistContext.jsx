@@ -3,6 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import ErrorMessages from "../constants/ErrorMessages";
 import SuccessMessages from "../constants/SuccessMessages";
+import { useCart } from "./CartContext";
 
 const WishlistContext = createContext();
 const LOCAL_WISHLIST_KEY = "guest_wishlist";
@@ -31,6 +32,8 @@ export const WishlistProvider = ({ children }) => {
 
   const token = localStorage.getItem("token");
   const isLoggedIn = !!token;
+
+  const { loadCart } = useCart();
 
   const fetchWishlist = async () => {
     setLoading(true);
@@ -116,6 +119,24 @@ export const WishlistProvider = ({ children }) => {
       );
       toast.success(SuccessMessages.MOVE_TO_CART);
       fetchWishlist();
+      loadCart();
+    } catch (err) {
+      toast.error(ErrorMessages.MOVE_TO_CART);
+      console.error(err);
+    }
+  };
+
+  const moveItemToCart = async (productVariantId) => {
+    if (!isLoggedIn) return toast.error("Bạn cần đăng nhập để thực hiện thao tác này.");
+    try {
+      await axios.post(
+        `http://localhost:8080/api/v1/wishlist/move-item-to-cart/${productVariantId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(SuccessMessages.MOVE_TO_CART);
+      fetchWishlist();
+      loadCart();
     } catch (err) {
       toast.error(ErrorMessages.MOVE_TO_CART);
       console.error(err);
@@ -143,6 +164,7 @@ export const WishlistProvider = ({ children }) => {
         removeFromWishlist,
         moveAllToCart,
         isInWishlist,
+        moveItemToCart,
       }}
     >
       {children}

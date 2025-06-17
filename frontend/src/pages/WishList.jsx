@@ -9,6 +9,7 @@ const Wishlist = () => {
     moveAllToCart,
     isInWishlist,
     loading,
+    moveItemToCart,
   } = useWishlist();
 
   const [selectedSizes, setSelectedSizes] = useState({});
@@ -126,6 +127,7 @@ const Wishlist = () => {
                     </p>
                     <button
                       className={`mt-3 md:mt-4 px-4 md:px-6 py-2 rounded-md transition bg-red-600 text-white hover:bg-red-500`}
+                      onClick={() => moveItemToCart(item.productVariantId)}
                     >
                       Thêm vào giỏ hàng
                     </button>

@@ -54,7 +54,7 @@ const Cart = () => {
           Vui lòng thêm sản phẩm vào giỏ hàng
         </p>
         <Link
-          to="/products"
+          to="/category?gender=Men"
           className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition"
         >
           Tiếp tục mua sắm
@@ -194,7 +194,7 @@ const Cart = () => {
           ))}
 
           <div className="mt-6">
-            <Link to="/products" className="text-gray-600 hover:text-gray-800">
+            <Link to="/category?gender=Men" className="text-gray-600 hover:text-gray-800">
               ← Tiếp tục mua sắm
             </Link>
           </div>

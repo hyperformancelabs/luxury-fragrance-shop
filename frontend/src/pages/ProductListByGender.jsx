@@ -10,6 +10,8 @@ import { useWishlist } from "../context/WishlistContext";
 import ErrorMessages from "../constants/ErrorMessages.js";
 
 const DEFAULT_MAX_PRICE = 56531700; // Fallback if API doesn't provide one initially
+const DEFAULT_FILTERS = { brands: [], style: [], toneScent: [], suitableGender: [] };
+const DEFAULT_PRICE_RANGE = { minPrice: 0, maxPrice: DEFAULT_MAX_PRICE, current: DEFAULT_MAX_PRICE };
 
 const ProductListByGender = () => {
   const [searchParams] = useSearchParams();
@@ -24,59 +26,88 @@ const ProductListByGender = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   
-  // maxPrice from filter sidebar is the *selected* max price by user
-  const [selectedMaxPrice, setSelectedMaxPrice] = useState(DEFAULT_MAX_PRICE); 
-  const [apiMaxPrice, setApiMaxPrice] = useState(DEFAULT_MAX_PRICE); // To store max price from API for comparison
+  // Applied filters (trigger product fetch)
+  const [appliedPriceRange, setAppliedPriceRange] = useState(DEFAULT_PRICE_RANGE);
+  const [appliedFilters, setAppliedFilters] = useState(DEFAULT_FILTERS);
+
+  // Filters being edited in the sidebar (pending)
+  const [sidebarPriceRange, setSidebarPriceRange] = useState(DEFAULT_PRICE_RANGE);
+  const [sidebarFilters, setSidebarFilters] = useState(DEFAULT_FILTERS);
+
+  const [apiFilterOptions, setApiFilterOptions] = useState({
+    brands: [],
+    style: [],
+    toneScent: [],
+    suitableGender: [],
+    priceRange: { min: 0, max: DEFAULT_MAX_PRICE } // Ensure it has default structure
+  });
 
   const [showVolumePopup, setShowVolumePopup] = useState(false);
   const [volumeOptions, setVolumeOptions] = useState([]);
   const [popupTargetProduct, setPopupTargetProduct] = useState(null);
   
-  const [filters, setFilters] = useState({
-    brands: [],
-    style: [], // Singular key
-    toneScent: [], // Singular key
-    suitableGender: [] // Singular key
-  });
-
   const [isFiltersApplied, setIsFiltersApplied] = useState(false);
-  const [shouldFetchFiltered, setShouldFetchFiltered] = useState(false);
-  // const [showFilterNotice, setShowFilterNotice] = useState(false); // Filter notice banner logic can be re-evaluated
   
-  const [sortBy, setSortBy] = useState(""); // User-facing sort option string
-  // sortDir is derived when making API call
+  const [sortBy, setSortBy] = useState("price"); // Default sort to price
+  const [sortDir, setSortDir] = useState("asc"); // Default sort direction
 
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const pageSize = 25;
 
-  // Fetch initial max price from filter options once
+  // State to track if initial states are set
+  const [initialStatesSet, setInitialStatesSet] = useState(false);
+
+  // 1. Fetch API filter options once on mount
   useEffect(() => {
     axios.get("http://localhost:8080/api/v1/products/filter-options")
       .then(response => {
-        if (response.data && response.data.data && response.data.data.priceRange) {
-          const apiMax = response.data.data.priceRange.max;
-          setApiMaxPrice(apiMax || DEFAULT_MAX_PRICE);
-          setSelectedMaxPrice(apiMax || DEFAULT_MAX_PRICE); // Initialize selectedMaxPrice with API's max
+        if (response.data && response.data.data) {
+          const data = response.data.data;
+          const apiMin = data.priceRange?.min || 0;
+          const apiMax = data.priceRange?.max || DEFAULT_MAX_PRICE;
+          setApiFilterOptions(prev => ({
+            ...prev,
+            brands: data.brands || [],
+            style: data.productDetails?.style || [],
+            toneScent: data.productDetails?.toneScent || [],
+            suitableGender: data.productDetails?.suitableGender || [],
+            priceRange: { min: apiMin, max: apiMax } // Ensure priceRange is set correctly
+          }));
         }
       })
       .catch(err => {
-        console.error("Error fetching initial max price:", err);
-        // Keep using DEFAULT_MAX_PRICE as fallback
+        console.error("Error fetching initial filter options:", err);
+        // Fallback to default if API fails
+        setApiFilterOptions(prev => ({ ...prev, priceRange: DEFAULT_PRICE_RANGE }));
       });
-  }, []);
+  }, []); // Empty dependency array: run once on mount
+
+  // 2. Initialize applied and sidebar filters/price range ONLY when apiFilterOptions is loaded
+  useEffect(() => {
+    if (apiFilterOptions.brands.length > 0 && !initialStatesSet) { // Check for some data to ensure API options are loaded
+        const initialApiMin = apiFilterOptions.priceRange.min;
+        const initialApiMax = apiFilterOptions.priceRange.max;
+
+        // Set initial applied filters/price range
+        setAppliedFilters({ ...DEFAULT_FILTERS });
+        setAppliedPriceRange({ minPrice: initialApiMin, maxPrice: initialApiMax, current: initialApiMax });
+
+        // Set initial sidebar filters/price range
+        setSidebarFilters({ ...DEFAULT_FILTERS });
+        setSidebarPriceRange({ minPrice: initialApiMin, maxPrice: initialApiMax, current: initialApiMax });
+
+        setInitialStatesSet(true); // Mark as set to prevent re-running
+    }
+  }, [apiFilterOptions, initialStatesSet]); // Depend on apiFilterOptions and initialStatesSet
 
 
-  const fetchProductsCallback = useCallback(async (isFilteredFetch, appliedFilters, currentMaxPrice, page, currentSortBy) => {
+  const fetchProductsCallback = useCallback(async (currentFilters, currentPriceRange, page, currentSortBy, currentSortDir) => {
     setLoading(true);
     setError("");
 
-    let endpoint = "http://localhost:8080/api/v1/products/category";
-    let params = { gender, page, size: pageSize }; // page here is for the initial load, might need adjustment
-    let payload = null;
-    let method = 'get';
-
-    // Determine API sort parameters
-    let apiSortByValue = "name"; // Default for backend if not price
+    const endpoint = `http://localhost:8080/api/v1/products/filter`;
+    
+    let apiSortByValue = "price";
     let apiSortDirValue = "asc";
 
     if (currentSortBy === "Giá thấp đến cao") {
@@ -86,103 +117,92 @@ const ProductListByGender = () => {
       apiSortByValue = "price";
       apiSortDirValue = "desc";
     } else if (currentSortBy === "A–Z") {
-      apiSortByValue = "name"; // Default for name is A-Z (asc)
+      apiSortByValue = "name";
       apiSortDirValue = "asc";
     }
-    // If currentSortBy is empty, backend defaults might apply or we stick to name/asc
 
-    if (isFilteredFetch) {
-      method = 'post';
-      endpoint = `http://localhost:8080/api/v1/products/filter?page=${page}&size=${pageSize}&sortBy=${apiSortByValue}&sortDir=${apiSortDirValue}`;
-      
-      const filterDataRequest = {
-        brands: appliedFilters.brands?.length > 0 ? appliedFilters.brands : undefined,
-        productDetails: {}
-      };
+    const payload = {
+      brands: currentFilters.brands?.length > 0 ? currentFilters.brands : undefined,
+      productDetails: {},
+      minPrice: currentPriceRange.minPrice,
+      maxPrice: currentPriceRange.maxPrice,
+    };
 
-      if (appliedFilters.style?.length > 0) {
-        filterDataRequest.productDetails.style = appliedFilters.style;
-      }
-      if (appliedFilters.toneScent?.length > 0) {
-        filterDataRequest.productDetails.toneScent = appliedFilters.toneScent;
-      }
-      
-      let suitableGenderFilterValues = [];
-      if (appliedFilters.suitableGender?.length > 0) {
-        suitableGenderFilterValues = appliedFilters.suitableGender;
-      } else if (gender && gender !== "Unisex") {
-        suitableGenderFilterValues = [gender];
-      }
+    if (currentFilters.style?.length > 0) {
+      payload.productDetails.style = currentFilters.style;
+    }
+    if (currentFilters.toneScent?.length > 0) {
+      payload.productDetails.toneScent = currentFilters.toneScent;
+    }
+    
+    let suitableGenderFilterValues = [];
+    if (currentFilters.suitableGender?.length > 0) {
+      suitableGenderFilterValues = currentFilters.suitableGender;
+    } else if (gender && gender !== "Unisex") {
+      suitableGenderFilterValues = [gender]; // Default gender for the page if no specific gender filter chosen
+    }
 
-      if (suitableGenderFilterValues.length > 0) {
-        filterDataRequest.productDetails.suitableGender = suitableGenderFilterValues;
-      }
-      
-      // Only add maxPrice if it's less than the API's maximum possible price
-      if (currentMaxPrice < apiMaxPrice) {
-        filterDataRequest.maxPrice = currentMaxPrice;
-      }
-      // To send minPrice, you'd add: filterDataRequest.minPrice = someMinValue; (API supports it)
-
-      payload = filterDataRequest;
-
-    } else { // Initial fetch by category (non-filtered, or only gender)
-        // The /products/category endpoint does not seem to support sorting/pagination from the example.
-        // If it does, params should include sortBy, sortDir.
-        // For now, it fetches page 0 and client-side sorts.
-        params.page = 0; // Always fetch first page for this type of load, then sort.
+    if (suitableGenderFilterValues.length > 0) {
+      payload.productDetails.suitableGender = suitableGenderFilterValues;
     }
 
     try {
-      const response = await axios({ method, url: endpoint, params: method === 'get' ? params : null, data: payload });
+      const response = await axios.post(endpoint, payload, {
+        params: {
+          page: page,
+          size: pageSize,
+          sortBy: apiSortByValue,
+          sortDir: apiSortDirValue
+        }
+      });
       const { items, totalPages: newTotalPages } = response.data.data || {};
 
       if (!Array.isArray(items) || typeof newTotalPages !== "number") {
         throw new Error(ErrorMessages.INVALID_RESPONSE);
       }
-
-      let processedItems = [...items];
-      // Client-side sorting for initial load if API doesn't sort /category
-      if (!isFilteredFetch) {
-        if (currentSortBy === "Giá thấp đến cao") {
-            processedItems.sort((a, b) => (a.volumePrices?.[0]?.price || 0) - (b.volumePrices?.[0]?.price || 0));
-        } else if (currentSortBy === "Giá cao đến thấp") {
-            processedItems.sort((a, b) => (b.volumePrices?.[0]?.price || 0) - (a.volumePrices?.[0]?.price || 0));
-        } else if (currentSortBy === "A–Z") {
-            processedItems.sort((a, b) => a.productName.localeCompare(b.productName));
-        }
-      }
       
-      setProducts(processedItems);
+      setProducts(items);
       setTotalPages(newTotalPages);
 
     } catch (err) {
-      console.error(`Lỗi khi tải sản phẩm (${isFilteredFetch ? 'filtered' : 'initial'}):`, err);
+      console.error(`Lỗi khi tải sản phẩm:`, err);
       setError(err.message === ErrorMessages.INVALID_RESPONSE ? ErrorMessages.INVALID_RESPONSE : ErrorMessages.PRODUCT_LOAD_FAIL);
     } finally {
       setTimeout(() => setLoading(false), 300);
     }
-  }, [gender, apiMaxPrice, pageSize]); // Include pageSize if it could change
+  }, [gender, pageSize, apiFilterOptions]); // apiFilterOptions is now a dependency
 
+  // Effect to trigger fetch when relevant states change, only after initial setup
   useEffect(() => {
-    fetchProductsCallback(shouldFetchFiltered, filters, selectedMaxPrice, currentPage, sortBy);
-  }, [currentPage, sortBy, shouldFetchFiltered, filters, selectedMaxPrice, fetchProductsCallback]);
+    if (initialStatesSet) { // Only fetch products after initial states are set
+        fetchProductsCallback(appliedFilters, appliedPriceRange, currentPage, sortBy, sortDir);
+    }
+  }, [currentPage, sortBy, sortDir, appliedFilters, appliedPriceRange, fetchProductsCallback, initialStatesSet]);
 
-  // Effect to reset to page 0 when filters change, or when switching between filtered/non-filtered
+  // Effect to reset to page 0 when gender, sort, or initial states are set (no longer watching applied filters directly for reset)
   useEffect(() => {
-    setCurrentPage(0);
-  }, [filters, selectedMaxPrice, shouldFetchFiltered, gender]);
+    if (initialStatesSet) {
+      // This effect primarily handles changes to gender or sort options that should reset the page.
+      // Applied filters and price range changes trigger page reset via applyFilters/clearFilters.
+      setCurrentPage(0);
+    } else {
+      // During initial load, keep page at 0.
+      setCurrentPage(0);
+    }
+  }, [gender, sortBy, sortDir, initialStatesSet]);
   
   // Effect to determine if any filters are actively applied
   useEffect(() => {
     const hasActiveFilters = 
-      (filters.brands && filters.brands.length > 0) ||
-      (filters.style && filters.style.length > 0) ||
-      (filters.toneScent && filters.toneScent.length > 0) ||
-      (filters.suitableGender && filters.suitableGender.length > 0) ||
-      selectedMaxPrice < apiMaxPrice;
+      (appliedFilters.brands && appliedFilters.brands.length > 0) ||
+      (appliedFilters.style && appliedFilters.style.length > 0) ||
+      (appliedFilters.toneScent && appliedFilters.toneScent.length > 0) ||
+      (appliedFilters.suitableGender && appliedFilters.suitableGender.length > 0) ||
+      appliedPriceRange.minPrice > apiFilterOptions.priceRange.min ||
+      appliedPriceRange.maxPrice < apiFilterOptions.priceRange.max;
+
     setIsFiltersApplied(hasActiveFilters);
-  }, [filters, selectedMaxPrice, apiMaxPrice]);
+  }, [appliedFilters, appliedPriceRange, apiFilterOptions]);
 
 
   const handleQuickView = (product) => {
@@ -206,43 +226,40 @@ const ProductListByGender = () => {
     }
   };
 
+  // Callbacks for ProductFilterSidebar to update pending filters
   const handleFilterChange = useCallback((newFilters) => {
-    setFilters(newFilters);
+    setSidebarFilters({ ...newFilters }); // Ensure new object reference
   }, []);
   
-  const handlePriceChange = useCallback((price) => {
-    setSelectedMaxPrice(price);
+  const handlePriceChange = useCallback((priceRangeObj) => {
+    setSidebarPriceRange({ ...priceRangeObj }); // Ensure new object reference
   }, []);
   
   const applyFilters = () => {
-    // setShouldFetchFiltered(true); // This is now handled by direct fetch or useEffect dependency
-    // setCurrentPage(0); // Handled by useEffect on filters/selectedMaxPrice
-    if (!shouldFetchFiltered) { // If we were not in filtered mode, switch to it
-        setShouldFetchFiltered(true);
-    } else { // If already in filtered mode, force a refetch with current state
-        fetchProductsCallback(true, filters, selectedMaxPrice, 0, sortBy); // Fetch page 0
-    }
+    setAppliedFilters({ ...sidebarFilters }); // Apply pending filters to main filter state
+    setAppliedPriceRange({ ...sidebarPriceRange }); // Apply pending price range
+    setCurrentPage(0); // Explicitly reset page to 0 when applying new filters
   };
   
   const clearFilters = () => {
-    setFilters({
-      brands: [],
-      style: [],
-      toneScent: [],
-      suitableGender: []
-    });
-    setSelectedMaxPrice(apiMaxPrice); // Reset to API's max price
-    setSortBy(""); // Optionally reset sort
-    if (shouldFetchFiltered) {
-      setShouldFetchFiltered(false); // This will trigger useEffect to fetch non-filtered
-    } else {
-      // If already not filtered, but sortBy might have changed or want to ensure default gender load
-      fetchProductsCallback(false, { brands: [], style: [], toneScent: [], suitableGender: [] }, apiMaxPrice, 0, "");
-    }
-    // setCurrentPage(0); // Handled by useEffect
+    const defaultFilters = DEFAULT_FILTERS;
+    const defaultPriceRange = apiFilterOptions.priceRange; // Use the actual API default range
+
+    setSidebarFilters({ ...defaultFilters }); // Reset sidebar's pending filters
+    setSidebarPriceRange({ ...defaultPriceRange, current: defaultPriceRange.max }); // Reset sidebar's pending price range
+
+    setAppliedFilters({ ...defaultFilters }); // Reset applied filters (triggers fetch)
+    setAppliedPriceRange({ ...defaultPriceRange, current: defaultPriceRange.max }); // Reset applied price range (triggers fetch)
+    setSortBy("price"); // Reset sort to default
+    setSortDir("asc"); // Reset sort direction to default
+    setCurrentPage(0); // Explicitly reset page to 0 when clearing filters
   };
 
-  const sortOptions = ["Giá thấp đến cao", "Giá cao đến thấp", "A–Z"];
+  const sortOptions = [
+    { label: "Giá thấp đến cao", sortBy: "price", sortDir: "asc" },
+    { label: "Giá cao đến thấp", sortBy: "price", sortDir: "desc" },
+    { label: "A–Z", sortBy: "name", sortDir: "asc" }
+  ];
 
   const renderPagination = () => (
     <div className="flex justify-center items-center mt-8 mb-6 gap-2">
@@ -308,10 +325,9 @@ const ProductListByGender = () => {
           <ProductFilterSidebar 
             onFilterChange={handleFilterChange} 
             onPriceChange={handlePriceChange}
-            initialFilters={filters} // Pass current filters to sync if sidebar remounts
-            initialPrice={selectedMaxPrice}
+            initialFilters={sidebarFilters} // Pass sidebar's current state as initial
+            initialPrice={sidebarPriceRange} // Pass sidebar's current state as initial
             gender={gender}
-            // brand={filters.brands}
           />
           
           <div className="mt-4 mb-6 space-y-2">
@@ -338,10 +354,10 @@ const ProductListByGender = () => {
               <span className="text-sm">Sắp xếp theo:</span>
               <div className="flex flex-wrap gap-2">
                 {sortOptions.map((option) => (
-                  <button key={option}
-                    className={`px-3 py-1 border rounded text-sm ${ sortBy === option ? "bg-gray-800 text-white" : "hover:bg-gray-100" }`}
-                    onClick={() => setSortBy(option)}
-                  > {option} </button>
+                  <button key={option.label}
+                    className={`px-3 py-1 border rounded text-sm ${ sortBy === option.sortBy && sortDir === option.sortDir ? "bg-gray-800 text-white" : "hover:bg-gray-100" }`}
+                    onClick={() => { setSortBy(option.sortBy); setSortDir(option.sortDir); }}
+                  > {option.label} </button>
                 ))}
               </div>
             </div>
@@ -362,7 +378,7 @@ const ProductListByGender = () => {
                   </div>
                 </div>
               ))
-            ) : products.length === 0 && !error ? ( // Show no products message only if no error
+            ) : products.length === 0 && !error ? (
                 <div className="col-span-full text-center py-10">
                      <p className="text-gray-500">Không tìm thấy sản phẩm phù hợp với tiêu chí tìm kiếm.</p>
                 </div>

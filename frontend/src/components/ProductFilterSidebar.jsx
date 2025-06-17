@@ -1,26 +1,15 @@
-// src/components/ProductFilterSidebar.js
-
 import React, { useState, useEffect } from "react";
 
 const ProductFilterSidebar = ({ onFilterChange, onPriceChange, initialFilters, initialPrice, gender }) => {
-  const [selectedFilters, setSelectedFilters] = useState({
-    brands: initialFilters?.brands || [],
-    style: initialFilters?.style || [], // Singular key
-    toneScent: initialFilters?.toneScent || [], // Singular key
-    suitableGender: initialFilters?.suitableGender || [] // Singular key
-  });
-
-  const [priceRange, setPriceRange] = useState({
-    min: 124200, // Default, will be updated from API
-    max: 56531700, // Default, will be updated from API
-    current: initialPrice || 56531700 
-  });
+  // Removed internal state for selectedFilters and priceRange.
+  // These are now fully controlled by props from the parent component.
 
   const [apiFilterOptions, setApiFilterOptions] = useState({
     brands: [],
     style: [],
     toneScent: [],
-    suitableGender: []
+    suitableGender: [],
+    priceRange: { min: 0, max: 56531700 } // Initialize priceRange in API options
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -83,8 +72,7 @@ const ProductFilterSidebar = ({ onFilterChange, onPriceChange, initialFilters, i
         
         if (result.status === "success" && result.data) {
           const data = result.data;
-          // Format options with a dummy count for display, API doesn't provide counts here
-          const formatOptions = (items) => (items || []).map(item => ({ // Added (items || []) for safety
+          const formatOptions = (items) => (items || []).map(item => ({
             name: item, 
             count: Math.floor(Math.random() * 50) + 1 
           }));
@@ -93,14 +81,9 @@ const ProductFilterSidebar = ({ onFilterChange, onPriceChange, initialFilters, i
             brands: formatOptions(data.brands),
             style: formatOptions(data.productDetails?.style),
             toneScent: formatOptions(data.productDetails?.toneScent),
-            suitableGender: formatOptions(data.productDetails?.suitableGender)
+            suitableGender: formatOptions(data.productDetails?.suitableGender),
+            priceRange: data.priceRange || { min: 0, max: 56531700 } // Ensure priceRange is set
           });
-          
-          setPriceRange(prev => ({
-            min: data.priceRange?.min || prev.min,
-            max: data.priceRange?.max || prev.max,
-            current: initialPrice !== undefined ? initialPrice : (data.priceRange?.max || prev.max)
-          }));
           setError(null);
         } else {
           throw new Error(result.message || "Failed to fetch filter options");
@@ -114,60 +97,45 @@ const ProductFilterSidebar = ({ onFilterChange, onPriceChange, initialFilters, i
     };
     
     fetchFilterData();
-  }, [initialPrice]); // Rerun if initialPrice changes, though typically it's static
+  }, []); // Empty dependency array: run once on mount
 
-  useEffect(() => {
-    if (onFilterChange && !isLoading) {
-      onFilterChange(selectedFilters);
-    }
-  }, [selectedFilters, isLoading, onFilterChange]);
+  // No longer need useEffect for initialFilters and initialPrice as component is now controlled
 
-  useEffect(() => {
-    if (onPriceChange && !isLoading) {
-      onPriceChange(priceRange.current);
-    }
-  }, [priceRange.current, isLoading, onPriceChange]);
-  
   const filterCategoriesConfig = [
     { title: "Thương hiệu", optionsKey: "brands", data: apiFilterOptions.brands },
     { title: "Phong cách", optionsKey: "style", data: apiFilterOptions.style },
     { title: "Tone hương", optionsKey: "toneScent", data: apiFilterOptions.toneScent },
-    ...(gender || !apiFilterOptions.suitableGender || apiFilterOptions.suitableGender.length === 0 ? [] : [ // Conditionally show gender filter
+    ...(gender || !apiFilterOptions.suitableGender || apiFilterOptions.suitableGender.length === 0 ? [] : [
       { title: "Giới tính", optionsKey: "suitableGender", data: apiFilterOptions.suitableGender }
     ])
   ];
 
   const handleCheckboxChange = (filterKey, value) => {
-    setSelectedFilters(prev => {
-      const currentValues = prev[filterKey] || []; // Ensure currentValues is an array
-      return {
-        ...prev,
-        [filterKey]: currentValues.includes(value)
-          ? currentValues.filter(item => item !== value)
-          : [...currentValues, value]
-      };
-    });
+    // Directly use initialFilters and call onFilterChange
+    const currentValues = initialFilters[filterKey] || [];
+    const newFilters = {
+      ...initialFilters,
+      [filterKey]: currentValues.includes(value)
+        ? currentValues.filter(item => item !== value)
+        : [...currentValues, value]
+    };
+    onFilterChange(newFilters);
   };
 
   const resetFilters = () => {
-    setSelectedFilters({
-      brands: [],
-      style: [],
-      toneScent: [],
-      suitableGender: []
+    // Call onFilterChange and onPriceChange with default values
+    onFilterChange({ brands: [], style: [], toneScent: [], suitableGender: [] });
+    onPriceChange({
+      minPrice: apiFilterOptions.priceRange.min,
+      maxPrice: apiFilterOptions.priceRange.max,
+      current: apiFilterOptions.priceRange.max // Reset to max of API range
     });
-    setPriceRange(prev => ({
-      ...prev,
-      current: prev.max 
-    }));
     setSearchTerms({
       brands: "",
       style: "",
       toneScent: "",
       suitableGender: ""
     });
-    // Note: This internal reset will trigger onFilterChange and onPriceChange,
-    // allowing the parent component to react.
   };
 
   const formatPriceDisplay = (price) => {
@@ -176,7 +144,6 @@ const ProductFilterSidebar = ({ onFilterChange, onPriceChange, initialFilters, i
   };
 
   if (isLoading) {
-    // Skeleton loader remains the same
     return (
       <div className="w-full md:w-64 md:pr-6 mb-6 md:mb-0 animate-pulse">
         <div className="h-10 bg-gray-200 rounded mb-6"></div>
@@ -196,7 +163,6 @@ const ProductFilterSidebar = ({ onFilterChange, onPriceChange, initialFilters, i
   }
 
   if (error) {
-    // Error display remains the same
     return (
       <div className="w-full md:w-64 md:pr-6 mb-6 md:mb-0">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -219,8 +185,7 @@ const ProductFilterSidebar = ({ onFilterChange, onPriceChange, initialFilters, i
           <span>Lọc sản phẩm theo</span>
           <svg
             className="w-4 h-4 ml-2"
-            fill="none"
-            stroke="currentColor"
+            fill="currentColor"
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -235,7 +200,6 @@ const ProductFilterSidebar = ({ onFilterChange, onPriceChange, initialFilters, i
       </div>
 
       {filterCategoriesConfig.map((category) => {
-        // Ensure category.data is an array before mapping
         const categoryOptions = Array.isArray(category.data) ? category.data : [];
         const displayOptions = getFilteredOptions(category.optionsKey, categoryOptions);
 
@@ -270,7 +234,7 @@ const ProductFilterSidebar = ({ onFilterChange, onPriceChange, initialFilters, i
                     <input
                       type="checkbox"
                       id={`${category.optionsKey}-${option.name}`}
-                      checked={selectedFilters[category.optionsKey]?.includes(option.name)}
+                      checked={initialFilters[category.optionsKey]?.includes(option.name)} // Use initialFilters
                       onChange={() => handleCheckboxChange(category.optionsKey, option.name)}
                       className="mr-2"
                     />
@@ -295,36 +259,26 @@ const ProductFilterSidebar = ({ onFilterChange, onPriceChange, initialFilters, i
       <div className="mb-6">
         <h3 className="font-semibold mb-2">Khoảng giá</h3>
         <div className="flex justify-between text-sm mb-2">
-          <span>{formatPriceDisplay(priceRange.min)}</span>
-          <span>{formatPriceDisplay(priceRange.current)}</span>
+          <span>{formatPriceDisplay(apiFilterOptions.priceRange.min)}</span> {/* Use apiFilterOptions for min/max display */}
+          <span>{formatPriceDisplay(initialPrice.current)}</span> {/* Use initialPrice.current for current value */}
         </div>
         <input
           type="range"
           className="w-full"
-          min={priceRange.min}
-          max={priceRange.max}
-          step={Math.max(1, (priceRange.max - priceRange.min) / 100)} 
-          value={priceRange.current}
-          onChange={(e) => setPriceRange(prev => ({
-            ...prev,
-            current: Number(e.target.value)
-          }))}
-          disabled={priceRange.min >= priceRange.max}
+          min={apiFilterOptions.priceRange.min} // Use apiFilterOptions for min/max range
+          max={apiFilterOptions.priceRange.max} // Use apiFilterOptions for min/max range
+          step={Math.max(1, (apiFilterOptions.priceRange.max - apiFilterOptions.priceRange.min) / 100)} 
+          value={initialPrice.current} // Use initialPrice.current
+          onChange={(e) => {
+            const newPrice = Number(e.target.value);
+            onPriceChange({ minPrice: apiFilterOptions.priceRange.min, maxPrice: newPrice, current: newPrice }); // Pass updated object
+          }}
+          disabled={apiFilterOptions.priceRange.min >= apiFilterOptions.priceRange.max}
         />
       </div>
 
-      {/* Decide if this internal reset button is needed, or if parent's reset is sufficient
-      <div className="mb-6">
-        <button
-          className="bg-red-600 text-white w-full py-2 rounded hover:bg-red-700 transition"
-          onClick={resetFilters}
-        >
-          Xóa bộ lọc
-        </button>
-      </div> 
-      */}
     </div>
   );
 };
 
-export default ProductFilterSidebar;
+export default ProductFilterSidebar; 
