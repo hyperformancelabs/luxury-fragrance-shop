@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { toast } from 'sonner';
 import { useCart } from '../../context/CartContext';
+import ErrorMessages from '../../constants/ErrorMessages';
+import SuccessMessages from '../../constants/SuccessMessages';
 
 const PaymentReturn = () => {
   const location = useLocation();
@@ -33,11 +35,11 @@ const PaymentReturn = () => {
       })
         .then(res => res.json())
         .then(data => {
-          toast.success("Đặt hàng thành công!");
+          toast.success(SuccessMessages.CHECKOUT_SUCCESS || "Đặt hàng thành công!");
           navigate('/ordersuccess');
         })
         .catch(err => {
-          toast.error("Lỗi khi lưu đơn hàng!");
+          toast.error(ErrorMessages.CHECKOUT_FAIL || "Lỗi khi lưu đơn hàng!");
         });
     }
   }, [status]);

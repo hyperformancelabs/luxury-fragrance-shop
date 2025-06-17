@@ -4,6 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
+import ErrorMessages from "../constants/ErrorMessages";
+import SuccessMessages from "../constants/SuccessMessages";
 
 const Cart = () => {
   const { user } = useAuth();
@@ -47,11 +49,10 @@ const Cart = () => {
   
     setQuantity(newQuantity);
     if (user) {
-      toast.success("Cập nhật số lượng sản phẩm thành công");
+      toast.success(SuccessMessages.UPDATE_CART_SUCCESS || "Cập nhật số lượng sản phẩm thành công");
       updateQuantityInCart(cartItemId, newQuantity, productVariantId);
     } else {
-      updateLocalCartQuantity(productVariantId, newQuantity);
-      toast.success("Cập nhật số lượng sản phẩm thành công");
+      toast.error(ErrorMessages.CART_UPDATE_FAIL || "Không thể cập nhật số lượng sản phẩm trong giỏ hàng");
     }
   };
   

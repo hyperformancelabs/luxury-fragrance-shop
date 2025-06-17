@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { Toaster, toast } from "sonner";
 import { useAuth } from '../context/AuthContext';
+import ErrorMessages from "../constants/ErrorMessages";
+import SuccessMessages from "../constants/SuccessMessages";
 
 
 const ProductDetail = () => {
@@ -140,7 +142,7 @@ setSelectedProduct(transformedProduct);
   const handleClickBuy = () => {
     handleAddToCart()
     setTimeout(() => {
-      toast.success('Đang chuyển đến trang thanh toán')
+      toast.success(SuccessMessages.NAVIGATE_TO_CHECKOUT || 'Đang chuyển đến trang thanh toán')
       navigate('/checkout')
     }, 1000)
   }
@@ -360,15 +362,42 @@ setSelectedProduct(transformedProduct);
   
 
   const handleAddToCart = () => {
-    if (!selectedSize) {
-      toast.error("Vui lòng chọn dung tích sản phẩm.");
+    console.log('handleAddToCart called');
+  
+    if (!selectedProduct) {
+      toast.error(ErrorMessages.INVALID_PRODUCT || "Sản phẩm không hợp lệ");
       return;
     }
+  
+    console.log( selectedProduct);
+  
+    if (!selectedSize) {
+      toast.error(ErrorMessages.SIZE_REQUIRED);
+      return;
+    }
+  
+    console.log(selectedSize);
+  
+    if (!selectedProduct.sizes || selectedProduct.sizes.length === 0) {
+      toast.error(ErrorMessages.VARIANT_NOT_FOUND || "Thông tin dung tích không có sẵn");
+      return;
+    }
+  
 
-    const selectedVariant = product.sizes.find(s => s.value === selectedSize);
-
-    if (!selectedVariant) {
-      toast.error("Không tìm thấy dung tích sản phẩm đã chọn.");
+    // console.log(selectedProduct.sizes);
+  
+   
+    const variant = selectedProduct.sizes.find(
+      (size) => size.label === selectedSize
+    );
+  
+    console.log('Variant selected:', variant);
+  
+    const variantId = variant?.productVariantId;
+  
+    if (!variant || !variantId) {
+      console.log("No matching variant found");
+      toast.error(ErrorMessages.VARIANT_NOT_FOUND || "Không tìm thấy dung tích phù hợp!");
       return;
     }
 
@@ -383,8 +412,36 @@ setSelectedProduct(transformedProduct);
       note: "",
       quantityInStock: selectedVariant.quantityInStock
     };
-
-    addToCart(item);
+  
+    console.log(item);
+  
+    if (user) {
+      addToCart(item);
+      toast.success(SuccessMessages.ADD_TO_CART_SUCCESS || "Sản phẩm đã được thêm vào giỏ hàng");
+    } else {
+      // console.log(localCart);
+  
+      const isProductInCart = localCart.some(
+        (product) => product.productVariantId === item.productVariantId && product.selectedSize === item.selectedSize
+      );
+  
+      // console.log(isProductInCart);
+  
+      if (isProductInCart) {
+        setLocalCart((prevCart) =>
+          prevCart.map((product) =>
+            product.productVariantId === item.productVariantId && product.selectedSize === item.selectedSize
+              ? { ...product, quantity: product.quantity + quantity }
+              : product
+          )
+        );
+        toast.success(SuccessMessages.UPDATE_CART_SUCCESS || "Cập nhật số lượng giỏ hàng");
+      } else {
+        setLocalCart((prevCart) => [...prevCart, item]);
+        toast.success(SuccessMessages.ADD_TO_CART_LOCAL_SUCCESS || "Đã thêm vào giỏ hàng");
+      }
+    }
+  
   };
   
   

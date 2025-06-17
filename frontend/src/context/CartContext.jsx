@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { toast } from 'sonner';
 import ErrorMessages from '../constants/ErrorMessages';
+import SuccessMessages from "../constants/SuccessMessages";
 
 export const CartContext = createContext();
 
@@ -246,10 +247,10 @@ export const CartProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       loadCart();
-      toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
+      toast.success(SuccessMessages.REMOVE_FROM_CART_SUCCESS || "Đã xóa sản phẩm khỏi giỏ hàng");
     } catch (err) {
       console.error("Error deleting item from cart:", err.response?.data || err);
-      toast.error("Không thể xóa sản phẩm khỏi giỏ hàng");
+      toast.error(ErrorMessages.CART_ITEM_DELETE_FAIL || "Không thể xóa sản phẩm khỏi giỏ hàng");
     }
   }
 

@@ -13,7 +13,7 @@ const ErrorMessages = {
     INVALID_QUANTITY: "Số lượng không hợp lệ. Vui lòng chọn từ 1 đến 10.",
     CART_EMPTY: "Giỏ hàng của bạn đang trống.",
     CART_ITEM_NOT_FOUND: "Không tìm thấy sản phẩm trong giỏ hàng.",
-    CART_UPDATE_FAIL: "Không thể cập nhật giỏ hàng.",
+    CART_UPDATE_FAIL: "Không thể cập nhật số lượng sản phẩm trong giỏ hàng.",
     CART_ITEM_DELETE_FAIL: "Không thể xóa sản phẩm khỏi giỏ hàng.",
     CART_ITEM_ADD_FAIL: "Không thể thêm sản phẩm vào giỏ hàng.",
 
@@ -31,7 +31,7 @@ const ErrorMessages = {
 
    //QUICK VIEW
    SIZE_REQUIRED: "Vui lòng chọn dung tích trước khi tiếp tục.",
-   VARIANT_NOT_FOUND: "Không tìm thấy biến thể sản phẩm phù hợp.",
+   VARIANT_NOT_FOUND: "Không tìm thấy dung tích phù hợp!",
    ADD_TO_CART_FAIL: "Không thể thêm vào giỏ hàng.",
    ADD_TO_WISHLIST_FAIL: "Không thể thêm vào yêu thích.",
 
@@ -45,7 +45,8 @@ const ErrorMessages = {
    CHECKOUT_FAIL: "Đặt hàng thất bại.",
    SESSION_NOT_FOUND: "Không tìm thấy thông tin phiên làm việc.",
    ORDER_ID_MISSING: "Đặt hàng thành công nhưng không lấy được mã đơn hàng.",
-  };
-  
-  export default ErrorMessages;
+   INVALID_PRODUCT: "Sản phẩm không hợp lệ.",
+};
+
+export default ErrorMessages;
   

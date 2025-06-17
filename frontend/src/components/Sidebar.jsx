@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, ShoppingBag, Bell, LogOut } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 import { Toaster, toast } from "sonner";
+import SuccessMessages from "../constants/SuccessMessages";
 
 const Sidebar = ({ profileData, activeTab, setActiveTab }) => {
   const [showConfirmLogout, setShowConfirmLogout] = useState(false);
@@ -10,11 +11,10 @@ const Sidebar = ({ profileData, activeTab, setActiveTab }) => {
     localStorage.removeItem("guestId");
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-        toast.success("Đăng xuất thành công!");
-setTimeout(() => {
-    window.location.href = "/";
-
-}, 1000);
+    toast.success(SuccessMessages.LOGOUT_SUCCESS || "Đăng xuất thành công!");
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 1000);
   };
 
   return (
@@ -36,7 +36,6 @@ setTimeout(() => {
           <SidebarItem icon={<LogOut size={18} />} text="Đăng xuất" active={false} onClick={() => setShowConfirmLogout(true)} />
         </nav>
       </div>
-
 
       {showConfirmLogout && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

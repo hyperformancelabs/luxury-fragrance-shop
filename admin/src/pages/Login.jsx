@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
+import SuccessMessages from "../../frontend/src/constants/SuccessMessages";
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -8,7 +9,7 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Login attempt with:', username);
-    toast.success("Đăng nhập thành công")
+    toast.success(SuccessMessages.LOGIN_SUCCESS || "Đăng nhập thành công");
     window.location.href = "/"
   };
 

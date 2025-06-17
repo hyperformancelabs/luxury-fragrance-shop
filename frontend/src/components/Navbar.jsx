@@ -6,6 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import { Toaster, toast } from "sonner";
 import debounce from "lodash.debounce";
 import axios from "axios";
+import SuccessMessages from "../constants/SuccessMessages";
 
 import {
   ChartBarIcon,
@@ -234,7 +235,7 @@ const Navbar = () => {
         setError(data.message || "Đăng nhập thất bại");
         return;
       }
-      toast.success("Đăng nhập thành công!");
+      toast.success(SuccessMessages.LOGIN_SUCCESS || "Đăng nhập thành công!");
       setTimeout(() => {
         window.location.href = "/";
       }, 1000);
