@@ -1665,9 +1665,24 @@ const Products = () => {
     </div>
   );
 
-  // Function để hiển thị lịch sử giao dịch của một sản phẩm
+  // Function để hiển thị lịch sử giao dịch của một phiên bản sản phẩm cụ thể
   const handleViewTransactionLog = (variant) => {
+    // Tìm thông tin sản phẩm từ phiên bản sản phẩm để hiển thị tên trong tiêu đề
+    const productInfo = products.find(p => p.productId === variant.productId) || {
+      productId: null, // Đặt productId thành null để đảm bảo API chỉ lọc theo productVariantId
+      productName: productVariants.find(v => v.productVariantId === variant.productVariantId)?.productName || "Sản phẩm"
+    };
+    
+    // Đặt thông tin sản phẩm để hiển thị trong tiêu đề modal
+    setSelectedProduct({
+      ...productInfo,
+      productId: null // Đặt productId thành null để đảm bảo API chỉ lọc theo productVariantId
+    });
+    
+    // Đặt ID phiên bản sản phẩm để lọc lịch sử giao dịch
     setTransactionLogVariantId(variant.productVariantId);
+    
+    // Hiển thị modal
     setShowTransactionLog(true);
   };
   
@@ -1700,7 +1715,7 @@ const Products = () => {
         
         <div className="flex-1">
           <InventoryTransactionLog 
-            productId={selectedProduct?.productId}
+            productId={transactionLogVariantId ? null : selectedProduct?.productId}
             productVariantId={transactionLogVariantId}
           />
         </div>

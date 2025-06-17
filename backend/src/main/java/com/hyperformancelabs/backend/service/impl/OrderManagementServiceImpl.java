@@ -2,12 +2,15 @@ package com.hyperformancelabs.backend.service.impl;
 
 import com.hyperformancelabs.backend.dto.OrderDTO;
 import com.hyperformancelabs.backend.dto.OrderListResponse;
+import com.hyperformancelabs.backend.model.Employee;
+import com.hyperformancelabs.backend.model.InventoryTransaction;
 import com.hyperformancelabs.backend.model.Order;
 import com.hyperformancelabs.backend.model.OrderItem;
-import com.hyperformancelabs.backend.model.ProductVariant;
-import com.hyperformancelabs.backend.model.Shipment;
-import com.hyperformancelabs.backend.model.Payment;
 import com.hyperformancelabs.backend.model.OrderPromotion;
+import com.hyperformancelabs.backend.model.Payment;
+import com.hyperformancelabs.backend.model.ProductVariant;
+import com.hyperformancelabs.backend.model.Promotion;
+import com.hyperformancelabs.backend.model.Shipment;
 import com.hyperformancelabs.backend.repository.OrderRepository;
 import com.hyperformancelabs.backend.service.OrderManagementService;
 import org.slf4j.Logger;
@@ -21,6 +24,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -65,6 +71,12 @@ public class OrderManagementServiceImpl implements OrderManagementService {
 
     @Autowired
     private com.hyperformancelabs.backend.repository.OrderPromotionRepository orderPromotionRepository;
+
+    @Autowired
+    private com.hyperformancelabs.backend.repository.InventoryTransactionRepository inventoryTransactionRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     @PreAuthorize("hasAuthority('order.view')")
@@ -253,6 +265,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     @PreAuthorize("hasAuthority('order.edit')")
     @Transactional
     public void updateOrderStatus(Integer orderId, String status) {
+        logger.info("Updating order status for order ID: {}, new status: {}", orderId, status);
+        
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
@@ -269,8 +283,99 @@ public class OrderManagementServiceImpl implements OrderManagementService {
             throw new RuntimeException("Invalid status value: " + status);
         }
 
+        // If changing to cancelled status, restore inventory
+        if ("cancelled".equalsIgnoreCase(normalized) && 
+            !"cancelled".equalsIgnoreCase(order.getOrderStatus())) {
+            
+            Order orderWithItems = orderRepository.findByIdWithItems(orderId)
+                    .orElseThrow(() -> new RuntimeException("Order not found"));
+                    
+            // Restore inventory
+            for (var item : orderWithItems.getOrderItems()) {
+                var variant = item.getProductVariant();
+                variant.setQuantityInStock(variant.getQuantityInStock() + item.getQuantity());
+                productVariantRepository.save(variant);
+            }
+        }
+        
+        // If changing to delivered status, log inventory transactions
+        if ("delivered".equalsIgnoreCase(normalized) && 
+            !"delivered".equalsIgnoreCase(order.getOrderStatus())) {
+            
+            logger.info("Order {} status changing to delivered, creating inventory transactions", orderId);
+            
+            Order orderWithItems = orderRepository.findByIdWithItems(orderId)
+                    .orElseThrow(() -> new RuntimeException("Order not found"));
+            
+            logger.info("Found order with {} items", orderWithItems.getOrderItems().size());
+            
+            // Get the employee who is performing this action (from Spring Security context)
+            Employee employee;
+            try {
+                String username = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication().getName();
+                
+                logger.info("Current user: {}", username);
+                
+                employee = employeeRepository.findByUsername(username)
+                    .orElse(null);
+            } catch (Exception e) {
+                logger.warn("Could not get current user or employee not found", e);
+                employee = null;
+            }
+            
+            // If employee not found, use employee with ID 1
+            if (employee == null) {
+                logger.info("Using default employee with ID 1");
+                employee = employeeRepository.findById(1)
+                    .orElseThrow(() -> new RuntimeException("Default employee not found"));
+            }
+            
+            logger.info("Using employee: {}", employee.getEmployeeId());
+            
+            // Get current database time to avoid constraint violations
+            java.time.LocalDateTime dbNow;
+            try {
+                jakarta.persistence.Query query = entityManager.createNativeQuery("SELECT GETDATE()");
+                java.sql.Timestamp currentDBTime = (java.sql.Timestamp) query.getSingleResult();
+                dbNow = currentDBTime.toLocalDateTime();
+                logger.info("Using database time: {}", dbNow);
+            } catch (Exception e) {
+                logger.warn("Could not get database time, using system time", e);
+                dbNow = java.time.LocalDateTime.now();
+            }
+            
+            // Log inventory transaction for each order item
+            for (OrderItem item : orderWithItems.getOrderItems()) {
+                ProductVariant variant = item.getProductVariant();
+                logger.info("Creating inventory transaction for product variant: {}", variant.getProductVariantId());
+                
+                // Create inventory transaction
+                InventoryTransaction transaction = new InventoryTransaction();
+                transaction.setProductVariant(variant);
+                transaction.setPerformedBy(employee);
+                transaction.setTransactionType("sell"); // Use "sell" type for delivered orders
+                transaction.setTransactionDate(dbNow);
+                
+                // IMPORTANT: For log-only transactions, we don't change the actual inventory
+                // We're just recording what happened, so beforeQuantity should be the current quantity
+                transaction.setBeforeQuantity(variant.getQuantityInStock());
+                transaction.setQuantity(item.getQuantity());
+                transaction.setAfterQuantity(variant.getQuantityInStock()); // Same as before quantity since we're not changing inventory
+                
+                transaction.setReason("Đơn hàng #" + orderId + " đã được giao thành công");
+                transaction.setNote("Giao dịch được tạo tự động khi đơn hàng chuyển sang trạng thái đã giao");
+                transaction.setCostPrice(item.getUnitPrice()); // Use unit price as cost price
+                
+                // Save the transaction
+                InventoryTransaction savedTransaction = inventoryTransactionRepository.save(transaction);
+                logger.info("Created inventory transaction with ID: {}", savedTransaction.getInventoryTransactionId());
+            }
+        }
+
         // Direct DB update to bypass Bean Validation constraints on unchanged fields (e.g., estimatedDeliveryDate)
         orderRepository.updateOrderStatus(orderId, normalized);
+        logger.info("Successfully updated order {} status to {}", orderId, normalized);
     }
 
     @Override
