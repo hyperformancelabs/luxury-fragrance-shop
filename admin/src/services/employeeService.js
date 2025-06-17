@@ -34,6 +34,44 @@ const updateProfile = async (profileData) => {
   }
 };
 
+// Get employee performance data
+const getEmployeePerformance = async (employeeId, startDate, endDate) => {
+  try {
+    // Format dates to dd/MM/yyyy
+    const formatDate = (date) => {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+
+    const formattedStartDate = formatDate(startDate || new Date('2004-07-08')); // Default to system start date
+    const formattedEndDate = formatDate(endDate || new Date()); // Default to today
+    
+    const response = await axios.get(`${API_URL}/employee-performance/top-performers`, {
+      params: {
+        startDate: formattedStartDate,
+        endDate: formattedEndDate,
+        limit: 100 // Get a large number to include all employees
+      },
+      headers: authService.getAuthHeader()
+    });
+    
+    if (response.data.code === 200 && response.data.status === 'success') {
+      if (employeeId) {
+        // Find specific employee
+        const employeeData = response.data.data.find(emp => emp.employeeId === employeeId);
+        return employeeData || { performanceScore: 0 }; // Return 0 if not found
+      }
+      return response.data.data;
+    }
+    throw new Error(response.data.message || 'Không thể lấy dữ liệu hiệu suất nhân viên');
+  } catch (error) {
+    console.error('Error fetching employee performance:', error);
+    return { performanceScore: 0 }; // Return 0 on error
+  }
+};
+
 // Get roles with employee counts
 const getRolesWithEmployeeCount = async () => {
   try {
@@ -380,15 +418,11 @@ const removePermissionsFromRole = async (roleId, permissionIds) => {
   }
 };
 
-const employeeService = {
+export default {
   getProfile,
   updateProfile,
+  getEmployeePerformance,
   getRolesWithEmployeeCount,
-  getEmployeesByRoleId,
-  getEmployeesByRole,
-  getEmployeeRoles,
-  removeEmployeeFromRole,
-  resetDefaultRole,
   getEmployees,
   createEmployee,
   updateEmployee,
@@ -400,13 +434,16 @@ const employeeService = {
   getAllRoles,
   getRoleById,
   createRole,
+  resetDefaultRole,
   updateRole,
   deleteRole,
   getAllPermissions,
+  getEmployeesByRole,
+  getEmployeeRoles,
+  removeEmployeeFromRole,
+  getEmployeesByRoleId,
   getPermissionsByRole,
   getAvailablePermissionsByRole,
   addPermissionsToRole,
   removePermissionsFromRole
 };
-
-export default employeeService;

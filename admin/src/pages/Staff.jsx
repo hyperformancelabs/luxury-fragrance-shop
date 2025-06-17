@@ -79,11 +79,39 @@ const initialStaffData = [];
 const initialRolesData = [];
 
 // Function to fetch employees list from API
-const fetchEmployees = async (setLoading, setError, setStaffData) => {
+const fetchEmployees = async (setLoading, setError, setStaffData, setMaxPerformance) => {
   setLoading(true);
   try {
     const res = await employeeService.getEmployees();
-    if (res?.data?.employees) setStaffData(res.data.employees);
+    if (res?.data?.employees) {
+      // Fetch performance data for all employees
+      const startDate = new Date('2004-07-08'); // System start date
+      const endDate = new Date(); // Today
+      const performanceData = await employeeService.getEmployeePerformance(null, startDate, endDate);
+      
+      // Tìm giá trị hiệu suất cao nhất
+      let maxValue = 100; // Giá trị mặc định
+      if (performanceData && performanceData.length > 0) {
+        maxValue = Math.max(...performanceData.map(p => parseFloat(p.performanceScore || 0)));
+        // Đảm bảo maxValue không bao giờ là 0 để tránh chia cho 0
+        maxValue = maxValue > 0 ? maxValue : 100;
+        // Cập nhật state maxPerformance
+        if (setMaxPerformance) {
+          setMaxPerformance(maxValue);
+        }
+      }
+      
+      // Map performance data to employees
+      const employeesWithPerformance = res.data.employees.map(employee => {
+        const performance = performanceData.find(p => p.employeeId === employee.employeeId);
+        return {
+          ...employee,
+          performanceScore: performance ? performance.performanceScore : 0
+        };
+      });
+      
+      setStaffData(employeesWithPerformance);
+    }
     setError(null);
   } catch (err) {
     console.error('Error fetching employees:', err);
@@ -99,8 +127,8 @@ const fetchActiveRoles = async (setLoading, setRoles) => {
   try { const res = await employeeService.getActiveRoles(); if (res?.data) setRoles(res.data); } catch {} finally { setLoading(false); }
 };
 
-// Performance status component
-const PerformanceIndicator = ({ value }) => {
+// Performance status component with maxValue context
+const PerformanceIndicator = ({ value, maxValue = 100 }) => {
   let bgColor = 'bg-gray-200';
   let textColor = 'text-gray-500';
   
@@ -120,15 +148,18 @@ const PerformanceIndicator = ({ value }) => {
     textColor = 'text-red-800';
   }
   
+  // Tính toán phần trăm dựa trên giá trị tối đa
+  const percentage = Math.min(100, (value / maxValue) * 100);
+  
   return (
     <div className="flex items-center">
       <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
         <div 
           className={`h-2 rounded-full ${bgColor}`} 
-          style={{ width: `${value}%` }}
+          style={{ width: `${percentage}%` }}
         ></div>
       </div>
-      <span className={`text-xs font-medium ${textColor}`}>{value}%</span>
+      <span className={`text-xs font-medium ${textColor}`}>{value}</span>
     </div>
   );
 };
@@ -587,7 +618,8 @@ const ViewDialog = ({ employee, onClose }) => {
     ['Địa chỉ', employee.address], 
     ['Ngày sinh', formatDate(employee.dateOfBirth)], 
     ['Trạng thái', employee.status], 
-    ['Vai trò', employee.roles.join(', ')] 
+    ['Vai trò', employee.roles.join(', ')],
+    ['Hiệu suất', employee.performanceScore || 'N/A']
   ];
   
   const copyText = txt => { 
@@ -2638,10 +2670,12 @@ const Staff = () => {
   const [roleFilter, setRoleFilter] = useState([]);
   // Thêm state mới cho lọc trạng thái vai trò
   const [roleStatusFilter, setRoleStatusFilter] = useState('all'); // 'all', 'active', 'inactive'
+  // Thêm state để lưu trữ giá trị hiệu suất cao nhất
+  const [maxPerformance, setMaxPerformance] = useState(100);
 
   // Fetch staff data and roles data when component mounts
   useEffect(() => {
-    fetchEmployees(setLoading, setError, setStaffData);
+    fetchEmployees(setLoading, setError, setStaffData, setMaxPerformance);
     fetchRoles();
     // eslint-disable-next-line
   }, []);
@@ -2750,7 +2784,7 @@ const Staff = () => {
       }
       
       // Refresh employee list
-      fetchEmployees(setLoading, setError, setStaffData);
+      fetchEmployees(setLoading, setError, setStaffData, setMaxPerformance);
       // Reset state
       setCurrentAction(null);
       setSelectedStaff(null);
@@ -2771,7 +2805,7 @@ const Staff = () => {
       toast.success('Xóa nhân viên thành công!');
       
       // Refresh employee list
-      fetchEmployees(setLoading, setError, setStaffData);
+      fetchEmployees(setLoading, setError, setStaffData, setMaxPerformance);
       // Reset state
       setCurrentAction(null);
       setSelectedStaff(null);
@@ -2924,7 +2958,7 @@ const Staff = () => {
                         staff.status === 'on_leave' ? 'Đang nghỉ phép' : 'Đã nghỉ',
           'Ngày bắt đầu': staff.startDate ? new Date(staff.startDate).toLocaleDateString('vi-VN') : '',
           'Ngày sinh': staff.dateOfBirth ? new Date(staff.dateOfBirth).toLocaleDateString('vi-VN') : '',
-          'Hiệu suất': staff.performance ?? 'N/A'
+          'Hiệu suất': staff.performanceScore || 'N/A'
         }));
 
         // Tạo worksheet từ dữ liệu
@@ -2961,7 +2995,7 @@ const Staff = () => {
            setRolesData(rolesResponse.data);
         }
         // Refresh employee list as role assignments might have changed
-        fetchEmployees(setLoading, setError, setStaffData);
+        fetchEmployees(setLoading, setError, setStaffData, setMaxPerformance);
         toast.success('Dữ liệu vai trò và nhân viên đã được cập nhật.');
      } catch(error) {
         console.error("Error refreshing data after RoleForm completion:", error);
@@ -2970,6 +3004,17 @@ const Staff = () => {
         setLoading(false);
      }
   };
+
+  // Define table columns with performance data
+  const columns = [
+    { key: 'fullName', label: 'Tên nhân viên', sortable: true },
+    { key: 'email', label: 'Email', sortable: true },
+    { key: 'phoneNumber', label: 'Số điện thoại', sortable: false },
+    { key: 'roles', label: 'Vai trò', sortable: false },
+    { key: 'status', label: 'Trạng thái', sortable: true },
+    { key: 'performanceScore', label: 'Hiệu suất', sortable: true },
+    { key: 'actions', label: 'Thao tác', sortable: false }
+  ];
 
   return (
     <div className="p-6">
@@ -3219,7 +3264,7 @@ const Staff = () => {
                       <StatusBadge status={staff.status} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <PerformanceIndicator value={staff.performance ?? 0} />
+                      <PerformanceIndicator value={parseFloat(staff.performanceScore || 0)} maxValue={maxPerformance} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex space-x-2 justify-end">
