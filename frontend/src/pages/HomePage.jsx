@@ -13,10 +13,10 @@ const HomePage = () => {
   return (
     <div>
      <Banner />
-     <FlashDeal />
+     {/* <FlashDeal /> */}
      <Brand />
-     <NewProduct />
-     <BestSellingProduct />
+     {/* <NewProduct /> */}
+     {/* <BestSellingProduct /> */}
      {/* <TopSearchInWeek /> */}
      <CollectionSeason />
      <AboutUs />

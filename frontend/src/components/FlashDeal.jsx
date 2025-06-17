@@ -42,7 +42,7 @@ const FlashDeal = () => {
   useEffect(() => {
     setIsLoading(true);
 
-    fetch("http://localhost:8080/api/v1/products/flash-sale")
+    fetch("http://localhost:8080/api/v1/products/random-10-cards")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Network response was not ok");

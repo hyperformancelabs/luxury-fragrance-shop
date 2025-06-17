@@ -80,7 +80,7 @@ const Navbar = () => {
       setLoading(true);
       try {
         const res = await axios.get(
-          `http://localhost:8080/api/v1/products/search?keyword=${encodeURIComponent(query)}`
+          `http://localhost:8080/api/v1/products/search?name=${encodeURIComponent(query)}`
         );
         setResults(res.data.data.content); // tuỳ API trả gì
       console.log(res.data.data.content)
@@ -147,13 +147,7 @@ const Navbar = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            name: registerData.name,
-            email: registerData.email,
-            password: registerData.password,
-            username: registerData.username,
-            phoneNumber: registerData.phoneNumber,
-          }),
+          body: JSON.stringify(registerData),
         }
       );
 
@@ -164,7 +158,23 @@ const Navbar = () => {
         return;
       }
 
-      handleLoginSubmit(new Event("submit"));
+      // Auto-login after successful registration
+      setLoginData({
+        username: registerData.username,
+        password: registerData.password,
+      });
+      setAuthMode("login");
+      setTimeout(() => {
+        document.getElementById("login-form")?.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+      }, 100);
+
+      setRegisterData({
+        name: "",
+        username: "",
+        password: "",
+        phoneNumber: "",
+        email: "",
+      });
     } catch (err) {
       setError("Có lỗi xảy ra khi đăng ký");
     }
@@ -433,7 +443,7 @@ const Navbar = () => {
                       )}
 
                       {authMode === "login" && (
-                        <form onSubmit={handleLoginSubmit}>
+                        <form id="login-form" onSubmit={handleLoginSubmit}>
                           <div className="mb-3">
                             <label
                               htmlFor="email"

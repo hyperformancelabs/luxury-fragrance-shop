@@ -310,7 +310,7 @@ public class ProductServiceImpl implements ProductService {
         // 🔄 Lấy ProductVariants theo gender từ database
         List<ProductVariant> filteredVariants = productVariantRepository.findByProductGender(gender);
 
-        // ✅ Gom theo productId
+        //  Gom theo productId
         Map<Integer, List<ProductVariant>> groupedByProduct = filteredVariants.stream()
                 .collect(Collectors.groupingBy(variant -> variant.getProduct().getProductId()));
 
@@ -408,5 +408,50 @@ public class ProductServiceImpl implements ProductService {
 
     private String toSnakeCase(String camel) {
         return camel.replaceAll("([a-z])([A-Z]+)", "$1_$2").toLowerCase();
+    }
+
+    public List<ProductCard> getTop10Products() {
+        List<Product> products = productRepository.findAll().stream()
+            .sorted(Comparator.comparing(Product::getProductId))
+            .limit(10)
+            .collect(Collectors.toList());
+        List<ProductCard> response = new ArrayList<>();
+        for (Product product : products) {
+            List<VolumePriceDTO> volumePrices = product.getProductVariants().stream()
+                .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice()))
+                .collect(Collectors.toList());
+            ProductCard card = new ProductCard(
+                product.getProductId(),
+                product.getProductName(),
+                product.getImageUrl(),
+                volumePrices,
+                product.getBrand().getBrandName(),
+                product.getBrand().getCountryOfOrigin()
+            );
+            response.add(card);
+        }
+        return response;
+    }
+
+    public List<ProductCard> getRandom10ProductCards() {
+        List<Product> allProducts = productRepository.findAll();
+        Collections.shuffle(allProducts);
+        return allProducts.stream()
+            .filter(product -> !product.getProductVariants().isEmpty())
+            .limit(10)
+            .map(product -> {
+                List<VolumePriceDTO> volumePrices = product.getProductVariants().stream()
+                    .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice()))
+                    .collect(Collectors.toList());
+                return new ProductCard(
+                    product.getProductId(),
+                    product.getProductName(),
+                    product.getImageUrl(),
+                    volumePrices,
+                    product.getBrand().getBrandName(),
+                    product.getBrand().getCountryOfOrigin()
+                );
+            })
+            .collect(Collectors.toList());
     }
 }

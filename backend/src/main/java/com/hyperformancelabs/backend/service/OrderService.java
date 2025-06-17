@@ -10,4 +10,5 @@ public interface OrderService {
     Object createOrderFromAnonymous(CreateAnonymousOrderRequest request, HttpServletRequest servletRequest);
     OrderDetailFullResponse getFullOrderDetail(Integer orderId);
     List<OrderDetailFullResponse> getAllOrdersOfCustomer(String token);
+    void cancelOrder(Integer orderId, HttpServletRequest servletRequest);
 }

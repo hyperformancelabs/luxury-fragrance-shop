@@ -205,4 +205,63 @@ public class OrderController {
         }
     }
 
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<ApiResponse<String>> cancelOrder(
+            @PathVariable Integer orderId,
+            HttpServletRequest request) {
+        try {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(ApiResponseStatus.UNAUTHORIZED_CODE).body(
+                        new ApiResponse<>(
+                                ApiResponseStatus.UNAUTHORIZED_CODE,
+                                ApiResponseStatus.ERROR_STATUS,
+                                ApiResponseStatus.UNAUTHORIZED_MESSAGE,
+                                null
+                        )
+                );
+            }
+            
+            orderService.cancelOrder(orderId, request);
+            
+            return ResponseEntity.ok(
+                    new ApiResponse<>(
+                            ApiResponseStatus.SUCCESS_CODE,
+                            ApiResponseStatus.SUCCESS_STATUS,
+                            "Đơn hàng đã được hủy thành công",
+                            null
+                    )
+            );
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("not found") || e.getMessage().contains("không tồn tại")) {
+                return ResponseEntity.status(ApiResponseStatus.NOT_FOUND_CODE).body(
+                        new ApiResponse<>(
+                                ApiResponseStatus.NOT_FOUND_CODE,
+                                ApiResponseStatus.ERROR_STATUS,
+                                e.getMessage(),
+                                null
+                        )
+                );
+            } else if (e.getMessage().contains("không có quyền") || e.getMessage().contains("không thể huỷ")) {
+                return ResponseEntity.status(ApiResponseStatus.FORBIDDEN_CODE).body(
+                        new ApiResponse<>(
+                                ApiResponseStatus.FORBIDDEN_CODE,
+                                ApiResponseStatus.ERROR_STATUS,
+                                e.getMessage(),
+                                null
+                        )
+                );
+            } else {
+                return ResponseEntity.status(ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE).body(
+                        new ApiResponse<>(
+                                ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE,
+                                ApiResponseStatus.ERROR_STATUS,
+                                e.getMessage(),
+                                null
+                        )
+                );
+            }
+        }
+    }
+
 }

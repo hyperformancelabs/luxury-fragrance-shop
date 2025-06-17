@@ -41,7 +41,7 @@ const BestSellingProduct = () => {
   useEffect(() => {
     setIsLoading(true);
 
-    fetch("http://localhost:8080/api/v1/products/best-seller?page=0%size=25")
+    fetch("http://localhost:8080/api/v1/products/random-10-cards")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -49,8 +49,8 @@ const BestSellingProduct = () => {
         return response.json();
       })
       .then((data) => {
-        setProduct(data.data.content);
-        console.log(data.data.content);
+        setProduct(data.data);
+        console.log(data.data);
       })
       .catch((err) => console.error("Error Fetching Data", err))
       .finally(() => setIsLoading(false));

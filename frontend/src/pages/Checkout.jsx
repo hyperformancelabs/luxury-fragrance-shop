@@ -152,6 +152,110 @@ const Checkout = () => {
     }
   };
 
+  // const handleCheckout = async () => {
+  //   const token = localStorage.getItem("token");
+  //   const sessionId = localStorage.getItem("sessionId");
+  
+  //   setIsLoading(true);
+  //   try {
+  //     let response;
+  //     let isTokenUser = !!token;
+  //     let headers = { "Content-Type": "application/json" };
+  //     let endpoint = "";
+  //     let payload;
+  
+  //     if (isTokenUser) {
+  //       payload = {
+  //         shippingAddress: shippingAddress,
+  //         shippingNote: formData.note || "",
+  //         shippingCost: parseFloat(formData.shippingFee),
+  //         paymentMethodId: paymentMethod === "vnpay" ? 4 : paymentMethod === "mb-bank" ? 3 : 1,
+  //       };
+  //       headers.Authorization = `Bearer ${token}`;
+  //       endpoint = "http://localhost:8080/api/v1/orders/create";
+  //     } else if (sessionId) {
+  //       payload = {
+  //         ...formData,
+  //         orderItems: currentCart.map((item) => ({
+  //           productVariantId: item.productVariantId,
+  //           quantity: item.quantity,
+  //           unitPrice: item.unitPrice,
+  //           note: item.note || "",
+  //         })),
+  //         shippingNote: formData.note || "",
+  //         shippingOption: "Giao hàng nhanh",
+  //         paymentMethodId: paymentMethod === "vnpay" ? 4 : paymentMethod === "mb-bank" ? 3 : 1,
+  //         sessionId: sessionId,
+  //       };
+  //       endpoint = "http://localhost:8080/api/v1/orders/create-anonymous";
+  //     } else {
+  //       toast.error(ErrorMessages.SESSION_NOT_FOUND);
+  //       setIsLoading(false);
+  //       return;
+  //     }
+  
+  //     response = await fetch(endpoint, {
+  //       method: "POST",
+  //       headers,
+  //       body: JSON.stringify(payload),
+  //     });
+  
+  //     const contentType = response.headers.get("content-type");
+  //     const isJson = contentType && contentType.includes("application/json");
+  //     const result = isJson ? await response.json() : await response.text();
+  
+  //     // if (!response.ok) {
+  //     //   throw new Error(typeof result === "string" ? result : result.message || "Lỗi đặt hàng");
+  //     // }
+  
+  //     const resData = result?.data;
+  //     const orderId = resData?.orderId;
+  
+    
+  //     if (resData?.url && orderId) {
+  //       const vnpayUrl = resData.url;
+  //       window.open(vnpayUrl, "_blank");
+  
+        
+  //       const pollingInterval = setInterval(async () => {
+  //         try {
+  //           const statusRes = await fetch(`http://localhost:8080/api/v1/orders/${orderId}/status`);
+  //           const statusData = await statusRes.json();
+  
+  //           if (statusData?.data?.paymentStatus === "completed") {
+  //             clearInterval(pollingInterval);
+  //             toast.success(SuccessMessages.PAYMENT_COMPLETED);
+  //             setTimeout(() => {
+  //               navigate(`/order-success?orderId=${orderId}`);
+  //             }, 3000);
+  //             // navigate(`/order-success?orderId=${orderId}`);
+  //           }
+  //         } catch (err) {
+  //           console.error(ErrorMessages.NETWORK_ERROR);
+  //         }
+  //       }, 5000);
+  
+  //       setIsLoading(false);
+  //       return;
+  //     }
+  
+  //     if (orderId) {
+  //       toast.success(SuccessMessages.CHECKOUT_SUCCESS);
+  //       setTimeout(() => {
+  //         localStorage.removeItem("sessionId");
+  //       }, 2000);
+  //       // setTimeout(() => {
+  //       //   navigate(`/order-success?orderId=${orderId}`);
+  //       // }, 1500);
+  //     }
+  //   } catch (err) {
+  //     console.error("Order failed", err);
+  //     toast.error(ErrorMessages.CHECKOUT_FAIL);
+  //   } finally {
+  //     setIsLoading(false);
+  //     setShowConfirmation(false);
+  //   }
+  // };
   const handleCheckout = async () => {
     const token = localStorage.getItem("token");
     const sessionId = localStorage.getItem("sessionId");
@@ -164,12 +268,17 @@ const Checkout = () => {
       let endpoint = "";
       let payload;
   
+      // Map payment method string to backend ID
+      let paymentMethodId = 1; // default COD
+      if (paymentMethod === "vnpay") paymentMethodId = 4;
+      else if (paymentMethod === "mb-bank") paymentMethodId = 3;
+  
       if (isTokenUser) {
         payload = {
           shippingAddress: shippingAddress,
           shippingNote: formData.note || "",
           shippingCost: parseFloat(formData.shippingFee),
-          paymentMethodId: paymentMethod === "vnpay" ? 4 : paymentMethod === "mb-bank" ? 3 : 1,
+          paymentMethodId,
         };
         headers.Authorization = `Bearer ${token}`;
         endpoint = "http://localhost:8080/api/v1/orders/create";
@@ -184,7 +293,7 @@ const Checkout = () => {
           })),
           shippingNote: formData.note || "",
           shippingOption: "Giao hàng nhanh",
-          paymentMethodId: paymentMethod === "vnpay" ? 4 : paymentMethod === "mb-bank" ? 3 : 1,
+          paymentMethodId,
           sessionId: sessionId,
         };
         endpoint = "http://localhost:8080/api/v1/orders/create-anonymous";
@@ -204,19 +313,14 @@ const Checkout = () => {
       const isJson = contentType && contentType.includes("application/json");
       const result = isJson ? await response.json() : await response.text();
   
-      // if (!response.ok) {
-      //   throw new Error(typeof result === "string" ? result : result.message || "Lỗi đặt hàng");
-      // }
-  
       const resData = result?.data;
       const orderId = resData?.orderId;
   
-    
+      // VNPay flow
       if (resData?.url && orderId) {
         const vnpayUrl = resData.url;
         window.open(vnpayUrl, "_blank");
   
-        
         const pollingInterval = setInterval(async () => {
           try {
             const statusRes = await fetch(`http://localhost:8080/api/v1/orders/${orderId}/status`);
@@ -228,7 +332,6 @@ const Checkout = () => {
               setTimeout(() => {
                 navigate(`/order-success?orderId=${orderId}`);
               }, 3000);
-              // navigate(`/order-success?orderId=${orderId}`);
             }
           } catch (err) {
             console.error(ErrorMessages.NETWORK_ERROR);
@@ -239,14 +342,13 @@ const Checkout = () => {
         return;
       }
   
+      // COD or MB Bank: just show success and redirect
       if (orderId) {
         toast.success(SuccessMessages.CHECKOUT_SUCCESS);
         setTimeout(() => {
           localStorage.removeItem("sessionId");
-        }, 2000);
-        // setTimeout(() => {
-        //   navigate(`/order-success?orderId=${orderId}`);
-        // }, 1500);
+          navigate(`/order-success?orderId=${orderId}`); // <-- Add this line
+        }, 1500);
       }
     } catch (err) {
       console.error("Order failed", err);

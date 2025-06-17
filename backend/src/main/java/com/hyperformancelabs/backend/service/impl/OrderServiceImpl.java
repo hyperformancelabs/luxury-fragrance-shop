@@ -69,8 +69,19 @@ public class OrderServiceImpl implements OrderService {
 
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (CartItem cartItem : selectedItems) {
+
+            ProductVariant productVariant = productVariantRepository.findById(cartItem.getProductVariant().getProductVariantId())
+                    .orElseThrow(() -> new NotFoundException("Product Variant not found"));
+
+            if (productVariant.getQuantityInStock() < cartItem.getQuantity()) {
+                throw new BadRequestException("Số lượng tồn kho không đủ cho sản phẩm: " + productVariant.getProductVariantId());
+            }
+
+            productVariant.setQuantityInStock(productVariant.getQuantityInStock() - cartItem.getQuantity());
+            productVariantRepository.save(productVariant);
+
             OrderItem orderItem = new OrderItem();
-            orderItem.setProductVariant(cartItem.getProductVariant());
+            orderItem.setProductVariant(productVariant);
             orderItem.setQuantity(cartItem.getQuantity());
             orderItem.setUnitPrice(cartItem.getUnitPrice());
             orderItem.setNote(cartItem.getNote());
@@ -80,6 +91,7 @@ public class OrderServiceImpl implements OrderService {
                     cartItem.getUnitPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()))
             );
         }
+
 
         order.setTotalAmount(totalAmount);
         order.setOrderStatus(request.getPaymentMethodId() == 4 ? "pending" : "processing");
@@ -166,6 +178,16 @@ public class OrderServiceImpl implements OrderService {
         for (OrderItemRequest item : request.getOrderItems()) {
             ProductVariant variant = productVariantRepository.findById(item.getProductVariantId())
                     .orElseThrow(() -> new NotFoundException(PRODUCT_NOT_FOUND + item.getProductVariantId()));
+
+            ProductVariant productVariant = productVariantRepository.findById(item.getProductVariantId())
+                    .orElseThrow(() -> new NotFoundException("Product Variant not found"));
+
+            if (productVariant.getQuantityInStock() < item.getQuantity()) {
+                throw new BadRequestException("Số lượng tồn kho không đủ cho sản phẩm: " + productVariant.getProductVariantId());
+            }
+
+            productVariant.setQuantityInStock(productVariant.getQuantityInStock() - item.getQuantity());
+            productVariantRepository.save(productVariant);
 
             OrderItem orderItem = new OrderItem();
             orderItem.setProductVariant(variant);
@@ -378,6 +400,52 @@ public class OrderServiceImpl implements OrderService {
                     paymentInfo
             );
         }).toList();
+    }
+
+    @Transactional
+    @Override
+    public void cancelOrder(Integer orderId, HttpServletRequest servletRequest) {
+        String token = servletRequest.getHeader("Authorization").substring(7);
+        String username = jwtUtil.getUsernameFromToken(token);
+
+        Customer customer = customerRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException(CUSTOMER_NOT_FOUND));
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+
+        if (!order.getCustomer().getCustomerId().equals(customer.getCustomerId())) {
+            throw new BadRequestException("Bạn không có quyền huỷ đơn hàng này");
+        }
+
+        if (!order.getOrderStatus().equals("processing") && !order.getOrderStatus().equals("pending")) {
+            throw new BadRequestException("Đơn hàng không thể huỷ trong trạng thái hiện tại");
+        }
+
+        for (OrderItem orderItem : order.getOrderItems()) {
+            ProductVariant productVariant = productVariantRepository.findById(orderItem.getProductVariant().getProductVariantId())
+                    .orElseThrow(() -> new NotFoundException("Product Variant not found"));
+
+            productVariant.setQuantityInStock(productVariant.getQuantityInStock() + orderItem.getQuantity());
+            productVariantRepository.save(productVariant);
+        }
+
+        order.setOrderStatus("cancelled");
+        orderRepository.save(order);
+
+        List<Payment> payments = paymentRepository.findByOrder(order);
+        if (!payments.isEmpty()) {
+            Payment payment = payments.get(0);
+            payment.setPaymentStatus("refunded");
+            paymentRepository.save(payment);
+        }
+
+        List<Shipment> shipments = shipmentRepository.findByOrder(order);
+        if (!shipments.isEmpty()) {
+            Shipment shipment = shipments.get(0);
+            shipment.setShipmentStatus("failed");
+            shipmentRepository.save(shipment);
+        }
     }
 
 

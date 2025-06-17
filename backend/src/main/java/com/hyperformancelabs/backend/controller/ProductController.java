@@ -213,19 +213,20 @@ public ResponseEntity<ApiResponse<Map<String, Object>>> getProductsByBrandPaged(
     }
 
     @GetMapping("/flash-sale")
-    public ResponseEntity<List<ProductCard>> getFlashSaleProducts(
-            @RequestParam(required = false) BigDecimal minPrice,
-            @RequestParam(required = false) BigDecimal maxPrice,
-            @RequestParam(required = false) Integer volume,
-            @RequestParam(required = false) String brandName,
-            @RequestParam(required = false) String suitableGender,
-            @RequestParam(required = false) String style,
-            @RequestParam(required = false) String toneScent
-    ) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getFlashSaleProducts() {
         List<ProductCard> result = productService.getFilteredFlashSaleProducts(
-                minPrice, maxPrice, volume, brandName, suitableGender, style, toneScent
+                null, null, null, null, null, null, null
         );
-        return ResponseEntity.ok(result);
+        Map<String, Object> data = new HashMap<>();
+        data.put("data", result);
+        return ResponseEntity.ok(
+            new ApiResponse<>(
+                ApiResponseStatus.SUCCESS_CODE,
+                ApiResponseStatus.SUCCESS_STATUS,
+                ApiResponseStatus.GET_SUCCESS_MESSAGE,
+                data
+            )
+        );
     }
 
     @PostMapping("/filter")
@@ -405,5 +406,35 @@ public ResponseEntity<ApiResponse<Map<String, Object>>> getProductsByBrandPaged(
                 )
             );
         }
+    }
+
+    @GetMapping("/top-10")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getTop10Products() {
+        List<ProductCard> result = productService.getTop10Products();
+        Map<String, Object> data = new HashMap<>();
+        data.put("data", result);
+        return ResponseEntity.ok(
+            new ApiResponse<>(
+                ApiResponseStatus.SUCCESS_CODE,
+                ApiResponseStatus.SUCCESS_STATUS,
+                ApiResponseStatus.GET_SUCCESS_MESSAGE,
+                data
+            )
+        );
+    }
+
+    @GetMapping("/random-10-cards")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getRandom10ProductCards() {
+        List<ProductCard> result = productService.getRandom10ProductCards();
+        Map<String, Object> data = new HashMap<>();
+        data.put("data", result);
+        return ResponseEntity.ok(
+            new ApiResponse<>(
+                ApiResponseStatus.SUCCESS_CODE,
+                ApiResponseStatus.SUCCESS_STATUS,
+                ApiResponseStatus.GET_SUCCESS_MESSAGE,
+                data
+            )
+        );
     }
 }
