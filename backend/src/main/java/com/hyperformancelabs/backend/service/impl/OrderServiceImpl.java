@@ -146,7 +146,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         Customer customer = new Customer();
-        customer.setUsername(request.getEmail());
+        customer.setUsername("anonymous_" + UUID.randomUUID().toString());
         customer.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
         customer.setName(request.getName());
         customer.setPhoneNumber(request.getPhoneNumber());
@@ -179,15 +179,12 @@ public class OrderServiceImpl implements OrderService {
             ProductVariant variant = productVariantRepository.findById(item.getProductVariantId())
                     .orElseThrow(() -> new NotFoundException(PRODUCT_NOT_FOUND + item.getProductVariantId()));
 
-            ProductVariant productVariant = productVariantRepository.findById(item.getProductVariantId())
-                    .orElseThrow(() -> new NotFoundException("Product Variant not found"));
-
-            if (productVariant.getQuantityInStock() < item.getQuantity()) {
-                throw new BadRequestException("Số lượng tồn kho không đủ cho sản phẩm: " + productVariant.getProductVariantId());
+            if (variant.getQuantityInStock() < item.getQuantity()) {
+                throw new BadRequestException("Số lượng tồn kho không đủ cho sản phẩm: " + variant.getProductVariantId());
             }
 
-            productVariant.setQuantityInStock(productVariant.getQuantityInStock() - item.getQuantity());
-            productVariantRepository.save(productVariant);
+            variant.setQuantityInStock(variant.getQuantityInStock() - item.getQuantity());
+            productVariantRepository.save(variant);
 
             OrderItem orderItem = new OrderItem();
             orderItem.setProductVariant(variant);
