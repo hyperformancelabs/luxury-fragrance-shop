@@ -53,25 +53,37 @@ export const CartProvider = ({ children }) => {
 
   const addToLocalCart = (product) => {
     setLocalCart(prevCart => {
-      const index = prevCart.findIndex(item => item.id === product.id && item.selectedSize === product.selectedSize);
+      const index = prevCart.findIndex(item => item.productVariantId === product.productVariantId);
       if (index >= 0) {
         const updatedCart = [...prevCart];
         updatedCart[index].quantity += product.quantity;
         return updatedCart;
       } else {
-        return [...prevCart, product];
+        return [
+          ...prevCart,
+          {
+            productVariantId: product.productVariantId,
+            productName: product.productName || "Unknown Product", 
+            volume: product.volume, 
+            unitPrice: product.unitPrice, 
+            quantity: product.quantity,
+            imageUrl: product.imageUrl || "", 
+            brandName: product.brandName || "",
+            note: product.note || ""
+          }
+        ];
       }
     });
   };
 
-  const removeFromLocalCart = (id, size) => {
-    setLocalCart(prevCart => prevCart.filter(item => !(item.id === id && item.selectedSize === size)));
+  const removeFromLocalCart = (productVariantId) => {
+    setLocalCart(prevCart => prevCart.filter(item => item.productVariantId !== productVariantId));
   };
 
-  const updateLocalCartQuantity = (id, size, newQuantity) => {
+  const updateLocalCartQuantity = (productVariantId, newQuantity) => {
     setLocalCart(prevCart =>
       prevCart.map(item =>
-        (item.id === id && item.selectedSize === size)
+        (item.productVariantId === productVariantId)
           ? { ...item, quantity: newQuantity }
           : item
       )
@@ -86,7 +98,7 @@ export const CartProvider = ({ children }) => {
   };
 
   const calculateLocalTotal = () => {
-    return localCart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return localCart.reduce((total, item) => total + (item.unitPrice * item.quantity), 0);
   };
 
   const loadCart = async () => {
@@ -118,7 +130,7 @@ export const CartProvider = ({ children }) => {
     try {
       const payload = {
         cartItems: localCart.map(item => ({
-          productVariantId: item.variantId,
+          productVariantId: item.productVariantId,
           quantity: item.quantity,
           note: item.note || ''
         }))
@@ -154,7 +166,16 @@ export const CartProvider = ({ children }) => {
         console.error("Error adding to cart:", err.response?.data || err);
       }
     } else {
-      addToLocalCart(product);
+      addToLocalCart({
+        productVariantId: product.productVariantId,
+        productName: product.productName, 
+        volume: product.volume, 
+        unitPrice: product.unitPrice, 
+        quantity: product.quantity,
+        imageUrl: product.imageUrl,
+        brandName: product.brandName,
+        note: product.note
+      });
     }
   };
 

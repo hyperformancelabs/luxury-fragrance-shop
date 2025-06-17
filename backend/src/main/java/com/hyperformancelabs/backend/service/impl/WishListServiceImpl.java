@@ -157,6 +157,52 @@ public class WishListServiceImpl implements WishListService {
         wishlistRepository.deleteAll(wishlists);
     }
 
+    @Override
+    @Transactional
+    public void moveItemToCart(String token, Integer productVariantId) {
+        String username = jwtUtil.getUsernameFromToken(token);
+        Customer customer = customerRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("Customer not found"));
+
+        ProductVariant variant = productVariantRepository.findById(productVariantId)
+                .orElseThrow(() -> new NotFoundException("Product variant not found"));
+
+        WishList wishlistItem = wishlistRepository.findByCustomerAndProductVariant(customer, variant)
+                .orElseThrow(() -> new NotFoundException("Wishlist item not found"));
+
+        Cart cart = cartRepository.findByCustomerAndStatus(customer, "active")
+                .orElseGet(() -> {
+                    Cart newCart = new Cart();
+                    newCart.setCustomer(customer);
+                    newCart.setStatus("active");
+                    newCart.setTotalAmount(BigDecimal.ZERO);
+                    return cartRepository.save(newCart);
+                });
+
+        Optional<CartItem> existingCartItem = cartItemRepository.findByCartAndProductVariant(cart, variant);
+        if (existingCartItem.isPresent()) {
+            CartItem cartItem = existingCartItem.get();
+            cartItem.setQuantity(cartItem.getQuantity() + 1);
+            cartItemRepository.save(cartItem);
+        } else {
+            CartItem cartItem = new CartItem();
+            cartItem.setCart(cart);
+            cartItem.setProductVariant(variant);
+            cartItem.setQuantity(1);
+            cartItem.setUnitPrice(variant.getPrice());
+            cartItem.setIsSelected(true);
+            cartItemRepository.save(cartItem);
+        }
+
+        BigDecimal total = cartItemRepository.findAllByCart(cart).stream()
+                .map(i -> i.getUnitPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        cart.setTotalAmount(total);
+        cartRepository.save(cart);
+
+        wishlistRepository.delete(wishlistItem);
+    }
+
 
 
 

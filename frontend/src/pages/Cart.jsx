@@ -14,6 +14,8 @@ const Cart = () => {
     updateQuantityInCart,
     localCart,
     deleteItemFromCart,
+    updateLocalCartQuantity,
+    removeFromLocalCart,
   } = useCart();
 
   const currentCart = user ? cartItems : localCart;
@@ -42,7 +44,13 @@ const Cart = () => {
       toast.success("Cập nhật số lượng sản phẩm thành công");
       updateQuantityInCart(cartItemId, newQuantity, productVariantId);
     } else {
-      toast.error("Không thể cập nhật số lượng sản phẩm trong giỏ hàng");
+      if (newQuantity < 1) {
+        toast.error("Số lượng không thể nhỏ hơn 1");
+        return;
+      }
+      // For anonymous users, update the local cart
+      updateLocalCartQuantity(productVariantId, newQuantity);
+      toast.success("Cập nhật số lượng sản phẩm thành công");
     }
   };
 
@@ -178,11 +186,9 @@ const Cart = () => {
                   onClick={() =>
                     user
                       ? deleteItemFromCart(
-                          // item.cartItemId,
                           item.productVariantId
                         )
                       : removeFromLocalCart(
-                          item.cartItemId,
                           item.productVariantId
                         )
                   }

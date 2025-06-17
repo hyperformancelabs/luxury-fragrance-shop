@@ -19,5 +19,7 @@ public interface WishListService {
 
     void clearWishlist(String token);
 
+    void moveItemToCart(String token, Integer productVariantId);
+
 }
 

@@ -42,7 +42,7 @@ function App() {
   richColors
   position="top-right"
   toastOptions={{
-    duration: 10000 // thời gian hiển thị toast (mặc định là 4000ms)
+    duration: 1000 // thời gian hiển thị toast (mặc định là 4000ms)
   }}
 />
 

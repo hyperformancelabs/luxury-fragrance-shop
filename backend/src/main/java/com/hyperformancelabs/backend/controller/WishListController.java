@@ -48,10 +48,19 @@ public class WishListController {
     }
 
     @PostMapping("/move-to-cart")
-    public ResponseEntity<?> moveToCart(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> moveAllToCart(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.substring(7);
         wishListService.moveAllToCart(token);
         return ResponseEntity.ok("Moved all items from wishlist to cart");
+    }
+
+    @PostMapping("/move-item-to-cart/{productVariantId}")
+    public ResponseEntity<?> moveItemToCart(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Integer productVariantId) {
+        String token = authHeader.substring(7);
+        wishListService.moveItemToCart(token, productVariantId);
+        return ResponseEntity.ok("Moved item from wishlist to cart");
     }
 
     @DeleteMapping("/{productVariantId}")
