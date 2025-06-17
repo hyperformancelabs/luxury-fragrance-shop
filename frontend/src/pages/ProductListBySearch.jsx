@@ -30,7 +30,7 @@ const ProductListBySearch = ({ keyword: defaultKeyword = "" }) => {
   // Nếu muốn lấy keyword từ query string
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    setSearchKeyword(params.get("keyword") || defaultKeyword);
+    setSearchKeyword(params.get("name") || defaultKeyword);
     setCurrentPage(0); // Reset trang khi thay đổi keyword
   }, [location.search, defaultKeyword]);
 
@@ -40,12 +40,12 @@ const ProductListBySearch = ({ keyword: defaultKeyword = "" }) => {
     // eslint-disable-next-line
   }, [currentPage, sortBy, searchKeyword]);
 
-  const fetchProducts = async (page, currentSortBy, keyword) => {
+  const fetchProducts = async (page, currentSortBy, name) => {
     setLoading(true);
     setError("");
     const endpoint = "http://localhost:8080/api/v1/products/search";
     const params = { 
-      keyword: keyword?.trim(),
+      name: name?.trim(),
       page,
       size: pageSize
     };
@@ -63,12 +63,12 @@ const ProductListBySearch = ({ keyword: defaultKeyword = "" }) => {
 
     try {
       const res = await axios.get(endpoint, { params });
-      const { content, totalPages, pageNumber } = res.data?.data || {};
-      if (!Array.isArray(content)) throw new Error(ErrorMessages.INVALID_RESPONSE);
+      const { items, totalPages, currentPage } = res.data?.data || {};
+      if (!Array.isArray(items)) throw new Error(ErrorMessages.INVALID_RESPONSE);
 
-      setProducts(content);
+      setProducts(items);
       setTotalPages(totalPages || 1);
-      setCurrentPage(pageNumber || 0);
+      setCurrentPage(currentPage || 0);
     } catch (err) {
       console.error("Lỗi khi tìm kiếm sản phẩm:", err);
       setError(ErrorMessages.PRODUCT_LOAD_FAIL);

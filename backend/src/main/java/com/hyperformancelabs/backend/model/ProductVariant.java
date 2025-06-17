@@ -71,4 +71,17 @@ public class ProductVariant {
     public ProductVariant(Integer productVariantId) {
         this.productVariantId = productVariantId;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ProductVariant that = (ProductVariant) o;
+        return productVariantId != null && productVariantId.equals(that.productVariantId);
+    }
+
+    @Override
+    public int hashCode() {
+        return productVariantId != null ? productVariantId.hashCode() : 0;
+    }
 }

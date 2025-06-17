@@ -173,8 +173,9 @@ public ResponseEntity<ApiResponse<Map<String, Object>>> getProductsByBrandPaged(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size) {
         try {
+            logger.info("Searching for products with name: {}", productName);
             Pageable pageable = PageRequest.of(page, size);
-            Page<ProductDTO> products = productService.findByProductNameContainingIgnoreCase(productName, pageable);
+            Page<ProductCard> products = productService.searchProductCardsByName(productName, pageable);
 
             Map<String, Object> data = new HashMap<>();
             data.put("items", products.getContent());
@@ -191,6 +192,7 @@ public ResponseEntity<ApiResponse<Map<String, Object>>> getProductsByBrandPaged(
                     )
             );
         } catch (Exception e) {
+            logger.error("Error searching products by name: {}", productName, e);
             return ResponseEntity.badRequest().body(
                     new ApiResponse<>(
                             ApiResponseStatus.BAD_REQUEST_CODE,

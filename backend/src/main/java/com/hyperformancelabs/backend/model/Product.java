@@ -48,4 +48,17 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private Set<ProductVariant> productVariants = new HashSet<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Product product = (Product) o;
+        return productId != null && productId.equals(product.productId);
+    }
+
+    @Override
+    public int hashCode() {
+        return productId != null ? productId.hashCode() : 0;
+    }
 }

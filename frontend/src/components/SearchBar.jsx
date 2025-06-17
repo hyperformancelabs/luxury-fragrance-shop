@@ -1,3 +1,4 @@
+import { Search } from "lucide-react";
 import React, { useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 
@@ -54,7 +55,7 @@ const SearchBar = ({
           type="submit"
           className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center"
         >
-          {/* SVG search icon */}
+          <Search className="w-5 h-5" />
         </button>
       </form>
       {showDropdown && searchQuery.trim() && (loading || results.length > 0) && (
@@ -68,10 +69,10 @@ const SearchBar = ({
           {results.length > 0 && (
             <ul className="max-h-72 overflow-y-auto">
               {results.map((item) => (
-                <li key={item.id}>
+                <li key={item.productId}>
                   <Link
-                    to={`/products/${item.id}`}
-                    onClick={onResultClick}
+                    to={`/products/${item.productId}`}
+                    onClick={() => onResultClick(item.productId)}
                     className="flex items-center px-4 py-2 hover:bg-gray-50 transition"
                   >
                     <img

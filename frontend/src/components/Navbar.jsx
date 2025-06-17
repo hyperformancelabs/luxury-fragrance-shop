@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   Search,
+  SearchIcon,
 } from "lucide-react";
 import { useWishlist } from "../context/WishlistContext";
 import SearchBar from "./SearchBar";
@@ -65,7 +66,7 @@ const Navbar = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?keyword=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/search?name=${encodeURIComponent(searchQuery.trim())}`);
       setShowMobileSearch(false); // ẩn search mobile nếu cần
       setResults([]); // ẩn dropdown luôn cho gọn
     }
@@ -82,8 +83,8 @@ const Navbar = () => {
         const res = await axios.get(
           `http://localhost:8080/api/v1/products/search?name=${encodeURIComponent(query)}`
         );
-        setResults(res.data.data.content); // tuỳ API trả gì
-      console.log(res.data.data.content)
+        setResults(res.data.data.items || []);
+      console.log(res.data.data.items)
       } catch (err) {
         setResults([]);
       } finally {
@@ -98,7 +99,16 @@ const Navbar = () => {
     const value = e.target.value;
     setSearchQuery(value);
     fetchProducts(value);
+    setShowDropdown(true);
     console.log(value)
+  };
+
+  // Handle click on search result
+  const handleResultClick = () => {
+    setShowDropdown(false);
+    setResults([]);
+    setSearchQuery("");
+    // Removed navigate call, Link component in SearchBar now handles navigation
   };
 
   const cartTotal = (user ? cartItems : localCart).reduce(
@@ -353,28 +363,25 @@ const Navbar = () => {
               </Link>
             </div>
             <SearchBar
-        searchQuery={searchQuery}
-        handleSearchChange={handleSearchChange}
-        handleSearchSubmit={handleSearchSubmit}
-        results={results}
-        loading={loading}
-        onResultClick={() => {
-          setShowDropdown(false);
-          setResults([]);
-        }}
-        showDropdown={showDropdown}
-        setShowDropdown={setShowDropdown}
-        className="md:w-96"
-      />
+              searchQuery={searchQuery}
+              handleSearchChange={handleSearchChange}
+              handleSearchSubmit={handleSearchSubmit}
+              results={results}
+              loading={loading}
+              onResultClick={handleResultClick}
+              showDropdown={showDropdown}
+              setShowDropdown={setShowDropdown}
+              className="md:w-96"
+            />
 
-      <div className="lg:hidden flex items-center ml-2">
-        <button
-          onClick={() => setShowMobileSearch(!showMobileSearch)}
-          className="text-gray-600 focus:outline-none"
-        >
-          <Search className="w-5 h-5" />
-        </button>
-      </div>
+            <div className="lg:hidden flex items-center ml-2">
+              <button
+                onClick={() => setShowMobileSearch(!showMobileSearch)}
+                className="text-gray-600 focus:outline-none"
+              >
+                <SearchIcon className="w-5 h-5" />
+              </button>
+            </div>
 
             <div className="flex items-center space-x-4 md:space-x-8">
               <Link
@@ -633,7 +640,7 @@ const Navbar = () => {
                   </div>
                 )}
               </div>
-
+  
               <Link
                 to="/wishlist"
                 className="flex flex-col items-center text-gray-700 relative"
@@ -659,8 +666,8 @@ const Navbar = () => {
                   <span className="text-xs mt-1 hidden sm:block">Giỏ hàng</span>
                 </Link>
 
-                {showCartPopup && (
-                  <div
+                {showCartPopup && (  
+                  <div 
                     className="absolute right-0 top-full bg-white border border-gray-200 shadow-lg z-50 w-80 rounded-md"
                     ref={cartPopupRef}
                   >

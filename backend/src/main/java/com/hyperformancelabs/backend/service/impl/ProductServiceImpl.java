@@ -41,26 +41,46 @@ public class ProductServiceImpl implements ProductService {
     private ProductVariantRepository productVariantRepository;
 
     private ProductDTO convertToDTO(Product product) {
+        if (product == null) {
+            logger.error("convertToDTO called with null product");
+            return null;
+        }
         ProductDTO dto = new ProductDTO();
         dto.setProductId(product.getProductId());
-        dto.setBrandName(product.getBrand().getBrandName());
+        if (product.getBrand() == null) {
+            logger.warn("Product with ID {} has null brand", product.getProductId());
+            dto.setBrandName(null);
+        } else {
+            dto.setBrandName(product.getBrand().getBrandName());
+        }
         dto.setProductName(product.getProductName());
         dto.setDescription(product.getDescription());
-        if (!product.getProductVariants().isEmpty()) {
-            ProductVariant firstVariant = product.getProductVariants().iterator().next();
-            dto.setVolume(firstVariant.getVolume());
-            dto.setPrice(firstVariant.getPrice());
-            dto.setDiscountPrice(firstVariant.getDiscountPrice());
-            dto.setQuantityInStock(firstVariant.getQuantityInStock());
-            dto.setReorderLevel(firstVariant.getReorderLevel());
-        } else {
+        if (product.getProductVariants() == null || product.getProductVariants().isEmpty()) {
+            logger.warn("Product with ID {} has no variants", product.getProductId());
             dto.setVolume(null);
             dto.setPrice(null);
             dto.setDiscountPrice(null);
             dto.setQuantityInStock(0);
             dto.setReorderLevel(null);
+        } else {
+            ProductVariant firstVariant = product.getProductVariants().iterator().next();
+            if (firstVariant == null) {
+                logger.warn("Product with ID {} has a null variant in its variants set", product.getProductId());
+                dto.setVolume(null);
+                dto.setPrice(null);
+                dto.setDiscountPrice(null);
+                dto.setQuantityInStock(0);
+                dto.setReorderLevel(null);
+            } else {
+                dto.setVolume(firstVariant.getVolume());
+                dto.setPrice(firstVariant.getPrice());
+                dto.setDiscountPrice(firstVariant.getDiscountPrice());
+                dto.setQuantityInStock(firstVariant.getQuantityInStock());
+                dto.setReorderLevel(firstVariant.getReorderLevel());
+            }
         }
         dto.setImageUrl(product.getImageUrl());
+        logger.info("Converted product ID {} to DTO", product.getProductId());
         return dto;
     }
 
@@ -96,6 +116,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public Page<ProductDTO> findByProductNameContainingIgnoreCase(String productName, Pageable pageable) {
         Page<Product> productPage = productRepository.findByProductNameContainingIgnoreCase(productName, pageable);
         return productPage.map(this::convertToDTO);
@@ -453,5 +474,23 @@ public class ProductServiceImpl implements ProductService {
                 );
             })
             .collect(Collectors.toList());
+    }
+
+    // --- NEW: Search ProductCard by name (for /search API) ---
+    public Page<ProductCard> searchProductCardsByName(String productName, Pageable pageable) {
+        Page<Product> productPage = productRepository.findByProductNameContainingIgnoreCase(productName, pageable);
+        return productPage.map(product -> {
+            List<VolumePriceDTO> volumePrices = product.getProductVariants().stream()
+                .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice()))
+                .collect(Collectors.toList());
+            return new ProductCard(
+                product.getProductId(),
+                product.getProductName(),
+                product.getImageUrl(),
+                volumePrices,
+                product.getBrand() != null ? product.getBrand().getBrandName() : null,
+                product.getBrand() != null ? product.getBrand().getCountryOfOrigin() : null
+            );
+        });
     }
 }

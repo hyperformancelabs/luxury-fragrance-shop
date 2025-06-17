@@ -40,4 +40,17 @@ public class Brand {
 
     @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL)
     private Set<Product> products = new HashSet<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Brand brand = (Brand) o;
+        return brandId != null && brandId.equals(brand.brandId);
+    }
+
+    @Override
+    public int hashCode() {
+        return brandId != null ? brandId.hashCode() : 0;
+    }
 }

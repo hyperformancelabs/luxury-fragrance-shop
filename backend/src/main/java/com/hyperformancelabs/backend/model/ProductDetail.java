@@ -31,4 +31,17 @@ public class ProductDetail {
 
     @Column(name = "note", columnDefinition = "NVARCHAR(MAX)")
     private String note;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ProductDetail that = (ProductDetail) o;
+        return productDetailId != null && productDetailId.equals(that.productDetailId);
+    }
+
+    @Override
+    public int hashCode() {
+        return productDetailId != null ? productDetailId.hashCode() : 0;
+    }
 }
