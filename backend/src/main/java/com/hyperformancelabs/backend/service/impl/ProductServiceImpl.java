@@ -160,8 +160,8 @@ public class ProductServiceImpl implements ProductService {
                     .map(variant -> new VolumePriceDTO(
                             variant.getProductVariantId(),
                             variant.getVolume(),
-                            variant.getPrice()
-
+                            variant.getPrice(),
+                            variant.getQuantityInStock()
                     ))
                     .collect(Collectors.toList());
 
@@ -205,7 +205,8 @@ public class ProductServiceImpl implements ProductService {
                     .map(variant -> new VolumePriceDTO(
                             variant.getProductVariantId(),
                             variant.getVolume(),
-                            variant.getPrice()
+                            variant.getPrice(),
+                            variant.getQuantityInStock()
                     ))
                     .collect(Collectors.toList());
 
@@ -258,7 +259,7 @@ public class ProductServiceImpl implements ProductService {
         List<ProductCard> response = new ArrayList<>();
         for (Product product : products) {
             List<VolumePriceDTO> volumePrices = product.getProductVariants().stream()
-                    .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice()))
+                    .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice(), v.getQuantityInStock()))
                     .collect(Collectors.toList());
 
             ProductCard card = new ProductCard(
@@ -303,7 +304,8 @@ public class ProductServiceImpl implements ProductService {
                     .map(variant -> new VolumePriceDTO(
                             variant.getProductVariantId(),
                             variant.getVolume(),
-                            variant.getPrice()))
+                            variant.getPrice(),
+                            variant.getQuantityInStock()))
                     .collect(Collectors.toList());
 
             return new ProductDetailDTO(
@@ -345,8 +347,8 @@ public class ProductServiceImpl implements ProductService {
                     .map(variant -> new VolumePriceDTO(
                             variant.getProductVariantId(),
                             variant.getVolume(),
-                            variant.getPrice()
-                    ))
+                            variant.getPrice(),
+                            variant.getQuantityInStock()))
                     .collect(Collectors.toList());
 
             Product product = variants.get(0).getProduct();
@@ -420,7 +422,7 @@ public class ProductServiceImpl implements ProductService {
         // Build ProductCard list
         return grouped.entrySet().stream().map(entry -> {
             List<VolumePriceDTO> vp = entry.getValue().stream()
-                .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice()))
+                .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice(), v.getQuantityInStock()))
                 .collect(Collectors.toList());
             Product p = entry.getValue().get(0).getProduct();
             return new ProductCard(p.getProductId(), p.getProductName(), p.getImageUrl(), vp,p.getBrand().getBrandName() ,p.getBrand().getCountryOfOrigin());
@@ -439,7 +441,7 @@ public class ProductServiceImpl implements ProductService {
         List<ProductCard> response = new ArrayList<>();
         for (Product product : products) {
             List<VolumePriceDTO> volumePrices = product.getProductVariants().stream()
-                .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice()))
+                .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice(), v.getQuantityInStock()))
                 .collect(Collectors.toList());
             ProductCard card = new ProductCard(
                 product.getProductId(),
@@ -462,7 +464,7 @@ public class ProductServiceImpl implements ProductService {
             .limit(10)
             .map(product -> {
                 List<VolumePriceDTO> volumePrices = product.getProductVariants().stream()
-                    .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice()))
+                    .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice(), v.getQuantityInStock()))
                     .collect(Collectors.toList());
                 return new ProductCard(
                     product.getProductId(),
@@ -481,7 +483,7 @@ public class ProductServiceImpl implements ProductService {
         Page<Product> productPage = productRepository.findByProductNameContainingIgnoreCase(productName, pageable);
         return productPage.map(product -> {
             List<VolumePriceDTO> volumePrices = product.getProductVariants().stream()
-                .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice()))
+                .map(v -> new VolumePriceDTO(v.getProductVariantId(), v.getVolume(), v.getPrice(), v.getQuantityInStock()))
                 .collect(Collectors.toList());
             return new ProductCard(
                 product.getProductId(),

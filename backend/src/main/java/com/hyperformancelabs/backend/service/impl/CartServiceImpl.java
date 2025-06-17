@@ -55,22 +55,24 @@ public class CartServiceImpl implements CartService {
 
         CartItem cartItem;
 
+        int finalQuantity = request.getQuantity();
         if (optionalCartItem.isPresent()) {
             cartItem = optionalCartItem.get();
-            cartItem.setQuantity(cartItem.getQuantity() + request.getQuantity());
-            if (request.getNote() != null) {
-                cartItem.setNote(request.getNote());
-            }
+            finalQuantity += cartItem.getQuantity();
         } else {
             cartItem = new CartItem();
             cartItem.setCart(cart);
             cartItem.setProductVariant(productVariant);
-            cartItem.setQuantity(request.getQuantity());
             cartItem.setUnitPrice(productVariant.getPrice());
             cartItem.setNote(request.getNote());
             cartItem.setIsSelected(true);
         }
 
+        if (finalQuantity > productVariant.getQuantityInStock()) {
+            throw new IllegalArgumentException("Số lượng sản phẩm trong kho không đủ cho yêu cầu của bạn. Còn lại: " + productVariant.getQuantityInStock());
+        }
+
+        cartItem.setQuantity(finalQuantity);
         cartItemRepository.save(cartItem);
 
         BigDecimal total = cartItemRepository.findAllByCart(cart).stream()
@@ -128,11 +130,14 @@ public class CartServiceImpl implements CartService {
         CartItem item = cartItemRepository.findByCartAndProductVariant(cart, variant)
                 .orElseThrow(() -> new RuntimeException("Cart item not found"));
 
-        if (request.getNewQuantity() > 0) {
+        if (request.getNewQuantity() <= 0) {
+            cartItemRepository.delete(item);
+        } else {
+            if (request.getNewQuantity() > variant.getQuantityInStock()) {
+                throw new IllegalArgumentException("Số lượng sản phẩm trong kho không đủ cho yêu cầu của bạn. Còn lại: " + variant.getQuantityInStock());
+            }
             item.setQuantity(request.getNewQuantity());
             cartItemRepository.save(item);
-        } else {
-            cartItemRepository.delete(item);
         }
 
 
@@ -204,13 +209,22 @@ public class CartServiceImpl implements CartService {
 
         CartItem cartItem = cartItemRepository.findByCartAndProductVariant(cart, productVariant).orElse(null);
 
+        int finalQuantity = quantity;
         if (cartItem != null) {
-            cartItem.setQuantity(cartItem.getQuantity() + quantity);
+            finalQuantity += cartItem.getQuantity();
+        }
+
+        if (finalQuantity > productVariant.getQuantityInStock()) {
+            throw new IllegalArgumentException("Số lượng sản phẩm trong kho không đủ cho yêu cầu của bạn. Còn lại: " + productVariant.getQuantityInStock());
+        }
+
+        if (cartItem != null) {
+            cartItem.setQuantity(finalQuantity);
         } else {
             cartItem = new CartItem();
             cartItem.setCart(cart);
             cartItem.setProductVariant(productVariant);
-            cartItem.setQuantity(quantity);
+            cartItem.setQuantity(finalQuantity);
             cartItem.setUnitPrice(productVariant.getPrice());
             cartItem.setIsSelected(true);
         }

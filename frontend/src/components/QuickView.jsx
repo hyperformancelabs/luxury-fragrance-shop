@@ -96,11 +96,12 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
       volume: variant.volume,
       note: `Size ${variant.volume}ml`,
       selectedSize: selectedSize,
+      quantityInStock: variant.quantityInStock,
     };
 
     if (user) {
       addToCart(item);
-      toast.success(SuccessMessages.ADD_TO_CART_SUCCESS);
+      // toast.success(SuccessMessages.ADD_TO_CART_SUCCESS);
       handleClosePopup();
     } else {
       const isProductInCart = localCart.some(
@@ -118,7 +119,7 @@ const QuickView = ({ selectedProduct, handleClosePopup }) => {
               : product
           )
         );
-        toast.success(SuccessMessages.UPDATE_CART_SUCCESS);
+        // toast.success(SuccessMessages.UPDATE_CART_SUCCESS);
       } else {
         setLocalCart((prevCart) => [...prevCart, item]);
         toast.success(SuccessMessages.ADD_TO_CART_LOCAL_SUCCESS);

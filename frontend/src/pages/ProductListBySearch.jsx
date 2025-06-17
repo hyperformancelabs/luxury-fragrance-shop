@@ -203,7 +203,11 @@ const ProductListBySearch = ({ keyword: defaultKeyword = "" }) => {
                       onError={(e) => { e.target.src = "/stamp.png"; }}
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 flex justify-center items-center transition-opacity opacity-0 group-hover:opacity-100">
-                      <button className="bg-white p-2 rounded-full" onClick={(e) => { e.stopPropagation(); handleQuickView(product); }}>
+                      <button className="bg-white p-2 rounded-full" onClick={(e) => {
+                        e.stopPropagation();
+                        console.log("Product passed to QuickView:", product);
+                        handleQuickView(product);
+                      }}>
                         <Eye size={20} />
                       </button>
                     </div>

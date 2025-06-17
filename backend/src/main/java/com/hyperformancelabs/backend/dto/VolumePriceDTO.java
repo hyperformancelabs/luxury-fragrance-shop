@@ -6,11 +6,13 @@ public class VolumePriceDTO {
     private Integer productVariantId;
     private Integer volume;
     private BigDecimal price;
+    private Integer quantityInStock;
 
-    public VolumePriceDTO(Integer productVariantId, Integer volume, BigDecimal price) {
+    public VolumePriceDTO(Integer productVariantId, Integer volume, BigDecimal price, Integer quantityInStock) {
         this.productVariantId = productVariantId;
         this.volume = volume;
         this.price = price;
+        this.quantityInStock = quantityInStock;
     }
 
     public Integer getProductVariantId() {
@@ -35,5 +37,13 @@ public class VolumePriceDTO {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public Integer getQuantityInStock() {
+        return quantityInStock;
+    }
+
+    public void setQuantityInStock(Integer quantityInStock) {
+        this.quantityInStock = quantityInStock;
     }
 }
