@@ -1134,23 +1134,31 @@ const Dashboard = () => {
                   </div>
                 ) : (
                   lowStockProducts.map((item, index) => (
-                    <div key={index} className="p-3 hover:bg-gray-50 rounded-lg">
+                    <div key={index} className="py-1.5 px-2.5 hover:bg-gray-50 rounded-lg">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-                          <AlertCircle size={20} className="text-red-500" />
+                        <div className="w-7 h-7 bg-red-100 rounded-lg flex items-center justify-center mr-2.5">
+                          <AlertCircle size={14} className="text-red-500" />
                         </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-800">{item.brandName} {item.productName} {item.volume}ml</h4>
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-sm text-gray-500">Ngưỡng: {item.reorderLevel}</span>
-                            <span className="text-sm font-medium text-red-600">Còn lại: {item.quantityInStock}</span>
-                          </div>
-                          {/* Progress bar showing stock level relative to threshold */}
-                          <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                            <div 
-                              className="bg-red-500 h-1.5 rounded-full" 
-                              style={{ width: `${Math.min(100, (item.quantityInStock / item.reorderLevel) * 100)}%` }}
-                            ></div>
+                                                  <div className="flex-1 min-w-0">
+                            <div className="mb-1">
+                              <h4 className="font-medium text-gray-800 truncate">{item.brandName} {item.productName} {item.volume}ml</h4>
+                            </div>
+                          
+                          <div className="text-xs text-gray-500 mb-0.5 line-clamp-1">Ngưỡng: {item.reorderLevel}</div>
+                          
+                          {/* Stock level progress bar */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 mr-2">
+                              <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                <div 
+                                  className="bg-red-500 h-1.5 rounded-full" 
+                                  style={{ width: `${Math.min(100, (item.quantityInStock / item.reorderLevel) * 100)}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-600 font-medium">
+                              {item.quantityInStock}/{item.reorderLevel}
+                            </span>
                           </div>
                         </div>
                       </div>

@@ -132,13 +132,15 @@ const AutocompleteInput = ({
         setSuggestions(results);
         setHasExactMatch(response.data.data.hasExactMatch || false);
         
-        // If there's an exact match, select it automatically
+        // If there's an exact match, we'll store it but NOT automatically select it
+        // This prevents the field from losing focus when typing an exact match
         if (response.data.data.hasExactMatch && results.length > 0) {
           const exactMatch = results.find(item => 
             item[displayField].toLowerCase() === query.toLowerCase());
-          if (exactMatch) {
-            setSelectedItem(exactMatch);
-          }
+          // Don't auto-select - let the user explicitly choose from dropdown
+          // if (exactMatch) {
+          //   setSelectedItem(exactMatch);
+          // }
         }
       } else {
         setSuggestions([]);

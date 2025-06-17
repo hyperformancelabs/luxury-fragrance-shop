@@ -1985,6 +1985,12 @@ const Products = () => {
     fetchProducts();
   };
 
+  // ===== NEW: helper to open brand creation modal from autocomplete =====
+  const handleCreateBrand = (brandName) => {
+    setNewBrandName(brandName);
+    setShowBrandForm(true);
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <Toaster position="top-right" />
@@ -2000,7 +2006,7 @@ const Products = () => {
           brands={brands}
           loadingBrands={loadingBrands}
           productToEdit={productToEdit}
-          onAddBrand={() => setShowBrandForm(true)}
+          onCreateBrand={handleCreateBrand}
         />
       )}
       
@@ -2011,7 +2017,11 @@ const Products = () => {
       {showBrandForm && (
         <BrandFormModal
           isOpen={showBrandForm}
-          onClose={() => setShowBrandForm(false)}
+          onClose={() => {
+            setShowBrandForm(false);
+            setNewBrandName('');
+          }}
+          initialData={{ brandName: newBrandName }}
           onSubmit={(brandData) => {
             // Submit brand creation
             axios.post('http://localhost:8080/api/v1/emp/brands', brandData)
@@ -2027,6 +2037,7 @@ const Products = () => {
                 });
                 toast.success(`Đã tạo thương hiệu "${brandData.brandName}" thành công`);
                 setShowBrandForm(false);
+                setNewBrandName('');
               }
             })
             .catch(error => {
@@ -2397,28 +2408,23 @@ const Products = () => {
         {!loading && !error && products.length > 0 && (
           <div className="px-4 py-3 flex flex-col md:flex-row md:justify-between border-t gap-3">
             <div className="flex items-center text-sm text-gray-500 flex-wrap gap-2">
-              <span>
-                Hiển thị {products.length > 0 ? page * pageSize + 1 : 0}-
-                {Math.min((page + 1) * pageSize, totalItems)} trong {totalItems} sản phẩm
-              </span>
-              <div className="flex items-center space-x-1">
-                <span className="text-sm text-gray-700">Hiển thị:</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setPage(0); // Reset về trang đầu khi thay đổi số item mỗi trang
-                  }}
-                  className="px-1 py-1 text-sm border rounded"
-                >
-                  {[10, 20, 50, 100, 200, 300, 500, 1000].map(size => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                  <option value={totalItems}>Tất cả</option>
-                </select>
-              </div>
+              <span>Hiển thị</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(0); // Reset về trang đầu khi thay đổi số item mỗi trang
+                }}
+                className="px-1 py-1 text-sm border rounded"
+              >
+                {[10, 20, 50, 100, 200, 300, 500, 1000].map(size => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+                <option value={totalItems}>Tất cả</option>
+              </select>
+              <span>mỗi trang trong {totalItems} sản phẩm</span>
             </div>
             
             <div className="flex justify-between md:justify-end items-center space-x-2">
