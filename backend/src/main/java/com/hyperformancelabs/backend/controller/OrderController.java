@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.hyperformancelabs.backend.exception.ErrorMessage.*;
+
 @RestController
 @RequestMapping("/orders")
 @RequiredArgsConstructor
@@ -135,7 +137,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getOrderStatus(@PathVariable Integer orderId) {
         try {
             Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Order not found"));
+                    .orElseThrow(() -> new RuntimeException(ORDER_NOT_FOUND + orderId));
 
             Map<String, Object> status = new HashMap<>();
             status.put("orderId", order.getOrderId());

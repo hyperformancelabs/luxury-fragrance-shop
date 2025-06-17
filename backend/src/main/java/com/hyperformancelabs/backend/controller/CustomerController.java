@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static com.hyperformancelabs.backend.exception.ErrorMessage.*;
+
 @RestController
 @RequestMapping("/customers")
 public class CustomerController {

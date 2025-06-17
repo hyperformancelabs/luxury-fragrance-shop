@@ -71,10 +71,10 @@ public class OrderServiceImpl implements OrderService {
         for (CartItem cartItem : selectedItems) {
 
             ProductVariant productVariant = productVariantRepository.findById(cartItem.getProductVariant().getProductVariantId())
-                    .orElseThrow(() -> new NotFoundException("Product Variant not found"));
+                    .orElseThrow(() -> new NotFoundException(PRODUCT_VARIANT_NOT_FOUND));
 
             if (productVariant.getQuantityInStock() < cartItem.getQuantity()) {
-                throw new BadRequestException("Số lượng tồn kho không đủ cho sản phẩm: " + productVariant.getProductVariantId());
+                throw new BadRequestException(INSUFFICIENT_STOCK + productVariant.getProductVariantId());
             }
 
             productVariant.setQuantityInStock(productVariant.getQuantityInStock() - cartItem.getQuantity());
@@ -180,7 +180,7 @@ public class OrderServiceImpl implements OrderService {
                     .orElseThrow(() -> new NotFoundException(PRODUCT_NOT_FOUND + item.getProductVariantId()));
 
             if (variant.getQuantityInStock() < item.getQuantity()) {
-                throw new BadRequestException("Số lượng tồn kho không đủ cho sản phẩm: " + variant.getProductVariantId());
+                throw new BadRequestException(INSUFFICIENT_STOCK + variant.getProductVariantId());
             }
 
             variant.setQuantityInStock(variant.getQuantityInStock() - item.getQuantity());

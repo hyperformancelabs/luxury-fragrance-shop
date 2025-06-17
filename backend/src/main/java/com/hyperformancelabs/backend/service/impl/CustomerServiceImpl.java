@@ -21,6 +21,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+import static com.hyperformancelabs.backend.exception.ErrorMessage.*;
+
 @Service
 public class CustomerServiceImpl implements CustomerService {
 
@@ -42,13 +44,13 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public CustomerResponseDTO register(RegisterRequest request) {
         if (customerRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username đã tồn tại");
+            throw new RuntimeException(USERNAME_EXISTS);
         }
         if (customerRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email đã tồn tại");
+            throw new RuntimeException(EMAIL_EXISTS);
         }
         if (customerRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new RuntimeException("Số điện thoại đã tồn tại");
+            throw new RuntimeException(PHONE_EXISTS);
         }
 
         Customer customer = new Customer();
@@ -87,10 +89,10 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public Customer login(LoginRequest request) {
         Customer customer = customerRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Tên đăng nhập không tồn tại"));
+                .orElseThrow(() -> new RuntimeException(USERNAME_NOT_FOUND));
 
         if (!passwordEncoder.matches(request.getPassword(), customer.getPassword())) {
-            throw new RuntimeException("Mật khẩu không chính xác");
+            throw new RuntimeException(PASSWORD_INCORRECT);
         }
 
         return customer;
@@ -105,7 +107,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public Customer getCustomerByUsername(String username) {
         return customerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
     }
 
     public CustomerProfile getCustomerProfile(String username) {
@@ -136,7 +138,7 @@ public class CustomerServiceImpl implements CustomerService {
         Customer customer = getCustomerByUsername(username);
 
         if (!passwordEncoder.matches(oldPassword, customer.getPassword())) {
-            throw new RuntimeException("Mật khẩu cũ không chính xác");
+            throw new RuntimeException(OLD_PASSWORD_INCORRECT);
         }
 
         customer.setPassword(passwordEncoder.encode(newPassword));

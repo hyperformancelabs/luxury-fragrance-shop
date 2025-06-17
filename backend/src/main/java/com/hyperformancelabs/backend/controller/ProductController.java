@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static com.hyperformancelabs.backend.exception.ErrorMessage.*;
 
 @RestController
 @RequestMapping("/products")

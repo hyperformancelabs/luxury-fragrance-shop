@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.hyperformancelabs.backend.exception.ErrorMessage.*;
+
 @RestController
 @RequestMapping("/carts")
 public class CartController {
@@ -47,7 +49,7 @@ public class CartController {
         String username = authentication.getName();
 
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new RuntimeException(CUSTOMER_NOT_FOUND));
 
         try {
             cartService.addProductToCart(customer, request);
@@ -67,7 +69,7 @@ public class CartController {
         String username = authentication.getName();
 
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new RuntimeException(CUSTOMER_NOT_FOUND));
 
         List<CartItemResponse> cartItems = cartService.getCartItemsForCustomer(customer);
         return ResponseEntity.ok(cartItems);
@@ -80,7 +82,7 @@ public class CartController {
         String username = auth.getName();
 
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new RuntimeException(CUSTOMER_NOT_FOUND));
 
         cartService.updateCartItemQuantity(customer, request);
         return ResponseEntity.ok("Cart item updated.");
@@ -297,7 +299,7 @@ public class CartController {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new RuntimeException(CUSTOMER_NOT_FOUND));
 
         cartService.syncCartItems(customer, request);
 

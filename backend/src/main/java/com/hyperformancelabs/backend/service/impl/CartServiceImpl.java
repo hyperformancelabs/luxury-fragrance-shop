@@ -1,6 +1,7 @@
 package com.hyperformancelabs.backend.service.impl;
 
 import com.hyperformancelabs.backend.dto.*;
+import com.hyperformancelabs.backend.exception.ErrorMessage;
 import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
 import com.hyperformancelabs.backend.model.*;
 import com.hyperformancelabs.backend.repository.CartItemRepository;
@@ -17,6 +18,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.hyperformancelabs.backend.exception.ErrorMessage.*;
 
 @Service
 public class CartServiceImpl implements CartService {
@@ -38,7 +41,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public void addProductToCart(Customer customer, AddToCartRequest request) {
         ProductVariant productVariant = productVariantRepository.findById(request.getProductVariantId())
-                .orElseThrow(() -> new IllegalArgumentException("Product variant not found"));
+                .orElseThrow(() -> new IllegalArgumentException(PRODUCT_VARIANT_NOT_FOUND));
 
         Cart cart = cartRepository.findByCustomerAndStatus(customer, "active")
                 .orElseGet(() -> {
@@ -69,7 +72,7 @@ public class CartServiceImpl implements CartService {
         }
 
         if (finalQuantity > productVariant.getQuantityInStock()) {
-            throw new IllegalArgumentException("Số lượng sản phẩm trong kho không đủ cho yêu cầu của bạn. Còn lại: " + productVariant.getQuantityInStock());
+            throw new IllegalArgumentException(INSUFFICIENT_STOCK + productVariant.getQuantityInStock());
         }
 
         cartItem.setQuantity(finalQuantity);
@@ -122,19 +125,19 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public void updateCartItemQuantity(Customer customer, UpdateCartItemRequest request) {
         Cart cart = cartRepository.findByCustomerAndStatus(customer, "active")
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
+                .orElseThrow(() -> new RuntimeException(CART_NOT_FOUND));
 
         ProductVariant variant = productVariantRepository.findById(request.getProductVariantId())
-                .orElseThrow(() -> new RuntimeException("Product variant not found"));
+                .orElseThrow(() -> new RuntimeException(PRODUCT_VARIANT_NOT_FOUND));
 
         CartItem item = cartItemRepository.findByCartAndProductVariant(cart, variant)
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+                .orElseThrow(() -> new RuntimeException(CART_ITEM_NOT_FOUND));
 
         if (request.getNewQuantity() <= 0) {
             cartItemRepository.delete(item);
         } else {
             if (request.getNewQuantity() > variant.getQuantityInStock()) {
-                throw new IllegalArgumentException("Số lượng sản phẩm trong kho không đủ cho yêu cầu của bạn. Còn lại: " + variant.getQuantityInStock());
+                throw new IllegalArgumentException(INSUFFICIENT_STOCK + variant.getQuantityInStock());
             }
             item.setQuantity(request.getNewQuantity());
             cartItemRepository.save(item);
@@ -154,16 +157,16 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public void removeItemFromCart(String username, Integer productVariantId) {
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
 
         Cart cart = cartRepository.findTopByCustomerAndStatusOrderByCartIdDesc(customer, "active")
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
+                .orElseThrow(() -> new RuntimeException(CART_NOT_FOUND));
 
         ProductVariant productVariant = productVariantRepository.findById(productVariantId)
-                .orElseThrow(() -> new RuntimeException("Product variant not found"));
+                .orElseThrow(() -> new RuntimeException(PRODUCT_VARIANT_NOT_FOUND));
 
         CartItem cartItem = cartItemRepository.findByCartAndProductVariant(cart, productVariant)
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+                .orElseThrow(() -> new RuntimeException(CART_ITEM_NOT_FOUND));
 
         cartItemRepository.delete(cartItem);
 
@@ -179,10 +182,10 @@ public class CartServiceImpl implements CartService {
 
     public void clearCart(String username) {
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
 
         Cart cart = cartRepository.findTopByCustomerAndStatusOrderByCartIdDesc(customer, "active")
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
+                .orElseThrow(() -> new RuntimeException(CART_NOT_FOUND));
 
         List<CartItem> cartItems = cartItemRepository.findByCart(cart);
         cartItemRepository.deleteAll(cartItems);
@@ -205,7 +208,7 @@ public class CartServiceImpl implements CartService {
                 });
 
         ProductVariant productVariant = productVariantRepository.findById(productVariantId)
-                .orElseThrow(() -> new RuntimeException("Product variant not found"));
+                .orElseThrow(() -> new RuntimeException(PRODUCT_VARIANT_NOT_FOUND));
 
         CartItem cartItem = cartItemRepository.findByCartAndProductVariant(cart, productVariant).orElse(null);
 
@@ -215,7 +218,7 @@ public class CartServiceImpl implements CartService {
         }
 
         if (finalQuantity > productVariant.getQuantityInStock()) {
-            throw new IllegalArgumentException("Số lượng sản phẩm trong kho không đủ cho yêu cầu của bạn. Còn lại: " + productVariant.getQuantityInStock());
+            throw new IllegalArgumentException(INSUFFICIENT_STOCK + productVariant.getQuantityInStock());
         }
 
         if (cartItem != null) {
@@ -239,7 +242,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public List<CartItemDTO> getCartItemsBySession(String sessionId) {
         Cart cart = cartRepository.findTopBySessionIdOrderByCartIdDesc(sessionId)
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
+                .orElseThrow(() -> new RuntimeException(CART_NOT_FOUND));
 
         return cartItemRepository.findByCart(cart).stream()
                 .map(item -> {
@@ -260,13 +263,13 @@ public class CartServiceImpl implements CartService {
     @Override
     public void updateCartItemQuantityBySession(String sessionId, Integer productVariantId, Integer quantity) {
         Cart cart = cartRepository.findTopBySessionIdOrderByCartIdDesc(sessionId)
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
+                .orElseThrow(() -> new RuntimeException(CART_NOT_FOUND));
 
         ProductVariant productVariant = productVariantRepository.findById(productVariantId)
-                .orElseThrow(() -> new RuntimeException("Product variant not found"));
+                .orElseThrow(() -> new RuntimeException(PRODUCT_VARIANT_NOT_FOUND));
 
         CartItem cartItem = cartItemRepository.findByCartAndProductVariant(cart, productVariant)
-                .orElseThrow(() -> new RuntimeException("Item not found in cart"));
+                .orElseThrow(() -> new RuntimeException(CART_ITEM_NOT_FOUND));
 
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
@@ -276,13 +279,13 @@ public class CartServiceImpl implements CartService {
     @Override
     public void removeItemFromCartBySession(String sessionId, Integer productVariantId) {
         Cart cart = cartRepository.findTopBySessionIdOrderByCartIdDesc(sessionId)
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
+                .orElseThrow(() -> new RuntimeException(CART_NOT_FOUND));
 
         ProductVariant productVariant = productVariantRepository.findById(productVariantId)
-                .orElseThrow(() -> new RuntimeException("Product variant not found"));
+                .orElseThrow(() -> new RuntimeException(PRODUCT_VARIANT_NOT_FOUND));
 
         CartItem cartItem = cartItemRepository.findByCartAndProductVariant(cart, productVariant)
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+                .orElseThrow(() -> new RuntimeException(CART_ITEM_NOT_FOUND));
 
         cartItemRepository.delete(cartItem);
         updateCartTotal(cart);
@@ -291,7 +294,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public void clearCartBySession(String sessionId) {
         Cart cart = cartRepository.findTopBySessionIdOrderByCartIdDesc(sessionId)
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
+                .orElseThrow(() -> new RuntimeException(CART_NOT_FOUND));
 
         List<CartItem> items = cartItemRepository.findByCart(cart);
         cartItemRepository.deleteAll(items);
@@ -326,7 +329,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public void mergeSessionCartToCustomer(String sessionId, String username) {
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
 
         Optional<Cart> sessionCartOpt = cartRepository.findTopBySessionIdOrderByCartIdDesc(sessionId);
         if (sessionCartOpt.isEmpty()) return;
@@ -387,7 +390,7 @@ public class CartServiceImpl implements CartService {
 
         for (SyncCartRequest.CartItemData itemData : request.getCartItems()) {
             ProductVariant variant = productVariantRepository.findById(itemData.getProductVariantId())
-                    .orElseThrow(() -> new RuntimeException("Product variant not found"));
+                    .orElseThrow(() -> new RuntimeException(PRODUCT_VARIANT_NOT_FOUND));
 
             Optional<CartItem> existingItemOpt =
                     cartItemRepository.findByCartAndProductVariant(cart, variant);

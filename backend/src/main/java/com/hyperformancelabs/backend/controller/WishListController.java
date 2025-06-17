@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static com.hyperformancelabs.backend.exception.ErrorMessage.*;
+
 @RestController
 @RequestMapping("/wishlist")
 @RequiredArgsConstructor
@@ -41,7 +43,7 @@ public class WishListController {
         String token = authHeader.substring(7);
         String username = jwtUtil.getUsernameFromToken(token);
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new RuntimeException(CUSTOMER_NOT_FOUND));
 
         wishListService.addToWishlist(customer, request);
         return ResponseEntity.ok("Added to wishlist");

@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.hyperformancelabs.backend.exception.ErrorMessage.*;
+
 @Service
 public class WishListServiceImpl implements WishListService {
 
@@ -41,7 +43,7 @@ public class WishListServiceImpl implements WishListService {
     public List<WishListItemResponse> getAllWishlist(String token) {
         String username = jwtUtil.getUsernameFromToken(token);
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new NotFoundException("Customer not found"));
+                .orElseThrow(() -> new NotFoundException(CUSTOMER_NOT_FOUND));
 
         List<WishList> wishlists = wishlistRepository.findByCustomer(customer);
 
@@ -68,7 +70,7 @@ public class WishListServiceImpl implements WishListService {
     @Override
     public void addToWishlist(Customer customer, AddToWishListRequest request) {
         ProductVariant variant = productVariantRepository.findById(request.getProductVariantId())
-                .orElseThrow(() -> new IllegalArgumentException("Product variant not found"));
+                .orElseThrow(() -> new IllegalArgumentException(PRODUCT_VARIANT_NOT_FOUND));
 
         boolean exists = wishlistRepository.existsByCustomerAndProductVariant(customer, variant);
         if (exists) {
@@ -86,7 +88,7 @@ public class WishListServiceImpl implements WishListService {
     public void moveAllToCart(String token) {
         String username = jwtUtil.getUsernameFromToken(token);
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new NotFoundException("Customer not found"));
+                .orElseThrow(() -> new NotFoundException(CUSTOMER_NOT_FOUND));
 
         List<WishList> wishlists = wishlistRepository.findByCustomer(customer);
 
@@ -136,10 +138,10 @@ public class WishListServiceImpl implements WishListService {
     public void removeFromWishlist(String token, Integer productVariantId) {
         String username = jwtUtil.getUsernameFromToken(token);
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new NotFoundException("Customer not found"));
+                .orElseThrow(() -> new NotFoundException(CUSTOMER_NOT_FOUND));
 
         ProductVariant variant = productVariantRepository.findById(productVariantId)
-                .orElseThrow(() -> new NotFoundException("Product variant not found"));
+                .orElseThrow(() -> new NotFoundException(PRODUCT_VARIANT_NOT_FOUND));
 
         Optional<WishList> wishlistItem = wishlistRepository.findByCustomerAndProductVariant(customer, variant);
         wishlistItem.ifPresent(wishlistRepository::delete);
@@ -151,7 +153,7 @@ public class WishListServiceImpl implements WishListService {
     public void clearWishlist(String token) {
         String username = jwtUtil.getUsernameFromToken(token);
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new NotFoundException("Customer not found"));
+                .orElseThrow(() -> new NotFoundException(CUSTOMER_NOT_FOUND));
 
         List<WishList> wishlists = wishlistRepository.findByCustomer(customer);
         wishlistRepository.deleteAll(wishlists);
@@ -162,13 +164,13 @@ public class WishListServiceImpl implements WishListService {
     public void moveItemToCart(String token, Integer productVariantId) {
         String username = jwtUtil.getUsernameFromToken(token);
         Customer customer = customerRepository.findByUsername(username)
-                .orElseThrow(() -> new NotFoundException("Customer not found"));
+                .orElseThrow(() -> new NotFoundException(CUSTOMER_NOT_FOUND));
 
         ProductVariant variant = productVariantRepository.findById(productVariantId)
-                .orElseThrow(() -> new NotFoundException("Product variant not found"));
+                .orElseThrow(() -> new NotFoundException(PRODUCT_VARIANT_NOT_FOUND));
 
         WishList wishlistItem = wishlistRepository.findByCustomerAndProductVariant(customer, variant)
-                .orElseThrow(() -> new NotFoundException("Wishlist item not found"));
+                .orElseThrow(() -> new NotFoundException(WISHLIST_ITEM_NOT_FOUND));
 
         Cart cart = cartRepository.findByCustomerAndStatus(customer, "active")
                 .orElseGet(() -> {

@@ -23,6 +23,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import static com.hyperformancelabs.backend.exception.ErrorMessage.*;
 
 @RestController
 @RequestMapping("/payment")
@@ -48,7 +49,7 @@ public class VnPayController {
     @GetMapping("/vnpay")
     public String createPaymentUrl(@RequestParam Integer orderId, HttpServletRequest request) throws Exception {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new RuntimeException(ORDER_NOT_FOUND + orderId));
 
         return vnPayService.createVnPayPaymentURL(order, request);
     }
@@ -82,7 +83,7 @@ public class VnPayController {
             Integer orderId = Integer.parseInt(vnpOrderInfo.split(":")[1]);
 
             Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Order not found"));
+                    .orElseThrow(() -> new RuntimeException(ORDER_NOT_FOUND + orderId));
 
             Payment payment = new Payment();
             payment.setOrder(order);

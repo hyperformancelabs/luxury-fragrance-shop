@@ -24,6 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static com.hyperformancelabs.backend.exception.ErrorMessage.*;
 
 @Transactional
 @Service
@@ -282,7 +283,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductDetailDTO getProductDetailById(Integer productId) {
         try {
             Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+                    .orElseThrow(() -> new ResourceNotFoundException(PRODUCT_NOT_FOUND + productId));
 
             String brandName = product.getBrand() != null ? product.getBrand().getBrandName() : "Unknown";
 
