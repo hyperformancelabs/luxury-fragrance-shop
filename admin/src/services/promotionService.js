@@ -18,25 +18,41 @@ const promotionService = {
     try {
       console.log('Fetching all promotions');
       
-      const response = await axios.get('http://localhost:8080/api/v1/emp/promotions');
+      // Clear cache before fetching to ensure we get fresh data
+      promotionCache.data = null;
+      
+      // Lấy tất cả khuyến mãi với kích thước trang lớn
+      const response = await axios.get('http://localhost:8080/api/v1/emp/promotions?page=0&size=100');
+      
+      console.log('API Response:', response.data);
       
       // Process the promotion data to convert date arrays to proper date strings
       if (response.data?.data?.promotions) {
-        const processedPromotions = response.data.data.promotions.map(promotion => ({
-          ...promotion,
-          id: promotion.promotionId, // Map promotionId to id for consistency
-          // Convert array date format [2025,7,1] to string "2025-07-01"
-          startDate: Array.isArray(promotion.startDate) ? 
+        const processedPromotions = response.data.data.promotions.map(promotion => {
+          // Chuyển đổi định dạng ngày tháng từ mảng sang chuỗi
+          const formattedStartDate = Array.isArray(promotion.startDate) ? 
             `${promotion.startDate[0]}-${String(promotion.startDate[1]).padStart(2, '0')}-${String(promotion.startDate[2]).padStart(2, '0')}` : 
-            promotion.startDate,
-          endDate: Array.isArray(promotion.endDate) ? 
+            promotion.startDate;
+            
+          const formattedEndDate = Array.isArray(promotion.endDate) ? 
             `${promotion.endDate[0]}-${String(promotion.endDate[1]).padStart(2, '0')}-${String(promotion.endDate[2]).padStart(2, '0')}` : 
-            promotion.endDate
-        }));
+            promotion.endDate;
+            
+          return {
+            ...promotion,
+            id: promotion.promotionId, // Map promotionId to id for consistency
+            startDate: formattedStartDate,
+            endDate: formattedEndDate
+          };
+        });
+        
+        console.log(`Loaded ${processedPromotions.length} promotions from API`);
         return processedPromotions;
       }
       
-      return response.data;
+      // Nếu không có cấu trúc data.promotions, trả về mảng rỗng để tránh lỗi
+      console.warn('Unexpected API response structure:', response.data);
+      return [];
     } catch (error) {
       console.error('Error fetching promotions:', error);
       throw error;
@@ -50,17 +66,24 @@ const promotionService = {
       // Process the promotion data to convert date arrays to proper date strings
       if (response.data?.data) {
         const promotion = response.data.data;
+        
+        // Chuyển đổi định dạng ngày tháng từ mảng sang chuỗi
+        const formattedStartDate = Array.isArray(promotion.startDate) ? 
+          `${promotion.startDate[0]}-${String(promotion.startDate[1]).padStart(2, '0')}-${String(promotion.startDate[2]).padStart(2, '0')}` : 
+          promotion.startDate;
+          
+        const formattedEndDate = Array.isArray(promotion.endDate) ? 
+          `${promotion.endDate[0]}-${String(promotion.endDate[1]).padStart(2, '0')}-${String(promotion.endDate[2]).padStart(2, '0')}` : 
+          promotion.endDate;
+        
         const processedPromotion = {
           ...promotion,
           id: promotion.promotionId, // Map promotionId to id for consistency
-          // Convert array date format [2025,7,1] to string "2025-07-01"
-          startDate: Array.isArray(promotion.startDate) ? 
-            `${promotion.startDate[0]}-${String(promotion.startDate[1]).padStart(2, '0')}-${String(promotion.startDate[2]).padStart(2, '0')}` : 
-            promotion.startDate,
-          endDate: Array.isArray(promotion.endDate) ? 
-            `${promotion.endDate[0]}-${String(promotion.endDate[1]).padStart(2, '0')}-${String(promotion.endDate[2]).padStart(2, '0')}` : 
-            promotion.endDate
+          startDate: formattedStartDate,
+          endDate: formattedEndDate
         };
+        
+        console.log('Processed promotion:', processedPromotion);
         return processedPromotion;
       }
       
@@ -73,7 +96,11 @@ const promotionService = {
 
   createPromotion: async (promotionData) => {
     try {
+      console.log('Creating new promotion with data:', promotionData);
+      
       const response = await axios.post('http://localhost:8080/api/v1/emp/promotions', promotionData);
+      console.log('Create response:', response.data);
+      
       // Clear cache when creating new promotion
       promotionCache.data = null;
       return response.data;
@@ -85,12 +112,42 @@ const promotionService = {
 
   updatePromotion: async (promotionId, promotionData) => {
     try {
-      const response = await axios.put(`http://localhost:8080/api/v1/emp/promotions/${promotionId}`, promotionData);
+      if (!promotionId) {
+        throw new Error('Missing promotion ID for update operation');
+      }
+      
+      console.log(`Updating promotion ID ${promotionId} with data:`, JSON.stringify(promotionData));
+      
+      // Ensure we're using the correct ID format
+      const id = promotionId.toString();
+      
+      // Make sure we're sending the right data format to the API
+      const apiData = {
+        ...promotionData,
+        // Convert empty strings to null for backend
+        description: promotionData.description || null,
+        endDate: promotionData.endDate || null,
+        usageLimit: promotionData.usageLimit === '' ? null : 
+                   (promotionData.usageLimit ? parseInt(promotionData.usageLimit) : null),
+        discountValue: promotionData.discountType === 'free_shipping' ? null : 
+                      (promotionData.discountValue ? parseFloat(promotionData.discountValue) : null)
+      };
+      
+      const response = await axios.put(`http://localhost:8080/api/v1/emp/promotions/${id}`, apiData);
+      console.log('Update response:', response.data);
+      
       // Clear cache when updating promotion
       promotionCache.data = null;
+      
+      // No artificial delay – backend save is synchronous within transaction
+      
       return response.data;
     } catch (error) {
-      console.error('Error updating promotion:', error);
+      console.error(`Error updating promotion ID ${promotionId}:`, error);
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+      }
       throw error;
     }
   },
@@ -181,6 +238,7 @@ const promotionService = {
 
   // Helper functions
   clearCache: () => {
+    console.log('Clearing promotion cache');
     promotionCache = {
       data: null,
       timestamp: null,

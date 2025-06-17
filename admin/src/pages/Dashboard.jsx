@@ -457,12 +457,94 @@ const Dashboard = () => {
     { id: 3, name: 'Chanel Bleu EDP 100ml', stock: 4, threshold: 5 }
   ];
   
-  // Upcoming marketing campaigns
-  const marketingCampaigns = [
-    { id: 1, name: 'Khuyến mãi mùa hè', startDate: '01/05/2025', endDate: '15/05/2025', status: 'Sắp diễn ra' },
-    { id: 2, name: 'Giảm giá cuối tuần', startDate: '16/04/2025', endDate: '18/04/2025', status: 'Sắp diễn ra' }
-  ];
-  
+  // Upcoming marketing campaigns fetched from API
+  const [marketingCampaigns, setMarketingCampaigns] = useState([]);
+  const [loadingMarketing, setLoadingMarketing] = useState(false);
+  const [marketingError, setMarketingError] = useState(null);
+
+  useEffect(() => {
+    const fetchMarketingCampaigns = async () => {
+      setLoadingMarketing(true);
+      setMarketingError(null);
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}/emp/promotions/upcoming?limit=5`, {
+          headers: {
+            'Content-Type': 'application/json',
+            // TODO: Replace with actual auth token retrieval logic
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          }
+        });
+        const json = await response.json();
+        if (response.ok && json?.data) {
+          const today = new Date();
+          // Map raw data to objects with Date instances first
+          const mapped = json.data.map(item => {
+            const startArr = item.startDate;
+            const endArr = item.endDate;
+            const start = startArr ? new Date(startArr[0], startArr[1] - 1, startArr[2]) : null;
+            const end = endArr ? new Date(endArr[0], endArr[1] - 1, endArr[2]) : null;
+
+            let statusLabel = 'Đã kết thúc';
+            if (start && start > today) {
+              statusLabel = 'Sắp diễn ra';
+            } else if (!end || end >= today) {
+              statusLabel = 'Đang diễn ra';
+            }
+
+            // Format dates professionally
+            const formatDate = (date) => {
+              if (!date) return null;
+              return date.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit', 
+                year: 'numeric'
+              });
+            };
+
+            const formatDateRange = (startDate, endDate) => {
+              const startStr = formatDate(startDate);
+              if (!endDate) {
+                return startStr ? `Từ ${startStr}` : 'Không xác định';
+              }
+              const endStr = formatDate(endDate);
+              return `${startStr || 'N/A'} - ${endStr}`;
+            };
+
+            return {
+              id: item.promotionId,
+              name: item.promotionName,
+              dateRange: formatDateRange(start, end),
+              status: statusLabel,
+              rawStart: start,
+              currentUsage: item.currentUsage || 0,
+              usageLimit: item.usageLimit,
+              usagePercentage: item.usagePercentage,
+              timeProgressPercentage: item.timeProgressPercentage
+            };
+          });
+
+          // Sort by newest start date
+          const campaigns = mapped.sort((a, b) => {
+            if (!a.rawStart) return 1;
+            if (!b.rawStart) return -1;
+            return b.rawStart - a.rawStart;
+          });
+
+          setMarketingCampaigns(campaigns);
+        } else {
+          throw new Error(json?.message || 'Lỗi không xác định');
+        }
+      } catch (err) {
+        console.error(err);
+        setMarketingError(err.message);
+      } finally {
+        setLoadingMarketing(false);
+      }
+    };
+
+    fetchMarketingCampaigns();
+  }, []);
+
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="p-6">
@@ -763,7 +845,7 @@ const Dashboard = () => {
                 </button>
               </div>
             </div>
-            <div className="p-3">
+            <div className="p-3 max-h-80 overflow-y-auto">
               {loadingTopProducts ? (
                 <div className="p-6 flex justify-center items-center">
                   <div className="text-gray-500 flex flex-col items-center">
@@ -824,7 +906,7 @@ const Dashboard = () => {
                 </button>
               </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-[512px] overflow-y-auto">
               {loadingRecentOrders ? (
                 <div className="p-6 flex justify-center items-center">
                   <div className="text-gray-500 flex flex-col items-center">
@@ -913,23 +995,107 @@ const Dashboard = () => {
                   </button>
                 </div>
               </div>
-              <div className="p-3">
-                {marketingCampaigns.map((campaign, index) => (
-                  <div key={index} className="p-3 hover:bg-gray-50 rounded-lg">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center mr-3">
-                        <Calendar size={20} className="text-pink-500" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-800">{campaign.name}</h4>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="text-sm text-gray-500">{campaign.startDate} - {campaign.endDate}</span>
-                          <span className="text-sm bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">{campaign.status}</span>
+              <div className="p-3 max-h-80 overflow-y-auto">
+                {loadingMarketing ? (
+                  <div className="p-6 flex justify-center items-center">
+                    <div className="text-gray-500 flex flex-col items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mb-2"></div>
+                      <span>Đang tải dữ liệu...</span>
+                    </div>
+                  </div>
+                ) : marketingError ? (
+                  <div className="p-6 text-center">
+                    <div className="text-red-500 mb-2">
+                      <AlertCircle size={24} className="mx-auto mb-2" />
+                      <p>Không thể tải dữ liệu chiến dịch marketing</p>
+                    </div>
+                    <p className="text-sm text-gray-500">{marketingError}</p>
+                  </div>
+                ) : marketingCampaigns.length === 0 ? (
+                  <div className="p-6 text-center text-gray-500">
+                    <Calendar size={24} className="mx-auto mb-2" />
+                    <p>Không có chiến dịch marketing sắp diễn ra</p>
+                  </div>
+                ) : (
+                  marketingCampaigns.map((campaign, index) => (
+                    <div key={index} className="py-1.5 px-2.5 hover:bg-gray-50 rounded-lg">
+                      <div className="flex items-center">
+                        <div className="w-7 h-7 bg-pink-100 rounded-lg flex items-center justify-center mr-2.5">
+                          <Calendar size={14} className="text-pink-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between mb-1">
+                            <h4 className="font-medium text-gray-800 truncate pr-2">{campaign.name}</h4>
+                            <div>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                                campaign.status === 'Đang diễn ra' ? 'bg-green-100 text-green-700' :
+                                campaign.status === 'Sắp diễn ra' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {campaign.status}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="text-xs text-gray-500 mb-0.5 line-clamp-1">{campaign.dateRange}</div>
+                          
+                          {/* Compact Usage Statistics */}
+                          {campaign.usageLimit && campaign.usagePercentage !== null ? (
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 mr-2">
+                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                  <div 
+                                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                                      campaign.usagePercentage >= 90 ? 'bg-red-500' :
+                                      campaign.usagePercentage >= 60 ? 'bg-yellow-500' :
+                                      'bg-green-500'
+                                    }`}
+                                    style={{ width: `${Math.min(100, campaign.usagePercentage)}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                              <span className="text-xs text-gray-600 font-medium">
+                                {campaign.currentUsage}/{campaign.usageLimit}
+                              </span>
+                            </div>
+                          ) : campaign.timeProgressPercentage !== null && campaign.startDate && campaign.endDate ? (
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 mr-2">
+                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                  <div
+                                    className="bg-blue-400 h-1.5 rounded-full transition-all duration-300"
+                                    style={{ width: `${Math.min(100, campaign.timeProgressPercentage)}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                              <span className="text-xs text-gray-600 font-medium">
+                                {(() => {
+                                  // Calculate days between dates
+                                  const startArr = campaign.startDate;
+                                  const endArr = campaign.endDate;
+                                  const start = startArr ? new Date(startArr[0], startArr[1] - 1, startArr[2]) : new Date();
+                                  const end = endArr ? new Date(endArr[0], endArr[1] - 1, endArr[2]) : new Date();
+                                  const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                                  const daysPassed = Math.floor(totalDays * campaign.timeProgressPercentage / 100);
+                                  return `${daysPassed}/${totalDays} ngày`;
+                                })()}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 mr-2">
+                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                  <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '100%' }}></div>
+                                </div>
+                              </div>
+                              <span className="text-xs text-gray-600 font-medium">{campaign.currentUsage || 0}/∞</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
             
@@ -945,7 +1111,7 @@ const Dashboard = () => {
                   </button>
                 </div>
               </div>
-              <div className="p-3">
+              <div className="p-3 max-h-80 overflow-y-auto">
                 {loadingLowStock ? (
                   <div className="p-6 flex justify-center items-center">
                     <div className="text-gray-500 flex flex-col items-center">
@@ -1009,7 +1175,7 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
-          <div className="p-3">
+          <div className="p-3 max-h-80 overflow-y-auto">
             {loadingTopEmployees ? (
               <div className="p-6 flex justify-center items-center">
                 <div className="text-gray-500 flex flex-col items-center">

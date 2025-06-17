@@ -1,7 +1,7 @@
 -- 1. Insert data into Employee table
 INSERT INTO Employee (username, password, full_name, phone_number, email, address, status, start_date, last_login, date_of_birth, profile_picture_url)
 VALUES
-('vhphat0807', 'admin@123', N'Vũ Hoàng Phát', '708643765', 'vhp08072004@gmail.com', '122 Hoàng Quốc Việt, Cổ Nhuế, Cầu Giấy, Hà Nội', 'active', '2025-03-10', NULL, '2025-04-10', 'https://www.vietcap.com.vn/api/cms-api/uploads/contents/202211/lam-phat-la-gi.jpg'),
+('vhphat0807', 'Admin@123', N'Vũ Hoàng Phát', '708643765', 'vhp08072004@gmail.com', '122 Hoàng Quốc Việt, Cổ Nhuế, Cầu Giấy, Hà Nội', 'active', '2025-03-10', NULL, '2025-04-10', 'https://www.vietcap.com.vn/api/cms-api/uploads/contents/202211/lam-phat-la-gi.jpg'),
 ('yaohu38', 'password@123', N'Phạm Nguyễn Quốc Huy', '701234567', 'sinh.nhat.toi@gmail.com', N'11 Nguyễn Đình Chiểu, Đa Kao, Quận 1, Hồ Chí Minh', 'active', '2023-01-15', '2023-11-20 10:00:00', '1990-05-20', 'https://cafefcdn.com/2019/2/27/photo-1-15512505967251974040600.png'),
 ('lta207', 'secure@pass', N'Lý Trọng Ân', '901234567', 'andeptrai@gmail.com', '97 Man Thiện, Hiệp Phú, Quận 9, Hồ Chí Minh', 'inactive', '2023-02-01', '2024-11-20 11:30:00', '2015-10-10', 'https://cdn.tcdulichtphcm.vn/upload/4-2024/images/2024-10-31/1730343994-dien-vien-thien-an-va-con-gai-2.jpg'),
 ('ntthao01', 'pass@123', N'Nguyễn Thị Thảo', '703456789', 'thao.nguyen@gmail.com', N'55 Lê Văn Việt, Hiệp Phú, Quận 9, Hồ Chí Minh', 'active', '2023-04-12', '2024-03-05 08:20:00', '1998-08-25', 'https://randomuser.me/api/portraits/women/1.jpg'),

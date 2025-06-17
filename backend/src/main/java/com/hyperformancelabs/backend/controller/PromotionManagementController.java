@@ -269,4 +269,17 @@ public class PromotionManagementController {
             return ResponseEntity.badRequest().body(new ApiResponse<>(ApiResponseStatus.BAD_REQUEST_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null));
         }
     }
+
+    // Get upcoming promotions (for dashboard)
+    @GetMapping("/upcoming")
+    @PreAuthorize("hasAuthority('promotion.view')")
+    public ResponseEntity<ApiResponse<java.util.List<PromotionDTO>>> getUpcomingPromotions(@RequestParam(defaultValue = "5") int limit) {
+        try {
+            var list = promotionManagementService.getUpcomingPromotions(limit);
+            return ResponseEntity.ok(new ApiResponse<>(ApiResponseStatus.SUCCESS_CODE, ApiResponseStatus.SUCCESS_STATUS, "Lấy danh sách khuyến mãi sắp diễn ra thành công", list));
+        } catch (Exception e) {
+            logger.error("Error get upcoming promotions", e);
+            return ResponseEntity.internalServerError().body(new ApiResponse<>(ApiResponseStatus.INTERNAL_SERVER_ERROR_CODE, ApiResponseStatus.ERROR_STATUS, e.getMessage(), null));
+        }
+    }
 } 

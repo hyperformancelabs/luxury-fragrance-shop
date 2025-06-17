@@ -132,7 +132,8 @@ public class PromotionManagementServiceImpl implements PromotionManagementServic
             promotion.setEndDate(request.getEndDate());
             promotion.setDiscountType(request.getDiscountType());
             promotion.setDiscountValue(request.getDiscountValue());
-            promotion.setStatus(request.getStatus());
+            // Set default status to 'active' if not specified
+            promotion.setStatus(request.getStatus() != null ? request.getStatus() : "active");
             promotion.setUsageLimit(request.getUsageLimit());
 
             Promotion saved = promotionRepository.save(promotion);
@@ -150,8 +151,12 @@ public class PromotionManagementServiceImpl implements PromotionManagementServic
     public PromotionDTO updatePromotion(Integer promotionId, PromotionUpdateRequest request) {
         try {
             logger.info("Updating promotion with ID: {}", promotionId);
+            logger.info("Update request data: {}", request);
+            
             Promotion promotion = promotionRepository.findById(promotionId)
                     .orElseThrow(() -> new ResourceNotFoundException("Promotion not found with id: " + promotionId));
+
+            logger.info("Found existing promotion: {}", promotion);
 
             // Check duplicate name if changed
             if (request.getPromotionName() != null && !request.getPromotionName().equals(promotion.getPromotionName()) &&
@@ -159,17 +164,56 @@ public class PromotionManagementServiceImpl implements PromotionManagementServic
                 throw new DuplicateResourceException("Promotion with name '" + request.getPromotionName() + "' already exists");
             }
 
-            if (request.getPromotionName() != null) promotion.setPromotionName(request.getPromotionName());
-            if (request.getDescription() != null) promotion.setDescription(request.getDescription());
-            if (request.getStartDate() != null) promotion.setStartDate(request.getStartDate());
-            if (request.getEndDate() != null) promotion.setEndDate(request.getEndDate());
-            if (request.getDiscountType() != null) promotion.setDiscountType(request.getDiscountType());
-            if (request.getDiscountValue() != null) promotion.setDiscountValue(request.getDiscountValue());
-            if (request.getStatus() != null) promotion.setStatus(request.getStatus());
-            if (request.getUsageLimit() != null) promotion.setUsageLimit(request.getUsageLimit());
+            // Track changes for debugging
+            StringBuilder changes = new StringBuilder();
+            
+            if (request.getPromotionName() != null) {
+                changes.append(String.format("Name: '%s' -> '%s', ", promotion.getPromotionName(), request.getPromotionName()));
+                promotion.setPromotionName(request.getPromotionName());
+            }
+            if (request.getDescription() != null) {
+                changes.append(String.format("Description updated, "));
+                promotion.setDescription(request.getDescription());
+            }
+            if (request.getStartDate() != null) {
+                changes.append(String.format("StartDate: '%s' -> '%s', ", promotion.getStartDate(), request.getStartDate()));
+                promotion.setStartDate(request.getStartDate());
+            }
+            if (request.getEndDate() != null || (request.getEndDate() == null && promotion.getEndDate() != null)) {
+                changes.append(String.format("EndDate: '%s' -> '%s', ", promotion.getEndDate(), request.getEndDate()));
+                promotion.setEndDate(request.getEndDate());
+            }
+            if (request.getDiscountType() != null) {
+                changes.append(String.format("DiscountType: '%s' -> '%s', ", promotion.getDiscountType(), request.getDiscountType()));
+                promotion.setDiscountType(request.getDiscountType());
+            }
+            if (request.getDiscountValue() != null) {
+                changes.append(String.format("DiscountValue: '%s' -> '%s', ", promotion.getDiscountValue(), request.getDiscountValue()));
+                promotion.setDiscountValue(request.getDiscountValue());
+            }
+            if (request.getStatus() != null) {
+                changes.append(String.format("Status: '%s' -> '%s', ", promotion.getStatus(), request.getStatus()));
+                promotion.setStatus(request.getStatus());
+            }
+            if (request.getUsageLimit() != null || (request.getUsageLimit() == null && promotion.getUsageLimit() != null)) {
+                changes.append(String.format("UsageLimit: '%s' -> '%s', ", promotion.getUsageLimit(), request.getUsageLimit()));
+                promotion.setUsageLimit(request.getUsageLimit());
+            }
+            
+            logger.info("Changes to apply: {}", changes.toString());
 
+            // Save the updated entity
             Promotion updated = promotionRepository.save(promotion);
-            logger.info("Updated promotion with ID: {}", promotionId);
+            logger.info("Updated promotion saved to database: {}", updated);
+            
+            // Verify the update was successful by reading back from the database
+            Promotion verified = promotionRepository.findById(promotionId).orElse(null);
+            if (verified != null) {
+                logger.info("Verified saved promotion from database: {}", verified);
+            } else {
+                logger.warn("Could not verify saved promotion - not found in database after save!");
+            }
+            
             return PromotionDTO.toDTO(updated);
         } catch (Exception e) {
             logger.error("Error updating promotion with ID: {}", promotionId, e);
@@ -289,6 +333,23 @@ public class PromotionManagementServiceImpl implements PromotionManagementServic
     }
 
     @Override
+    @PreAuthorize("hasAuthority('promotion.view')")
+    @Transactional(readOnly = true)
+    public java.util.List<PromotionDTO> getUpcomingPromotions(int limit) {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        // Ensure statuses are up to date before fetching
+        updatePromotionStatuses();
+
+        java.util.List<Promotion> list = promotionRepository.findActiveAndNotExpired(today);
+
+        if (limit > 0 && list.size() > limit) {
+            list = list.subList(0, limit);
+        }
+
+        return list.stream().map(this::mapToPromotionDTOWithStats).toList();
+    }
+
+    @Override
     public long getUsage(Integer promotionId) {
         return orderPromotionRepository.countByPromotion_PromotionId(promotionId);
     }
@@ -314,21 +375,70 @@ public class PromotionManagementServiceImpl implements PromotionManagementServic
         java.util.List<Promotion> promotions = promotionRepository.findAll();
         for (Promotion p : promotions) {
             if (p.getEndDate() != null && today.isAfter(p.getEndDate())) {
+                // Expired campaigns
                 if (!"expired".equalsIgnoreCase(p.getStatus())) {
                     p.setStatus("expired");
                 }
-            } else if ((p.getStartDate() == null || !today.isBefore(p.getStartDate())) &&
-                    (p.getEndDate() == null || !today.isAfter(p.getEndDate()))) {
-                // within range
+            } else {
+                // All campaigns that have not expired are considered "active"
                 if (!"active".equalsIgnoreCase(p.getStatus())) {
                     p.setStatus("active");
-                }
-            } else {
-                if (!"inactive".equalsIgnoreCase(p.getStatus())) {
-                    p.setStatus("inactive");
                 }
             }
         }
         promotionRepository.saveAll(promotions);
+    }
+
+    private PromotionDTO mapToPromotionDTOWithStats(Promotion promotion) {
+        PromotionDTO dto = PromotionDTO.toDTO(promotion);
+        
+        // Calculate current usage
+        long currentUsage = orderPromotionRepository.countByPromotion_PromotionId(promotion.getPromotionId());
+        dto.setCurrentUsage(currentUsage);
+        
+        // Calculate usage percentage
+        if (promotion.getUsageLimit() != null && promotion.getUsageLimit() > 0) {
+            double usagePercentage = (double) currentUsage / promotion.getUsageLimit() * 100;
+            dto.setUsagePercentage(Math.min(100.0, usagePercentage));
+        } else {
+            dto.setUsagePercentage(null);
+        }
+        
+        // Calculate time progress percentage
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate startDate = promotion.getStartDate();
+        java.time.LocalDate endDate = promotion.getEndDate();
+        
+        if (startDate != null) {
+            if (endDate != null) {
+                // Has both start and end date
+                long totalDays = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate);
+                if (totalDays > 0) {
+                    if (today.isBefore(startDate)) {
+                        dto.setTimeProgressPercentage(0.0);
+                    } else if (today.isAfter(endDate)) {
+                        dto.setTimeProgressPercentage(100.0);
+                    } else {
+                        long daysPassed = java.time.temporal.ChronoUnit.DAYS.between(startDate, today);
+                        double timeProgress = (double) daysPassed / totalDays * 100;
+                        dto.setTimeProgressPercentage(Math.min(100.0, Math.max(0.0, timeProgress)));
+                    }
+                } else {
+                    dto.setTimeProgressPercentage(100.0); // Same day campaign
+                }
+            } else {
+                // No end date - calculate based on days since start
+                if (today.isBefore(startDate)) {
+                    dto.setTimeProgressPercentage(0.0);
+                } else {
+                    // For ongoing campaigns without end date, we can't calculate meaningful progress
+                    dto.setTimeProgressPercentage(null);
+                }
+            }
+        } else {
+            dto.setTimeProgressPercentage(null);
+        }
+        
+        return dto;
     }
 } 

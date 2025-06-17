@@ -17,6 +17,9 @@ public class PromotionDTO {
     private BigDecimal discountValue;
     private String status;
     private Integer usageLimit;
+    private Long currentUsage;
+    private Double usagePercentage;
+    private Double timeProgressPercentage;
 
     public Promotion toEntity() {
         Promotion promotion = new Promotion();

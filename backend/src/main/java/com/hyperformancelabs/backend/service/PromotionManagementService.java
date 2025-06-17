@@ -35,4 +35,7 @@ public interface PromotionManagementService {
     PromotionSalesSummaryDTO getSalesSummary(Integer promotionId, String startDate, String endDate);
 
     long getUsage(Integer promotionId);
+
+    /* Get upcoming promotions (start date after today) with an optional limit */
+    java.util.List<com.hyperformancelabs.backend.dto.PromotionDTO> getUpcomingPromotions(int limit);
 } 

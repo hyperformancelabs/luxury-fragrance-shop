@@ -19,6 +19,7 @@ import promotionService from '../services/promotionService';
 import PromotionFormModal from '../Components/PromotionFormModal';
 import PromotionDetailModal from '../Components/PromotionDetailModal';
 import { PageHeader } from '../Components/common';
+import ConfirmDialog from '../Components/common/ConfirmDialog';
 
 const Marketing = () => {
   // State management
@@ -37,6 +38,7 @@ const Marketing = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [promotionToEdit, setPromotionToEdit] = useState(null);
   const [promotionToView, setPromotionToView] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Lấy ngày hôm nay định dạng yyyy-mm-dd
   const today = new Date().toISOString().split('T')[0];
@@ -93,13 +95,16 @@ const Marketing = () => {
   const loadPromotions = async () => {
     try {
       setLoading(true);
+      promotionService.clearCache();
       const data = await promotionService.getAllPromotions();
       console.log('Loaded promotions data:', data);
       setPromotions(Array.isArray(data) ? data : []);
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Error loading promotions:', error);
       toast.error('Không thể tải danh sách khuyến mãi. Vui lòng thử lại.');
       setPromotions([]);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -159,28 +164,72 @@ const Marketing = () => {
       // Prepare data for API
       const promotionData = {
         ...formData,
+        // Xử lý các trường đặc biệt
+        description: formData.description || null,
+        // Đặt rõ ràng endDate = null nếu trường rỗng
+        endDate: formData.endDate === '' ? null : formData.endDate,
         // Nếu free ship, discountValue = null
         discountValue: formData.discountType === 'free_shipping' ? null : parseFloat(formData.discountValue),
-        usageLimit: formData.usageLimit ? parseInt(formData.usageLimit) : null,
+        // Đặt rõ ràng usageLimit = null nếu trường rỗng
+        usageLimit: formData.usageLimit === '' ? null : (formData.usageLimit ? parseInt(formData.usageLimit) : null),
       };
 
+      console.log('Submitting promotion data:', promotionData);
+
+      let apiResult;
       if (promotionToEdit) {
         // Update existing promotion
-        await promotionService.updatePromotion(promotionToEdit.id, promotionData);
-        toast.success('Cập nhật khuyến mãi thành công!');
-    } else {
+        const promotionId = promotionToEdit.promotionId || promotionToEdit.id;
+        console.log('Updating promotion with ID:', promotionId);
+        if (!promotionId) throw new Error('Missing promotion ID for update operation');
+        apiResult = await promotionService.updatePromotion(promotionId, promotionData);
+        if (apiResult?.status === 'success') {
+          toast.success('Cập nhật khuyến mãi thành công!');
+        } else {
+          toast.error('Cập nhật khuyến mãi thất bại: ' + (apiResult?.message || 'Lỗi không xác định'));
+          return;
+        }
+      } else {
         // Create new promotion
-        await promotionService.createPromotion(promotionData);
-        toast.success('Tạo khuyến mãi thành công!');
+        apiResult = await promotionService.createPromotion(promotionData);
+        if (apiResult?.status === 'success') {
+          toast.success('Tạo khuyến mãi thành công!');
+        } else {
+          toast.error('Tạo khuyến mãi thất bại: ' + (apiResult?.message || 'Lỗi không xác định'));
+          return;
+        }
+      }
+
+      // Optimistic update: if API returns entity, merge into local state immediately
+      if (apiResult?.data) {
+        setPromotions(prev => {
+          const list = promotionToEdit ? prev.map(p => (p.promotionId === apiResult.data.promotionId ? apiResult.data : p))
+                                       : [apiResult.data, ...prev];
+          return list;
+        });
       }
 
       // Reset form and close modal
       resetForm();
       setIsFormModalOpen(false);
-      await loadPromotions();
+      
+      // Làm mới dữ liệu nền để đảm bảo đồng bộ khi cần
+      promotionService.clearCache();
+      const updated = await loadPromotions();
+      // điều hướng về trang trước nếu trang hiện tại không còn dữ liệu
+      const totalPagesAfter = Math.max(1, Math.ceil(updated.length / itemsPerPage));
+      setCurrentPage(prev => Math.min(prev, totalPagesAfter));
     } catch (error) {
       console.error('Error saving promotion:', error);
-      toast.error(promotionToEdit ? 'Không thể cập nhật khuyến mãi' : 'Không thể tạo khuyến mãi');
+      
+      // Xử lý lỗi 409 Conflict (trùng tên)
+      if (error.response && error.response.status === 409) {
+        toast.error(`Tên khuyến mãi "${formData.promotionName}" đã tồn tại, vui lòng chọn tên khác`);
+      } else {
+        toast.error(promotionToEdit ? 
+          `Không thể cập nhật khuyến mãi: ${error.response?.data?.message || error.message}` : 
+          `Không thể tạo khuyến mãi: ${error.response?.data?.message || error.message}`);
+      }
     }
   };
 
@@ -200,7 +249,7 @@ const Marketing = () => {
       endDate: '',
       discountType: 'percentage',
       discountValue: '',
-      status: 'inactive',
+      status: 'active',
       usageLimit: ''
     });
     setPromotionToEdit(null);
@@ -217,11 +266,13 @@ const Marketing = () => {
       promotionName: promotion.promotionName || '',
       description: promotion.description || '',
       startDate: promotion.startDate ? promotion.startDate.split('T')[0] : '',
+      // Để trống chuỗi nếu không có ngày kết thúc để hiển thị đúng trong form
       endDate: promotion.endDate ? promotion.endDate.split('T')[0] : '',
       discountType: promotion.discountType || 'percentage',
       discountValue: promotion.discountValue || '',
-      status: promotion.status || 'inactive',
-      usageLimit: promotion.usageLimit || ''
+      status: promotion.status || 'active',
+      // Để trống chuỗi nếu không có giới hạn sử dụng để hiển thị đúng trong form
+      usageLimit: promotion.usageLimit !== null ? promotion.usageLimit : ''
     });
     setPromotionToEdit(promotion);
     setIsFormModalOpen(true);
@@ -232,35 +283,49 @@ const Marketing = () => {
     setIsDetailModalOpen(true);
   };
 
-  const handleDeletePromotions = async () => {
+  const handleDeletePromotions = () => {
     if (selectedPromotions.length === 0) {
       toast.warning('Vui lòng chọn khuyến mãi cần xóa');
       return;
     }
+    setShowDeleteConfirm(true);
+  };
 
-    if (!window.confirm(`Bạn có chắc muốn xóa ${selectedPromotions.length} khuyến mãi đã chọn?`)) {
-      return;
-    }
-
+  const confirmDeletePromotions = async () => {
     try {
-      await Promise.all(
-        selectedPromotions.map(id => promotionService.deletePromotion(id))
-      );
+      await Promise.all(selectedPromotions.map(id => promotionService.deletePromotion(id)));
       toast.success(`Đã xóa ${selectedPromotions.length} khuyến mãi`);
       setSelectedPromotions([]);
-      await loadPromotions();
+      setShowDeleteConfirm(false);
+      const updated = await loadPromotions();
+      const totalPagesAfter = Math.max(1, Math.ceil(updated.length / itemsPerPage));
+      setCurrentPage(prev => Math.min(prev, totalPagesAfter));
     } catch (error) {
       console.error('Error deleting promotions:', error);
       toast.error('Không thể xóa khuyến mãi');
     }
   };
 
+  const cancelDeletePromotions = () => {
+    setShowDeleteConfirm(false);
+  };
+
+  const clearSelection = () => {
+    setSelectedPromotions([]);
+    setShowDeleteConfirm(false);
+  };
+
   // Table handlers
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedPromotions(filteredPromotions.map(p => p.id));
+  // Toggle select all for current page
+  const handleSelectAll = () => {
+    const pageIds = paginatedPromotions.map(p => p.id);
+    const allSelected = pageIds.every(id => selectedPromotions.includes(id));
+    if (allSelected) {
+      // Unselect only ids of the current page
+      setSelectedPromotions(prev => prev.filter(id => !pageIds.includes(id)));
     } else {
-      setSelectedPromotions([]);
+      // Add missing ids of the current page
+      setSelectedPromotions(prev => Array.from(new Set([...prev, ...pageIds])));
     }
   };
 
@@ -328,8 +393,21 @@ const Marketing = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'Không xác định';
-    return new Date(dateString).toLocaleDateString('vi-VN');
+    if (!dateString) return null;
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const formatDateRange = (startDate, endDate) => {
+    const startStr = formatDate(startDate);
+    if (!endDate) {
+      return startStr ? `Từ ${startStr}` : 'Không xác định';
+    }
+    const endStr = formatDate(endDate);
+    return `${startStr || 'N/A'} - ${endStr}`;
   };
 
   const getStatusBadge = (status) => {
@@ -466,14 +544,14 @@ const Marketing = () => {
 
           {/* Right side - action buttons */}
           <div className="flex items-center space-x-3">
-            <button
-              onClick={handleAddPromotion}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <Plus size={16} className="mr-2" />
-              Thêm khuyến mãi
-            </button>
             {selectedPromotions.length > 0 && (
+              <>
+              <button
+                onClick={clearSelection}
+                className="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
+              >
+                Bỏ chọn tất cả
+              </button>
               <button
                 onClick={handleDeletePromotions}
                 className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
@@ -481,7 +559,15 @@ const Marketing = () => {
                 <Trash2 size={16} className="mr-2" />
                 Xóa ({selectedPromotions.length})
               </button>
+              </>
             )}
+            <button
+              onClick={handleAddPromotion}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <Plus size={16} className="mr-2" />
+              Thêm khuyến mãi
+            </button>
           </div>
         </div>
       </div>
@@ -512,42 +598,30 @@ const Marketing = () => {
     <table className="min-w-full divide-y divide-gray-200">
       <thead className="bg-gray-50">
         <tr>
-                    <th className="px-6 py-3 text-left">
-                      <input
-                        type="checkbox"
-                        checked={selectedPromotions.length === paginatedPromotions.length && paginatedPromotions.length > 0}
-                        onChange={handleSelectAll}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
+          <th className="px-6 py-3 text-left">
+            <input
+              type="checkbox"
+              checked={paginatedPromotions.length>0 && paginatedPromotions.every(p=>selectedPromotions.includes(p.id))}
+              onChange={handleSelectAll}
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
           </th>
-          <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort('promotionName')}
-          >
-                      Tên khuyến mãi
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Tên khuyến mãi
           </th>
-          <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort('discountValue')}
-          >
-                      Giảm giá
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Giảm giá
           </th>
-          <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-            onClick={() => handleSort('startDate')}
-          >
-                      Thời gian
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Thời gian
           </th>
-          <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort('status')}
-          >
-                      Trạng thái
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Trạng thái
           </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Giới hạn
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Giới hạn
           </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Thao tác
           </th>
         </tr>
@@ -580,15 +654,24 @@ const Marketing = () => {
             </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <div>
-                          <div>{formatDate(promotion.startDate)}</div>
-                          <div className="text-gray-500">đến {formatDate(promotion.endDate)}</div>
+                          <div>{formatDateRange(promotion.startDate, promotion.endDate)}</div>
                         </div>
             </td>
                       <td className="px-6 py-4">
                         {getStatusBadge(promotion.status)}
             </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        {promotion.usageLimit ? `${promotion.usageLimit} lần` : 'Không giới hạn'}
+                        {promotion.usageLimit ? (
+                          <span className={`${
+                            (promotion.currentUsage / promotion.usageLimit) >= 0.9 ? 'text-red-600' : 
+                            (promotion.currentUsage / promotion.usageLimit) >= 0.6 ? 'text-yellow-600' : 
+                            'text-green-600'
+                          }`}>
+                            {(promotion.currentUsage || 0)}/{promotion.usageLimit} lần
+                          </span>
+                        ) : (
+                          <span className="text-green-600">{(promotion.currentUsage || 0)}/∞ lần</span>
+                        )}
             </td>
                       <td className="px-6 py-4 text-sm font-medium">
                         <div className="flex items-center space-x-2">
@@ -714,6 +797,16 @@ const Marketing = () => {
           setPromotionToView(null);
         }}
         promotion={promotionToView}
+      />
+
+      {/* Delete confirm modal */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Xác nhận xoá"
+        message={`Bạn có chắc chắn muốn xoá ${selectedPromotions.length} khuyến mãi đã chọn?`}
+        confirmText="Xoá"
+        onConfirm={confirmDeletePromotions}
+        onCancel={cancelDeletePromotions}
       />
     </div>
   );

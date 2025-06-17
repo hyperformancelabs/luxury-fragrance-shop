@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Calendar, Percent, DollarSign } from 'lucide-react';
+import { X, Calendar, Percent, DollarSign, AlertTriangle } from 'lucide-react';
 
 const PromotionFormModal = ({ 
   isOpen, 
@@ -23,6 +23,9 @@ const PromotionFormModal = ({
 
   const isEditing = !!promotionToEdit;
 
+  // Check if both endDate and usageLimit are empty
+  const isUnlimitedPromotion = !formData.endDate && !formData.usageLimit;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
@@ -44,7 +47,7 @@ const PromotionFormModal = ({
           {/* Tên khuyến mãi */}
           <div>
             <label htmlFor="promotionName" className="block text-sm font-medium text-gray-700 mb-2">
-              Tên khuyến mãi *
+              Tên khuyến mãi <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -79,7 +82,7 @@ const PromotionFormModal = ({
             <div>
               <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
                 <Calendar size={16} className="inline mr-1" />
-                Ngày bắt đầu *
+                Ngày bắt đầu <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -111,7 +114,7 @@ const PromotionFormModal = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="discountType" className="block text-sm font-medium text-gray-700 mb-2">
-                Loại giảm giá *
+                Loại giảm giá <span className="text-red-500">*</span>
               </label>
               <select
                 id="discountType"
@@ -132,12 +135,12 @@ const PromotionFormModal = ({
                   {formData.discountType === 'percentage' ? (
                     <>
                       <Percent size={16} className="inline mr-1" />
-                      Giá trị giảm (%) *
+                      Giá trị giảm (%) <span className="text-red-500">*</span>
                     </>
                   ) : (
                     <>
                       <DollarSign size={16} className="inline mr-1" />
-                      Số tiền giảm (VNĐ) *
+                      Số tiền giảm (VNĐ) <span className="text-red-500">*</span>
                     </>
                   )}
                 </label>
@@ -162,12 +165,12 @@ const PromotionFormModal = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
-                Trạng thái *
+                Trạng thái <span className="text-red-500">*</span>
               </label>
               <select
                 id="status"
                 name="status"
-                value={formData.status || 'planned'}
+                value={formData.status || 'active'}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
@@ -193,6 +196,22 @@ const PromotionFormModal = ({
               />
             </div>
           </div>
+
+          {/* Warning for unlimited promotion */}
+          {isUnlimitedPromotion && (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-yellow-400" />
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-700">
+                    <strong>Cảnh báo:</strong> Bạn đang tạo khuyến mãi không giới hạn thời gian và số lần sử dụng.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Notes/Tips */}
           <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
