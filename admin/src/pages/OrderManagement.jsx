@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Filter, ChevronDown, ChevronUp, MoreHorizontal, Eye, Clock, Package, Check, AlertTriangle, RefreshCw, ChevronLeft, ChevronRight, Download, X } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import orderService from '../services/orderService';
+import { PageHeader, PaginationFooter, TableToolbar } from '../Components/common';
 
 // Helper function to get status configuration
 const getStatusConfig = (status) => {
@@ -99,15 +100,7 @@ const OrderManagement = () => {
   const [editingSection, setEditingSection] = useState(''); // 'items', 'payment', 'shipment'
   const [editedQuantities, setEditedQuantities] = useState({});
   
-  // Stats data
-  const [statsData, setStatsData] = useState({
-    totalOrders: 0,
-    pendingOrders: 0,
-    processingOrders: 0,
-    shippingOrders: 0,
-    deliveredOrders: 0,
-    cancelledOrders: 0
-  });
+
 
   // Inline status dropdown state
   const [statusEditingOrderId, setStatusEditingOrderId] = useState(null);
@@ -117,6 +110,9 @@ const OrderManagement = () => {
 
   // New state for changed statuses
   const [changedStatuses, setChangedStatuses] = useState({});
+
+  // New state for filter anchor
+  const [filterAnchor, setFilterAnchor] = useState(null);
 
   // Fetch orders when dependencies change
   useEffect(() => {
@@ -164,9 +160,6 @@ const OrderManagement = () => {
         setOrders(data.orders || []);
         setTotalPages(data.totalPages || 0);
         setTotalItems(data.totalItems || 0);
-        if (!orderFilters.status) {
-          updateStats(data.orders || []);
-        }
       } else {
         setError(response.message || 'Failed to fetch orders');
         toast.error(response.message || 'Lỗi khi tải danh sách đơn hàng');
@@ -180,18 +173,7 @@ const OrderManagement = () => {
     }
   };
 
-  // Update statistics
-  const updateStats = (orderData) => {
-    const stats = {
-      totalOrders: orderData.length,
-      pendingOrders: orderData.filter(order => order.orderStatus === 'pending').length,
-      processingOrders: orderData.filter(order => order.orderStatus === 'processing').length,
-      shippingOrders: orderData.filter(order => order.orderStatus === 'shipping').length,
-      deliveredOrders: orderData.filter(order => order.orderStatus === 'delivered').length,
-      cancelledOrders: orderData.filter(order => order.orderStatus === 'cancelled').length
-    };
-    setStatsData(stats);
-  };
+
 
   // Handle sorting
   const handleSort = (field) => {
@@ -372,11 +354,12 @@ const OrderManagement = () => {
   };
 
   // Handle filter toggle
-  const toggleOrderFilter = (filterName) => {
-    setOrderFilters(prev => ({
-      ...prev,
-      [filterName]: prev[filterName] ? '' : 'active'
-    }));
+  const handleFilterToggle = (e) => {
+    setShowFilters(prev => !prev);
+    if (e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setFilterAnchor({top: rect.bottom + window.scrollY + 6, left: rect.left + window.scrollX});
+    }
   };
 
   // Apply filters
@@ -455,159 +438,14 @@ const OrderManagement = () => {
   };
 
   return (
-    <div className="p-6 max-w-full mx-auto">
+    <div className="p-6">
       <Toaster position="top-right" />
       
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng</h1>
-          <p className="text-gray-600 mt-1">Quản lý tất cả đơn hàng trong hệ thống</p>
-        </div>
-      </div>
-
-      {/* Quick Status Filters */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        <button
-          onClick={() => quickFilterByStatus('')}
-          className={`px-3 py-1 rounded-full text-sm transition-colors ${
-            orderFilters.status === '' 
-              ? 'bg-blue-600 text-white' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          Tất cả ({statsData.totalOrders})
-        </button>
-        <button
-          onClick={() => quickFilterByStatus('pending')}
-          className={`px-3 py-1 rounded-full text-sm transition-colors ${
-            orderFilters.status === 'pending' 
-              ? 'bg-blue-600 text-white' 
-              : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-          }`}
-        >
-          Chờ xác nhận ({statsData.pendingOrders})
-        </button>
-        <button
-          onClick={() => quickFilterByStatus('processing')}
-          className={`px-3 py-1 rounded-full text-sm transition-colors ${
-            orderFilters.status === 'processing' 
-              ? 'bg-purple-600 text-white' 
-              : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-          }`}
-        >
-          Đang xử lý ({statsData.processingOrders})
-        </button>
-        <button
-          onClick={() => quickFilterByStatus('shipping')}
-          className={`px-3 py-1 rounded-full text-sm transition-colors ${
-            orderFilters.status === 'shipping' 
-              ? 'bg-yellow-600 text-white' 
-              : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-          }`}
-        >
-          Đang giao ({statsData.shippingOrders})
-        </button>
-        <button
-          onClick={() => quickFilterByStatus('delivered')}
-          className={`px-3 py-1 rounded-full text-sm transition-colors ${
-            orderFilters.status === 'delivered' 
-              ? 'bg-green-600 text-white' 
-              : 'bg-green-100 text-green-700 hover:bg-green-200'
-          }`}
-        >
-          Đã giao ({statsData.deliveredOrders})
-        </button>
-        <button
-          onClick={() => quickFilterByStatus('cancelled')}
-          className={`px-3 py-1 rounded-full text-sm transition-colors ${
-            orderFilters.status === 'cancelled' 
-              ? 'bg-red-600 text-white' 
-              : 'bg-red-100 text-red-700 hover:bg-red-200'
-          }`}
-        >
-          Đã hủy ({statsData.cancelledOrders})
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-blue-100 mr-4">
-              <Package size={20} className="text-blue-600" />
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm">Tổng đơn</p>
-              <h3 className="text-xl font-bold">{statsData.totalOrders}</h3>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-blue-100 mr-4">
-              <Clock size={20} className="text-blue-600" />
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm">Chờ xác nhận</p>
-              <h3 className="text-xl font-bold">{statsData.pendingOrders}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-purple-100 mr-4">
-              <RefreshCw size={20} className="text-purple-600" />
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm">Đang xử lý</p>
-              <h3 className="text-xl font-bold">{statsData.processingOrders}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-yellow-100 mr-4">
-              <Package size={20} className="text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm">Đang giao</p>
-              <h3 className="text-xl font-bold">{statsData.shippingOrders}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-green-100 mr-4">
-              <Check size={20} className="text-green-600" />
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm">Đã giao</p>
-              <h3 className="text-xl font-bold">{statsData.deliveredOrders}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-red-100 mr-4">
-              <AlertTriangle size={20} className="text-red-600" />
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm">Đã hủy</p>
-              <h3 className="text-xl font-bold">{statsData.cancelledOrders}</h3>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader title="Quản lý đơn hàng" subtitle="Quản lý tất cả đơn hàng trong hệ thống" />
 
       {/* Bulk Actions */}
       {selectedOrders.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 mt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <span className="text-sm text-blue-800 font-medium">
@@ -642,109 +480,50 @@ const OrderManagement = () => {
         </div>
       )}
 
-      {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow mb-6">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
-            <div className="relative flex-1 max-w-md">
-              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm theo mã đơn hàng, tên khách hàng..."
-                value={searchTerm}
-                onChange={handleSearch}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                <Filter size={16} className="mr-2" />
-                Bộ lọc
-              </button>
-              <button
-                onClick={fetchOrders}
-                className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                <RefreshCw size={16} className="mr-2" />
-                Làm mới
-              </button>
-              {/* Đã chuyển bộ chọn số bản ghi xuống cuối bảng để tránh trùng lặp */}
-            </div>
+      {/* Toolbar wrapper */}
+      <div className={`bg-white rounded-lg shadow mb-6 ${selectedOrders.length === 0 ? 'mt-6' : ''}`}>
+        <TableToolbar
+          searchValue={searchTerm}
+          onSearchChange={(e) => setSearchTerm(e.target.value)}
+          onSearchSubmit={(e)=>{e.preventDefault(); setPage(0); fetchOrders();}}
+          onFilter={handleFilterToggle}
+          addLabel={null}
+          onAdd={null}
+          placeholder="Tìm đơn hàng, khách hàng..."
+        />
+      </div>
+
+      {/* Filter Popup */}
+      {showFilters && (
+        <div className="fixed z-50 bg-white border rounded-md shadow-lg p-4" style={{top: filterAnchor?.top, left: filterAnchor?.left, width: '300px'}}>
+          <h4 className="font-medium mb-2 flex items-center"><Filter size={16} className="mr-2" /> Bộ lọc</h4>
+          {/* Status checkboxes */}
+          <div className="mb-3">
+            <p className="text-sm font-semibold mb-1">Trạng thái</p>
+            {['pending','processing','shipping','delivered','cancelled'].map(st=> (
+              <label key={st} className="flex items-center text-sm space-x-2 mb-1">
+                <input
+                  type="checkbox"
+                  checked={orderFilters.status===st}
+                  onChange={()=> setOrderFilters(prev=> ({...prev, status: prev.status===st? '' : st}))}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span>{getStatusConfig(st).label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="flex justify-end space-x-2 mt-4">
+            <button
+              onClick={()=>{clearFilters(); setShowFilters(false);}}
+              className="px-3 py-1 text-sm border rounded"
+            >Bỏ lọc</button>
+            <button
+              onClick={()=>{applyFilters(); setShowFilters(false);}}
+              className="px-3 py-1 text-sm bg-blue-600 text-white rounded"
+            >Áp dụng</button>
           </div>
         </div>
-
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
-                <select
-                  value={orderFilters.status}
-                  onChange={(e) => setOrderFilters(prev => ({ ...prev, status: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                >
-                  <option value="">Tất cả trạng thái</option>
-                  <option value="pending">Chờ xác nhận</option>
-                  <option value="processing">Đang xử lý</option>
-                  <option value="shipping">Đang giao</option>
-                  <option value="delivered">Đã giao</option>
-                  <option value="cancelled">Đã hủy</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Từ ngày</label>
-                <input
-                  type="date"
-                  value={orderFilters.dateFrom}
-                  onChange={(e) => setOrderFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Đến ngày</label>
-                <input
-                  type="date"
-                  value={orderFilters.dateTo}
-                  onChange={(e) => setOrderFilters(prev => ({ ...prev, dateTo: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Mã khách hàng</label>
-                <input
-                  type="number"
-                  placeholder="Nhập mã khách hàng"
-                  value={orderFilters.customerId}
-                  onChange={(e) => setOrderFilters(prev => ({ ...prev, customerId: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-3 mt-4">
-              <button
-                onClick={applyFilters}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Áp dụng bộ lọc
-              </button>
-              <button
-                onClick={clearFilters}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Xóa bộ lọc
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Orders Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -994,26 +773,21 @@ const OrderManagement = () => {
               <div className="px-4 py-3 flex flex-col md:flex-row md:justify-between border-t gap-3 bg-white">
                 {/* Info & page size */}
                 <div className="flex items-center text-sm text-gray-500 flex-wrap gap-2">
-                  <span>
-                    Hiển thị {orders.length > 0 ? page * pageSize + 1 : 0}-
-                    {Math.min((page + 1) * pageSize, totalItems)} trong {totalItems} đơn hàng
-                  </span>
-                  <div className="flex items-center space-x-1">
-                    <span className="text-sm text-gray-700">Hiển thị:</span>
-                    <select
-                      value={pageSize}
-                      onChange={(e) => {
-                        setPageSize(Number(e.target.value));
-                        setPage(0);
-                      }}
-                      className="px-1 py-1 text-sm border rounded"
-                    >
-                      {[10, 20, 50, 100, 200, 500].map(size => (
-                        <option key={size} value={size}>{size}</option>
-                      ))}
-                      <option value={totalItems}>Tất cả</option>
-                    </select>
-                  </div>
+                  <span>Hiển thị</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setPage(0);
+                    }}
+                    className="px-1 py-1 text-sm border rounded"
+                  >
+                    {[10, 20, 50, 100, 200, 500].map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                    <option value={totalItems}>Tất cả</option>
+                  </select>
+                  <span>mỗi trang trong {totalItems} đơn hàng</span>
                 </div>
 
                 {/* Controls */}

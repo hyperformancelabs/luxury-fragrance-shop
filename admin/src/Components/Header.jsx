@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Bell, Search, LogOut, Settings, ChevronDown } from 'lucide-react'
+import { LogOut, Settings, ChevronDown, Menu } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
-const Header = ({ sidebarOpen }) => {
+const Header = ({ sidebarOpen, setSidebarOpen }) => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -36,24 +36,21 @@ const Header = ({ sidebarOpen }) => {
   }
   
   return (
-  <header className={`fixed top-0 ${sidebarOpen ? 'left-64' : 'left-20'} right-0 h-16 bg-white shadow-sm z-20 flex justify-between items-center px-4`}>
-    <h1 className="text-xl font-semibold text-gray-800">Bảng điều khiển</h1>
-    
+  <header className="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-20 flex justify-between items-center px-4">
     <div className="flex items-center space-x-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-        <input
-          type="text"
-          placeholder="Tìm kiếm..."
-          className="pl-10 pr-4 py-2 rounded-full bg-gray-100 border-none focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
-        />
-      </div>
-      
-      <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 relative">
-        <Bell size={20} className="text-gray-600" />
-        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+      <button 
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+      >
+        <Menu size={20} className="text-gray-600" />
       </button>
       
+      <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+        APH PERFUME
+      </h1>
+    </div>
+    
+    <div className="flex items-center">
       <div className="relative" ref={dropdownRef}>
         <button 
           onClick={() => setDropdownOpen(!dropdownOpen)}

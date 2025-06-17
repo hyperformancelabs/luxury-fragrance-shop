@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Edit, Trash2, Filter, ChevronDown, ChevronUp, MoreHorizontal, Upload, Download, XCircle, Check, X, FileEdit, Layers, PlusCircle, ChevronLeft, ChevronRight, Clock, List, Settings, DollarSign, ArrowDown, ArrowUp, History, User, Phone, Mail, MapPin, Star, Award, CreditCard, ShoppingBag, MessageCircle, Heart } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, MoreHorizontal, Upload, Download, XCircle, Check, X, FileEdit, Layers, PlusCircle, Clock, List, Settings, DollarSign, ArrowDown, ArrowUp, History, User, Phone, Mail, MapPin, Star, Award, CreditCard, ShoppingBag, MessageCircle, Heart } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
+import { PageHeader, TableToolbar } from '../Components/common';
 
 // Service cho customer management
 const customerService = {
@@ -276,6 +277,16 @@ const RatingDisplay = ({ rating }) => {
   );
 };
 
+// Helper function to get status configuration for filters
+const getStatusConfig = (status) => {
+  const statusConfigs = {
+    active: { label: 'Hoạt động' },
+    inactive: { label: 'Không hoạt động' },
+    banned: { label: 'Bị cấm' }
+  };
+  return statusConfigs[status] || { label: status };
+};
+
 // Main Component
 const Customer = () => {
   // State cho dữ liệu khách hàng
@@ -352,6 +363,10 @@ const Customer = () => {
   const [customerWishlist, setCustomerWishlist] = useState([]);
   const [customerConversations, setCustomerConversations] = useState([]);
   const [loadingModal, setLoadingModal] = useState(false);
+  
+  // Filter popup state
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterAnchor, setFilterAnchor] = useState(null);
 
   // Load data functions
   const fetchCustomers = async () => {
@@ -453,6 +468,29 @@ const Customer = () => {
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
+  };
+
+  // Filter handlers
+  const handleFilterToggle = (e) => {
+    setShowFilters(prev => !prev);
+    const rect = e.target.getBoundingClientRect();
+    setFilterAnchor({top: rect.bottom + window.scrollY + 6, left: rect.left + window.scrollX});
+  };
+
+  const applyFilters = () => {
+    setPage(0);
+    fetchCustomers();
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      name: '',
+      phone: '',
+      email: '',
+      status: ''
+    });
+    setPage(0);
+    fetchCustomers();
   };
 
   const formatPrice = (price) => {
@@ -1478,59 +1516,59 @@ const Customer = () => {
   );
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="p-6">
       <Toaster position="top-right" />
       
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="container mx-auto px-6 py-3">
-          <h1 className="text-xl font-bold text-gray-800">Quản lý khách hàng</h1>
-        </div>
-      </header>
+      <PageHeader title="Quản lý khách hàng" subtitle="Quản lý hồ sơ và trạng thái khách hàng" />
 
-      <div className="container mx-auto px-6 py-8">
-
-
-        {/* Action Bar */}
+      <div className="mt-6">
+        {/* Toolbar wrapper */}
         <div className="bg-white rounded-lg shadow mb-6">
-          <div className="p-4 border-b flex flex-row justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <form onSubmit={handleSearch} className="flex items-center">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                  <input
-                    type="text"
-                    placeholder="Tìm theo tên, SĐT, email..."
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </form>
+          <TableToolbar
+            searchValue={searchTerm}
+            onSearchChange={(e) => setSearchTerm(e.target.value)}
+            onSearchSubmit={handleSearch}
+            onFilter={handleFilterToggle}
+            addLabel="Thêm khách hàng"
+            onAdd={handleAddCustomer}
+            placeholder="Tìm theo tên, SĐT, email..."
+          />
+        </div>
 
-              <select
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={filters.status}
-                onChange={(e) => setFilters({...filters, status: e.target.value})}
-              >
-                <option value="">Tất cả trạng thái</option>
-                <option value="active">Hoạt động</option>
-                <option value="inactive">Không hoạt động</option>
-                <option value="banned">Bị cấm</option>
-              </select>
+        {/* Filter Popup */}
+        {showFilters && (
+          <div className="fixed z-50 bg-white border rounded-md shadow-lg p-4" style={{top: filterAnchor?.top, left: filterAnchor?.left, width: '300px'}}>
+            <h4 className="font-medium mb-2 flex items-center"><Filter size={16} className="mr-2" /> Bộ lọc</h4>
+            
+            {/* Status checkboxes */}
+            <div className="mb-3">
+              <p className="text-sm font-semibold mb-1">Trạng thái</p>
+              {['active','inactive','banned'].map(st=> (
+                <label key={st} className="flex items-center text-sm space-x-2 mb-1">
+                  <input
+                    type="checkbox"
+                    checked={filters.status===st}
+                    onChange={()=> setFilters(prev=> ({...prev, status: prev.status===st? '' : st}))}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span>{getStatusConfig(st).label}</span>
+                </label>
+              ))}
             </div>
 
-            <div>
-              <button 
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-700"
-                onClick={handleAddCustomer}
-              >
-                <Plus size={18} className="mr-1" />
-                Thêm khách hàng
-              </button>
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                onClick={()=>{clearFilters(); setShowFilters(false);}}
+                className="px-3 py-1 text-sm border rounded"
+              >Bỏ lọc</button>
+              <button
+                onClick={()=>{applyFilters(); setShowFilters(false);}}
+                className="px-3 py-1 text-sm bg-blue-600 text-white rounded"
+              >Áp dụng</button>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Customer Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -1639,7 +1677,7 @@ const Customer = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 max-w-xs whitespace-normal break-words">
                           <div className="text-sm text-gray-900">
                             <div className="flex items-center mb-1">
                               <Phone className="h-4 w-4 text-gray-400 mr-2" />
@@ -1737,67 +1775,75 @@ const Customer = () => {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                  <div className="flex-1 flex justify-between sm:hidden">
-                    <button
-                      onClick={() => handlePageChange(page - 1)}
-                      disabled={page === 0}
-                      className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              {!loading && customers.length > 0 && (
+                <div className="px-4 py-3 flex flex-col md:flex-row md:justify-between border-t gap-3 bg-white">
+                  <div className="flex items-center text-sm text-gray-500 flex-wrap gap-2">
+                    <span>Hiển thị</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e)=>{setPageSize(Number(e.target.value)); setPage(0);}}
+                      className="px-1 py-1 text-sm border rounded"
                     >
-                      Trước
-                    </button>
-                    <button
-                      onClick={() => handlePageChange(page + 1)}
-                      disabled={page === totalPages - 1}
-                      className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      Sau
-                    </button>
+                      {[10,20,50,100,200,500].map(size => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                      <option value={totalItems}>Tất cả</option>
+                    </select>
+                    <span>mỗi trang trong {totalItems} khách hàng</span>
                   </div>
-                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm text-gray-700">
-                        Hiển thị <span className="font-medium">{page * pageSize + 1}</span> đến{' '}
-                        <span className="font-medium">{Math.min((page + 1) * pageSize, totalItems)}</span> trong{' '}
-                        <span className="font-medium">{totalItems}</span> kết quả
-                      </p>
-                    </div>
-                    <div>
-                      <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                        <button
-                          onClick={() => handlePageChange(page - 1)}
-                          disabled={page === 0}
-                          className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                        >
-                          <ChevronLeft className="h-5 w-5" />
-                        </button>
-                        
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          const pageNum = Math.max(0, Math.min(page - 2 + i, totalPages - 5 + i));
-                          return (
-                            <button
-                              key={pageNum}
-                              onClick={() => handlePageChange(pageNum)}
-                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                pageNum === page
-                                  ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                  : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                              }`}
-                            >
-                              {pageNum + 1}
-                            </button>
-                          );
+
+                  <div className="flex justify-between md:justify-end items-center space-x-2">
+                    <div className="flex items-center">
+                      <button
+                        onClick={()=>handlePageChange(page -1)}
+                        disabled={page===0}
+                        className={`px-2 py-1 border rounded ${page===0?'text-gray-400 cursor-not-allowed':'hover:bg-gray-50'}`}
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      <div className="flex items-center mx-1">
+                        <button className={`px-3 py-1 border rounded ${page===0?'bg-blue-600 text-white':'hover:bg-gray-50'}`} onClick={()=>handlePageChange(0)}>1</button>
+                        {page+1 > 3 && <span className="px-1">...</span>}
+                        {Array.from({length: totalPages}).map((_,i)=>{
+                          if(i!==0 && i!== totalPages-1){
+                            if(Math.abs((page+1)-(i+1))<=1){
+                              return (
+                                <button key={i} className={`px-3 py-1 border rounded ${(page)===i?'bg-blue-600 text-white':'hover:bg-gray-50'}`} onClick={()=>handlePageChange(i)}>{i+1}</button>
+                              );
+                            }
+                          }
+                          return null;
                         })}
-                        
-                        <button
-                          onClick={() => handlePageChange(page + 1)}
-                          disabled={page === totalPages - 1}
-                          className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                        >
-                          <ChevronRight className="h-5 w-5" />
-                        </button>
-                      </nav>
+                        {page+1 < totalPages-2 && <span className="px-1">...</span>}
+                        {totalPages>1 && (
+                          <button className={`px-3 py-1 border rounded ${(page)===totalPages-1?'bg-blue-600 text-white':'hover:bg-gray-50'}`} onClick={()=>handlePageChange(totalPages-1)}>{totalPages}</button>
+                        )}
+                      </div>
+                      <button
+                        onClick={()=>handlePageChange(page+1)}
+                        disabled={page>=totalPages-1}
+                        className={`px-2 py-1 border rounded ${page>=totalPages-1?'text-gray-400 cursor-not-allowed':'hover:bg-gray-50'}`}
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    </div>
+                    <div className="inline-flex items-center ml-1">
+                      <span className="mr-1 text-sm whitespace-nowrap">Đến trang:</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max={totalPages}
+                        className="w-14 h-8 px-2 border rounded text-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const num = parseInt(e.target.value, 10);
+                            if (!isNaN(num) && num >= 1 && num <= totalPages) {
+                              handlePageChange(num - 1);
+                              e.target.value = '';
+                            }
+                          }
+                        }}
+                      />
                     </div>
                   </div>
                 </div>

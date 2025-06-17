@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, isSameDay } from 'date-fns';
 import { AlertCircle, TrendingUp, TrendingDown, ShoppingCart, Users, Clock, Calendar, Package, ChevronRight, ChevronDown, Truck, User, DollarSign, Activity, Award, Star } from 'lucide-react';
 import { revenueService } from '../services/revenueService';
 import { dashboardService } from '../services/dashboardService';
+import { PageHeader } from '../Components/common';
 
 // Quick select presets
 const presets = [
@@ -151,6 +153,8 @@ const groupDataByYear = (chartData) => {
 };
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  
   // Date range state - default to "All time" (July 8, 2004 to today)
   const [dateRange, setDateRange] = useState({
     from: new Date('2004-07-08'),
@@ -460,496 +464,342 @@ const Dashboard = () => {
   ];
   
   return (
-    <div className="p-6 bg-gray-50">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">Tổng quan</h2>
-          <p className="text-gray-500 text-sm mt-1">Thời gian: {getDateRangeText()}</p>
-        </div>
-        <div className="flex items-center relative">
-          <DateRangeFilter onChange={setDateRange} />
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 ml-2">
-            Xuất báo cáo
-          </button>
-        </div>
-      </div>
-      
-      {/* Key Performance Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-gray-500 text-sm mb-1">Doanh thu</p>
-              <h3 className="text-2xl font-bold text-gray-800">
-                {loading ? (
-                  <span className="text-gray-500">Đang tải...</span>
-                ) : error ? (
-                  <div>
-                    <span className="text-red-500 text-sm">Lỗi khi tải dữ liệu</span>
-                    <span className="block text-xs text-gray-500 mt-1">{error}</span>
-                  </div>
-                ) : (
-                  formatCurrency(revenueData?.totalAmount || 0)
-                )}
-              </h3>
-              {!loading && !error && revenueData?.previousPeriodChange !== undefined && (
-                <div className={`flex items-center text-sm mt-2 ${revenueData.previousPeriodChange > 0 ? 'text-green-500' : revenueData.previousPeriodChange < 0 ? 'text-red-500' : 'text-gray-500'}`}>
-                  {revenueData.previousPeriodChange > 0 ? (
-                    <TrendingUp size={16} className="mr-1" />
-                  ) : revenueData.previousPeriodChange < 0 ? (
-                    <TrendingDown size={16} className="mr-1" />
-                  ) : (
-                    <Activity size={16} className="mr-1" />
-                  )}
-                  {revenueData.previousPeriodChange === 0 ? (
-                    'Bằng kỳ trước'
-                  ) : (
-                    `${revenueData.previousPeriodChange > 0 ? 'Tăng' : 'Giảm'} ${Math.abs(revenueData.previousPeriodChange)}% so với kỳ trước`
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <DollarSign size={24} className="text-blue-600" />
-            </div>
+    <div className="bg-gray-50 min-h-screen">
+      <div className="p-6">
+        <PageHeader 
+          title="Tổng quan" 
+          subtitle={`Thời gian: ${getDateRangeText()}`}
+        >
+          <div className="flex items-center gap-3">
+            <DateRangeFilter onChange={setDateRange} />
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors">
+              Xuất báo cáo
+            </button>
           </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-gray-500 text-sm mb-1">Đơn hàng mới</p>
-              <h3 className="text-2xl font-bold text-gray-800">
-                {loadingOrders ? (
-                  <span className="text-gray-500">Đang tải...</span>
-                ) : ordersError ? (
-                  <div>
-                    <span className="text-red-500 text-sm">Lỗi khi tải dữ liệu</span>
-                    <span className="block text-xs text-gray-500 mt-1">{ordersError}</span>
+        </PageHeader>
+        {/* Key Performance Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 mt-6">
+          <div 
+            className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow" 
+            onClick={() => navigate('/statistics')}
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-gray-500 text-sm mb-1">Doanh thu</p>
+                <h3 className="text-2xl font-bold text-gray-800">
+                  {loading ? (
+                    <span className="text-gray-500">Đang tải...</span>
+                  ) : error ? (
+                    <div>
+                      <span className="text-red-500 text-sm">Lỗi khi tải dữ liệu</span>
+                      <span className="block text-xs text-gray-500 mt-1">{error}</span>
+                    </div>
+                  ) : (
+                    formatCurrency(revenueData?.totalAmount || 0)
+                  )}
+                </h3>
+                {!loading && !error && revenueData?.previousPeriodChange !== undefined && (
+                  <div className={`flex items-center text-sm mt-2 ${revenueData.previousPeriodChange > 0 ? 'text-green-500' : revenueData.previousPeriodChange < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                    {revenueData.previousPeriodChange > 0 ? (
+                      <TrendingUp size={16} className="mr-1" />
+                    ) : revenueData.previousPeriodChange < 0 ? (
+                      <TrendingDown size={16} className="mr-1" />
+                    ) : (
+                      <Activity size={16} className="mr-1" />
+                    )}
+                    {revenueData.previousPeriodChange === 0 ? (
+                      'Bằng kỳ trước'
+                    ) : (
+                      `${revenueData.previousPeriodChange > 0 ? 'Tăng' : 'Giảm'} ${Math.abs(revenueData.previousPeriodChange)}% so với kỳ trước`
+                    )}
                   </div>
-                ) : (
-                  newOrdersData?.newOrdersCount || 0
                 )}
-              </h3>
-              {!loadingOrders && !ordersError && newOrdersData?.previousPeriodChange !== undefined && (
-                <div className={`flex items-center text-sm mt-2 ${newOrdersData.previousPeriodChange > 0 ? 'text-green-500' : newOrdersData.previousPeriodChange < 0 ? 'text-red-500' : 'text-gray-500'}`}>
-                  {newOrdersData.previousPeriodChange > 0 ? (
-                    <TrendingUp size={16} className="mr-1" />
-                  ) : newOrdersData.previousPeriodChange < 0 ? (
-                    <TrendingDown size={16} className="mr-1" />
-                  ) : (
-                    <Activity size={16} className="mr-1" />
-                  )}
-                  {newOrdersData.previousPeriodChange === 0 ? (
-                    'Bằng kỳ trước'
-                  ) : (
-                    `${newOrdersData.previousPeriodChange > 0 ? 'Tăng' : 'Giảm'} ${Math.abs(newOrdersData.previousPeriodChange)}% so với kỳ trước`
-                  )}
-                </div>
-              )}
+              </div>
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <DollarSign size={24} className="text-blue-600" />
+              </div>
             </div>
-            <div className="bg-purple-50 p-3 rounded-lg">
-              <ShoppingCart size={24} className="text-purple-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-gray-500 text-sm mb-1">Khách hàng mới</p>
-              <h3 className="text-2xl font-bold text-gray-800">
-                {loadingCustomers ? (
-                  <span className="text-gray-500">Đang tải...</span>
-                ) : customersError ? (
-                  <div>
-                    <span className="text-red-500 text-sm">Lỗi khi tải dữ liệu</span>
-                    <span className="block text-xs text-gray-500 mt-1">{customersError}</span>
-                  </div>
-                ) : (
-                  newCustomersData?.newCustomersCount || 0
-                )}
-              </h3>
-              {!loadingCustomers && !customersError && newCustomersData?.previousPeriodChange !== undefined && (
-                <div className={`flex items-center text-sm mt-2 ${newCustomersData.previousPeriodChange > 0 ? 'text-green-500' : newCustomersData.previousPeriodChange < 0 ? 'text-red-500' : 'text-gray-500'}`}>
-                  {newCustomersData.previousPeriodChange > 0 ? (
-                    <TrendingUp size={16} className="mr-1" />
-                  ) : newCustomersData.previousPeriodChange < 0 ? (
-                    <TrendingDown size={16} className="mr-1" />
-                  ) : (
-                    <Activity size={16} className="mr-1" />
-                  )}
-                  {newCustomersData.previousPeriodChange === 0 ? (
-                    'Bằng kỳ trước'
-                  ) : (
-                    `${newCustomersData.previousPeriodChange > 0 ? 'Tăng' : 'Giảm'} ${Math.abs(newCustomersData.previousPeriodChange)}% so với kỳ trước`
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="bg-yellow-50 p-3 rounded-lg">
-              <Users size={24} className="text-yellow-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-gray-500 text-sm mb-1">Giá trị trung bình đơn hàng</p>
-              <h3 className="text-2xl font-bold text-gray-800">
-                {loadingAvgOrderValue ? (
-                  <span className="text-gray-500">Đang tải...</span>
-                ) : avgOrderValueError ? (
-                  <div>
-                    <span className="text-red-500 text-sm">Lỗi khi tải dữ liệu</span>
-                    <span className="block text-xs text-gray-500 mt-1">{avgOrderValueError}</span>
-                  </div>
-                ) : (
-                  formatCurrency(avgOrderValueData?.averageOrderValue || 0)
-                )}
-              </h3>
-              {/* Không hiển thị thông tin thêm cho giá trị trung bình đơn hàng */}
-            </div>
-            <div className="bg-green-50 p-3 rounded-lg">
-              <TrendingUp size={24} className="text-green-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Sales Chart and Top Products */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-lg text-gray-800">Doanh thu</h3>
-            {!loading && !error && revenueData?.maxRevenueDay && (
-              <div className="text-sm text-gray-500">
-                Ngày cao nhất: {revenueData.maxRevenueDay.date} ({formatCurrency(revenueData.maxRevenueDay.amount)})
-            </div>
-            )}
           </div>
           
-          {/* Phần hiển thị biểu đồ - tăng chiều cao để biểu đồ đẹp hơn */}
-          <div className="h-80">
-            {loading ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-gray-500">Đang tải dữ liệu biểu đồ...</span>
+          <div 
+            className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow" 
+            onClick={() => navigate('/orders')}
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-gray-500 text-sm mb-1">Đơn hàng mới</p>
+                <h3 className="text-2xl font-bold text-gray-800">
+                  {loadingOrders ? (
+                    <span className="text-gray-500">Đang tải...</span>
+                  ) : ordersError ? (
+                    <div>
+                      <span className="text-red-500 text-sm">Lỗi khi tải dữ liệu</span>
+                      <span className="block text-xs text-gray-500 mt-1">{ordersError}</span>
+                    </div>
+                  ) : (
+                    newOrdersData?.newOrdersCount || 0
+                  )}
+                </h3>
+                {!loadingOrders && !ordersError && newOrdersData?.previousPeriodChange !== undefined && (
+                  <div className={`flex items-center text-sm mt-2 ${newOrdersData.previousPeriodChange > 0 ? 'text-green-500' : newOrdersData.previousPeriodChange < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                    {newOrdersData.previousPeriodChange > 0 ? (
+                      <TrendingUp size={16} className="mr-1" />
+                    ) : newOrdersData.previousPeriodChange < 0 ? (
+                      <TrendingDown size={16} className="mr-1" />
+                    ) : (
+                      <Activity size={16} className="mr-1" />
+                    )}
+                    {newOrdersData.previousPeriodChange === 0 ? (
+                      'Bằng kỳ trước'
+                    ) : (
+                      `${newOrdersData.previousPeriodChange > 0 ? 'Tăng' : 'Giảm'} ${Math.abs(newOrdersData.previousPeriodChange)}% so với kỳ trước`
+                    )}
+                  </div>
+                )}
               </div>
-            ) : error ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-red-500">Không thể tải dữ liệu biểu đồ</span>
+              <div className="bg-purple-50 p-3 rounded-lg">
+                <ShoppingCart size={24} className="text-purple-600" />
               </div>
-            ) : revenueData?.chartData && revenueData.chartData.length > 0 ? (
-              <div className="w-full h-full bg-gray-50 flex flex-col overflow-hidden rounded-lg">
-                {/* Container chính với thanh cuộn ngang */}
-                <div className="w-full flex-1 overflow-x-auto">
-                  <div className="h-full flex items-end p-4 pb-1 relative">
-                    {/* Nhóm dữ liệu theo năm và hiển thị */}
-                    {groupDataByYear(revenueData.chartData).map((yearGroup, groupIndex) => {
-                      // Tính toán chiều rộng dựa trên số lượng dữ liệu
-                      const widthPerItem = Math.max(30, Math.min(80, 1000 / revenueData.chartData.length));
-                      
-                      return (
-                        <div 
-                          key={yearGroup.year} 
-                          className="flex flex-col h-full min-w-fit relative"
-                          style={{ borderLeft: groupIndex > 0 ? '1px dashed #e5e7eb' : 'none' }}
-                        >
-                          {/* Nhãn năm */}
-                          <div className="sticky left-0 self-start px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded mb-2 shadow-sm z-10">
-                            {yearGroup.year}
-                          </div>
-                          
-                          {/* Dữ liệu năm */}
-                          <div className="flex flex-1 items-end">
-                            {yearGroup.data.map((item, index) => {
-                              // Tính chiều cao tương đối với giá trị cao nhất
-                              const height = Math.max(
-                                10, 
-                                (Number(item.amount) / (revenueData.maxRevenueDay?.amount || 1)) * 200
-                              );
-                              
-                              return (
-                                <div 
-                                  key={index} 
-                                  className="relative group mx-1 flex flex-col items-center"
-                                  style={{ width: `${widthPerItem}px` }}
-                                >
-                      <div 
-                                    className="bg-blue-500 group-hover:bg-blue-600 hover:shadow-lg transition-all duration-200 w-full max-w-8 rounded-t-sm"
-                                    style={{ height: `${height}px` }}
+            </div>
+          </div>
+          
+          <div 
+            className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow" 
+            onClick={() => navigate('/customers')}
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-gray-500 text-sm mb-1">Khách hàng mới</p>
+                <h3 className="text-2xl font-bold text-gray-800">
+                  {loadingCustomers ? (
+                    <span className="text-gray-500">Đang tải...</span>
+                  ) : customersError ? (
+                    <div>
+                      <span className="text-red-500 text-sm">Lỗi khi tải dữ liệu</span>
+                      <span className="block text-xs text-gray-500 mt-1">{customersError}</span>
+                    </div>
+                  ) : (
+                    newCustomersData?.newCustomersCount || 0
+                  )}
+                </h3>
+                {!loadingCustomers && !customersError && newCustomersData?.previousPeriodChange !== undefined && (
+                  <div className={`flex items-center text-sm mt-2 ${newCustomersData.previousPeriodChange > 0 ? 'text-green-500' : newCustomersData.previousPeriodChange < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                    {newCustomersData.previousPeriodChange > 0 ? (
+                      <TrendingUp size={16} className="mr-1" />
+                    ) : newCustomersData.previousPeriodChange < 0 ? (
+                      <TrendingDown size={16} className="mr-1" />
+                    ) : (
+                      <Activity size={16} className="mr-1" />
+                    )}
+                    {newCustomersData.previousPeriodChange === 0 ? (
+                      'Bằng kỳ trước'
+                    ) : (
+                      `${newCustomersData.previousPeriodChange > 0 ? 'Tăng' : 'Giảm'} ${Math.abs(newCustomersData.previousPeriodChange)}% so với kỳ trước`
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="bg-yellow-50 p-3 rounded-lg">
+                <Users size={24} className="text-yellow-600" />
+              </div>
+            </div>
+          </div>
+          
+          <div 
+            className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow" 
+            onClick={() => navigate('/orders')}
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-gray-500 text-sm mb-1">Giá trị trung bình đơn hàng</p>
+                <h3 className="text-2xl font-bold text-gray-800">
+                  {loadingAvgOrderValue ? (
+                    <span className="text-gray-500">Đang tải...</span>
+                  ) : avgOrderValueError ? (
+                    <div>
+                      <span className="text-red-500 text-sm">Lỗi khi tải dữ liệu</span>
+                      <span className="block text-xs text-gray-500 mt-1">{avgOrderValueError}</span>
+                    </div>
+                  ) : (
+                    formatCurrency(avgOrderValueData?.averageOrderValue || 0)
+                  )}
+                </h3>
+                {/* Không hiển thị thông tin thêm cho giá trị trung bình đơn hàng */}
+              </div>
+              <div className="bg-green-50 p-3 rounded-lg">
+                <TrendingUp size={24} className="text-green-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Sales Chart and Top Products */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-lg text-gray-800">Doanh thu</h3>
+              <div className="flex items-center gap-3">
+                {!loading && !error && revenueData?.maxRevenueDay && (
+                  <div className="text-sm text-gray-500">
+                    Ngày cao nhất: {revenueData.maxRevenueDay.date} ({formatCurrency(revenueData.maxRevenueDay.amount)})
+                  </div>
+                )}
+                <button 
+                  className="text-blue-600 text-sm flex items-center hover:text-blue-800"
+                  onClick={() => navigate('/statistics')}
+                >
+                  Xem chi tiết <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+            
+            {/* Phần hiển thị biểu đồ - tăng chiều cao để biểu đồ đẹp hơn */}
+            <div className="h-80">
+              {loading ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-gray-500">Đang tải dữ liệu biểu đồ...</span>
+                </div>
+              ) : error ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-red-500">Không thể tải dữ liệu biểu đồ</span>
+                </div>
+              ) : revenueData?.chartData && revenueData.chartData.length > 0 ? (
+                <div className="w-full h-full bg-gray-50 flex flex-col overflow-hidden rounded-lg">
+                  {/* Container chính với thanh cuộn ngang */}
+                  <div className="w-full flex-1 overflow-x-auto">
+                    <div className="h-full flex items-end p-4 pb-1 relative">
+                      {/* Nhóm dữ liệu theo năm và hiển thị */}
+                      {groupDataByYear(revenueData.chartData).map((yearGroup, groupIndex) => {
+                        // Tính toán chiều rộng dựa trên số lượng dữ liệu
+                        const widthPerItem = Math.max(30, Math.min(80, 1000 / revenueData.chartData.length));
+                        
+                        return (
+                          <div 
+                            key={yearGroup.year} 
+                            className="flex flex-col h-full min-w-fit relative"
+                            style={{ borderLeft: groupIndex > 0 ? '1px dashed #e5e7eb' : 'none' }}
+                          >
+                            {/* Nhãn năm */}
+                            <div className="sticky left-0 self-start px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded mb-2 shadow-sm z-10">
+                              {yearGroup.year}
+                            </div>
+                            
+                            {/* Dữ liệu năm */}
+                            <div className="flex flex-1 items-end">
+                              {yearGroup.data.map((item, index) => {
+                                // Tính chiều cao tương đối với giá trị cao nhất
+                                const height = Math.max(
+                                  10, 
+                                  (Number(item.amount) / (revenueData.maxRevenueDay?.amount || 1)) * 200
+                                );
+                                
+                                return (
+                                  <div 
+                                    key={index} 
+                                    className="relative group mx-1 flex flex-col items-center"
+                                    style={{ width: `${widthPerItem}px` }}
                                   >
-                                    {/* Hiển thị giá trị khi cột đủ cao */}
-                                    {height > 40 && (
-                                      <span className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full text-xs text-blue-700 opacity-0 group-hover:opacity-100">
-                                        {formatCurrency(item.amount).replace('₫', '')}
-                                      </span>
-                                    )}
+                                    <div 
+                                      className="bg-blue-500 group-hover:bg-blue-600 hover:shadow-lg transition-all duration-200 w-full max-w-8 rounded-t-sm"
+                                      style={{ height: `${height}px` }}
+                                    >
+                                      {/* Hiển thị giá trị khi cột đủ cao */}
+                                      {height > 40 && (
+                                        <span className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full text-xs text-blue-700 opacity-0 group-hover:opacity-100">
+                                          {formatCurrency(item.amount).replace('₫', '')}
+                                        </span>
+                                      )}
+                                    </div>
+                                    
+                                    <span className="text-xs mt-1 text-gray-600 whitespace-nowrap truncate" style={{ maxWidth: `${widthPerItem}px` }}>
+                                      {item.date.substring(0, 5)}
+                                    </span>
+                                    
+                                    {/* Tooltip hiển thị khi hover */}
+                                    <div className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs rounded py-1 px-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap">
+                                      <div className="font-medium">{item.date}</div>
+                                      <div className="font-semibold">{formatCurrency(item.amount)}</div>
+                                      <div>{item.orderCount} đơn hàng</div>
+                                    </div>
                                   </div>
-                                  
-                                  <span className="text-xs mt-1 text-gray-600 whitespace-nowrap truncate" style={{ maxWidth: `${widthPerItem}px` }}>
-                                    {item.date.substring(0, 5)}
-                                  </span>
-                                  
-                                  {/* Tooltip hiển thị khi hover */}
-                                  <div className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs rounded py-1 px-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap">
-                                    <div className="font-medium">{item.date}</div>
-                                    <div className="font-semibold">{formatCurrency(item.amount)}</div>
-                                    <div>{item.orderCount} đơn hàng</div>
-                                  </div>
-                                </div>
-                              );
-                            })}
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                
-                {/* Legend */}
-                <div className="flex justify-between items-center p-2 border-t border-gray-200 bg-white text-xs text-gray-500">
-                  <div>
-                    <span className="w-2 h-2 inline-block bg-blue-500 rounded-full mr-1"></span>
-                    Doanh thu theo ngày
-                  </div>
-                  <div>
-                    {revenueData.chartData.length} ngày • Tổng: {formatCurrency(revenueData.totalAmount)}
+                        );
+                      })}
                     </div>
-                </div>
-              </div>
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 rounded-lg">
-                <span className="text-gray-500 mb-2">Không có dữ liệu doanh thu trong khoảng thời gian này</span>
-                <span className="text-sm text-gray-400">Vui lòng chọn khoảng thời gian khác hoặc kiểm tra lại dữ liệu</span>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-lg text-gray-800">Sản phẩm bán chạy</h3>
-              <button className="text-blue-600 text-sm flex items-center">
-                Xem tất cả <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-          <div className="p-3">
-            {loadingTopProducts ? (
-              <div className="p-6 flex justify-center items-center">
-                <div className="text-gray-500 flex flex-col items-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
-                  <span>Đang tải dữ liệu...</span>
-                </div>
-              </div>
-            ) : topProductsError ? (
-              <div className="p-6 text-center">
-                <div className="text-red-500 mb-2">
-                  <AlertCircle size={24} className="mx-auto mb-2" />
-                  <p>Không thể tải dữ liệu sản phẩm bán chạy</p>
-                </div>
-                <p className="text-sm text-gray-500">{topProductsError}</p>
-              </div>
-            ) : topProducts.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
-                <Package size={24} className="mx-auto mb-2" />
-                <p>Không có dữ liệu sản phẩm bán chạy trong khoảng thời gian này</p>
-              </div>
-            ) : (
-              topProducts.map((product, index) => (
-                <div key={index} className="p-3 hover:bg-gray-50 rounded-lg">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-                      {product.imageUrl ? (
-                        <img src={product.imageUrl} alt={product.name} className="w-8 h-8 object-cover rounded" />
-                      ) : (
-                        <Package size={20} className="text-gray-500" />
-                      )}
+                  </div>
+                  
+                  {/* Legend */}
+                  <div className="flex justify-between items-center p-2 border-t border-gray-200 bg-white text-xs text-gray-500">
+                    <div>
+                      <span className="w-2 h-2 inline-block bg-blue-500 rounded-full mr-1"></span>
+                      Doanh thu theo ngày
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">{product.name}</h4>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-sm text-gray-500">{product.sold} đã bán</span>
-                        <span className="text-sm font-medium text-blue-600">{formatCurrency(product.revenue)}</span>
-                      </div>
+                    <div>
+                      {revenueData.chartData.length} ngày • Tổng: {formatCurrency(revenueData.totalAmount)}
                     </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-      
-      {/* Recent Orders and Marketing Campaigns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-lg text-gray-800">Đơn hàng gần đây</h3>
-              <button className="text-blue-600 text-sm flex items-center">
-                Xem tất cả <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            {loadingRecentOrders ? (
-              <div className="p-6 flex justify-center items-center">
-                <div className="text-gray-500 flex flex-col items-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
-                  <span>Đang tải dữ liệu...</span>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 rounded-lg">
+                  <span className="text-gray-500 mb-2">Không có dữ liệu doanh thu trong khoảng thời gian này</span>
+                  <span className="text-sm text-gray-400">Vui lòng chọn khoảng thời gian khác hoặc kiểm tra lại dữ liệu</span>
                 </div>
-              </div>
-            ) : recentOrdersError ? (
-              <div className="p-6 text-center">
-                <div className="text-red-500 mb-2">
-                  <AlertCircle size={24} className="mx-auto mb-2" />
-                  <p>Không thể tải dữ liệu đơn hàng gần đây</p>
-                </div>
-                <p className="text-sm text-gray-500">{recentOrdersError}</p>
-              </div>
-            ) : apiRecentOrders.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
-                <ShoppingCart size={24} className="mx-auto mb-2" />
-                <p>Không có đơn hàng nào trong khoảng thời gian này</p>
-              </div>
-            ) : (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng tiền</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {apiRecentOrders.map((order, index) => {
-                    // Format the order date
-                    const orderDate = order.orderDate ? 
-                      `${order.orderDate[2]}/${order.orderDate[1]}/${order.orderDate[0]}` : 
-                      'N/A';
-                    
-                    // Map order status to Vietnamese
-                    const statusMap = {
-                      'pending': 'Chờ xử lý',
-                      'processing': 'Đang xử lý',
-                      'shipping': 'Đang giao',
-                      'delivered': 'Đã giao',
-                      'cancelled': 'Đã hủy'
-                    };
-                    
-                    const statusClass = {
-                      'pending': 'bg-blue-100 text-blue-800',
-                      'processing': 'bg-purple-100 text-purple-800',
-                      'shipping': 'bg-yellow-100 text-yellow-800',
-                      'delivered': 'bg-green-100 text-green-800',
-                      'cancelled': 'bg-red-100 text-red-800'
-                    };
-                    
-                    return (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">#{order.orderId}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">ID: {order.customerId}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{orderDate}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs rounded-full ${statusClass[order.orderStatus] || 'bg-gray-100 text-gray-800'}`}>
-                            {statusMap[order.orderStatus] || order.orderStatus}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{formatCurrency(order.totalAmount)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 gap-6">
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-100">
-              <div className="flex justify-between items-center">
-                <h3 className="font-semibold text-lg text-gray-800">Chiến dịch Marketing</h3>
-                <button className="text-blue-600 text-sm flex items-center">
-                  Xem tất cả <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-            <div className="p-3">
-              {marketingCampaigns.map((campaign, index) => (
-                <div key={index} className="p-3 hover:bg-gray-50 rounded-lg">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center mr-3">
-                      <Calendar size={20} className="text-pink-500" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">{campaign.name}</h4>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-sm text-gray-500">{campaign.startDate} - {campaign.endDate}</span>
-                        <span className="text-sm bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">{campaign.status}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              )}
             </div>
           </div>
           
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-100">
               <div className="flex justify-between items-center">
-                <h3 className="font-semibold text-lg text-gray-800">Cảnh báo tồn kho thấp</h3>
-                <button className="text-blue-600 text-sm flex items-center">
-                  Xem tất cả <ChevronRight size={16} />
+                <h3 className="font-semibold text-lg text-gray-800">Sản phẩm bán chạy</h3>
+                <button 
+                  className="text-blue-600 text-sm flex items-center hover:text-blue-800"
+                  onClick={() => navigate('/products')}
+                >
+                  Xem chi tiết <ChevronRight size={16} />
                 </button>
               </div>
             </div>
             <div className="p-3">
-              {loadingLowStock ? (
+              {loadingTopProducts ? (
                 <div className="p-6 flex justify-center items-center">
                   <div className="text-gray-500 flex flex-col items-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mb-2"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
                     <span>Đang tải dữ liệu...</span>
                   </div>
                 </div>
-              ) : lowStockError ? (
+              ) : topProductsError ? (
                 <div className="p-6 text-center">
                   <div className="text-red-500 mb-2">
                     <AlertCircle size={24} className="mx-auto mb-2" />
-                    <p>Không thể tải dữ liệu cảnh báo tồn kho</p>
+                    <p>Không thể tải dữ liệu sản phẩm bán chạy</p>
                   </div>
-                  <p className="text-sm text-gray-500">{lowStockError}</p>
+                  <p className="text-sm text-gray-500">{topProductsError}</p>
                 </div>
-              ) : lowStockProducts.length === 0 ? (
+              ) : topProducts.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
                   <Package size={24} className="mx-auto mb-2" />
-                  <p>Không có sản phẩm nào dưới ngưỡng tồn kho</p>
+                  <p>Không có dữ liệu sản phẩm bán chạy trong khoảng thời gian này</p>
                 </div>
               ) : (
-                lowStockProducts.map((item, index) => (
+                topProducts.map((product, index) => (
                   <div key={index} className="p-3 hover:bg-gray-50 rounded-lg">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-                        <AlertCircle size={20} className="text-red-500" />
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt={product.name} className="w-8 h-8 object-cover rounded" />
+                        ) : (
+                          <Package size={20} className="text-gray-500" />
+                        )}
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-800">{item.brandName} {item.productName} {item.volume}ml</h4>
+                        <h4 className="font-medium text-gray-800">{product.name}</h4>
                         <div className="flex items-center justify-between mt-1">
-                          <span className="text-sm text-gray-500">Ngưỡng: {item.reorderLevel}</span>
-                          <span className="text-sm font-medium text-red-600">Còn lại: {item.quantityInStock}</span>
-                        </div>
-                        {/* Progress bar showing stock level relative to threshold */}
-                        <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                          <div 
-                            className="bg-red-500 h-1.5 rounded-full" 
-                            style={{ width: `${Math.min(100, (item.quantityInStock / item.reorderLevel) * 100)}%` }}
-                          ></div>
+                          <span className="text-sm text-gray-500">{product.sold} đã bán</span>
+                          <span className="text-sm font-medium text-blue-600">{formatCurrency(product.revenue)}</span>
                         </div>
                       </div>
                     </div>
@@ -959,93 +809,282 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-      </div>
-      
-      {/* Top Performing Employees */}
-      <div className="bg-white rounded-lg shadow mb-6">
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-lg text-gray-800">Nhân viên xuất sắc</h3>
-            <button className="text-blue-600 text-sm flex items-center">
-              Xem tất cả <ChevronRight size={16} />
-            </button>
+        
+        {/* Recent Orders and Marketing Campaigns */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold text-lg text-gray-800">Đơn hàng gần đây</h3>
+                <button 
+                  className="text-blue-600 text-sm flex items-center hover:text-blue-800"
+                  onClick={() => navigate('/orders')}
+                >
+                  Xem chi tiết <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              {loadingRecentOrders ? (
+                <div className="p-6 flex justify-center items-center">
+                  <div className="text-gray-500 flex flex-col items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
+                    <span>Đang tải dữ liệu...</span>
+                  </div>
+                </div>
+              ) : recentOrdersError ? (
+                <div className="p-6 text-center">
+                  <div className="text-red-500 mb-2">
+                    <AlertCircle size={24} className="mx-auto mb-2" />
+                    <p>Không thể tải dữ liệu đơn hàng gần đây</p>
+                  </div>
+                  <p className="text-sm text-gray-500">{recentOrdersError}</p>
+                </div>
+              ) : apiRecentOrders.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">
+                  <ShoppingCart size={24} className="mx-auto mb-2" />
+                  <p>Không có đơn hàng nào trong khoảng thời gian này</p>
+                </div>
+              ) : (
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {apiRecentOrders.map((order, index) => {
+                      // Format the order date
+                      const orderDate = order.orderDate ? 
+                        `${order.orderDate[2]}/${order.orderDate[1]}/${order.orderDate[0]}` : 
+                        'N/A';
+                      
+                      // Map order status to Vietnamese
+                      const statusMap = {
+                        'pending': 'Chờ xử lý',
+                        'processing': 'Đang xử lý',
+                        'shipping': 'Đang giao',
+                        'delivered': 'Đã giao',
+                        'cancelled': 'Đã hủy'
+                      };
+                      
+                      const statusClass = {
+                        'pending': 'bg-blue-100 text-blue-800',
+                        'processing': 'bg-purple-100 text-purple-800',
+                        'shipping': 'bg-yellow-100 text-yellow-800',
+                        'delivered': 'bg-green-100 text-green-800',
+                        'cancelled': 'bg-red-100 text-red-800'
+                      };
+                      
+                      return (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">#{order.orderId}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">ID: {order.customerId}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{orderDate}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs rounded-full ${statusClass[order.orderStatus] || 'bg-gray-100 text-gray-800'}`}>
+                              {statusMap[order.orderStatus] || order.orderStatus}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{formatCurrency(order.totalAmount)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-6">
+            <div className="bg-white rounded-lg shadow">
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-semibold text-lg text-gray-800">Chiến dịch Marketing</h3>
+                  <button 
+                    className="text-blue-600 text-sm flex items-center hover:text-blue-800"
+                    onClick={() => navigate('/marketings')}
+                  >
+                    Xem chi tiết <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+              <div className="p-3">
+                {marketingCampaigns.map((campaign, index) => (
+                  <div key={index} className="p-3 hover:bg-gray-50 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center mr-3">
+                        <Calendar size={20} className="text-pink-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-800">{campaign.name}</h4>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-sm text-gray-500">{campaign.startDate} - {campaign.endDate}</span>
+                          <span className="text-sm bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">{campaign.status}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow">
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-semibold text-lg text-gray-800">Cảnh báo tồn kho thấp</h3>
+                  <button 
+                    className="text-blue-600 text-sm flex items-center hover:text-blue-800"
+                    onClick={() => navigate('/products')}
+                  >
+                    Xem chi tiết <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+              <div className="p-3">
+                {loadingLowStock ? (
+                  <div className="p-6 flex justify-center items-center">
+                    <div className="text-gray-500 flex flex-col items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mb-2"></div>
+                      <span>Đang tải dữ liệu...</span>
+                    </div>
+                  </div>
+                ) : lowStockError ? (
+                  <div className="p-6 text-center">
+                    <div className="text-red-500 mb-2">
+                      <AlertCircle size={24} className="mx-auto mb-2" />
+                      <p>Không thể tải dữ liệu cảnh báo tồn kho</p>
+                    </div>
+                    <p className="text-sm text-gray-500">{lowStockError}</p>
+                  </div>
+                ) : lowStockProducts.length === 0 ? (
+                  <div className="p-6 text-center text-gray-500">
+                    <Package size={24} className="mx-auto mb-2" />
+                    <p>Không có sản phẩm nào dưới ngưỡng tồn kho</p>
+                  </div>
+                ) : (
+                  lowStockProducts.map((item, index) => (
+                    <div key={index} className="p-3 hover:bg-gray-50 rounded-lg">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                          <AlertCircle size={20} className="text-red-500" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-800">{item.brandName} {item.productName} {item.volume}ml</h4>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-sm text-gray-500">Ngưỡng: {item.reorderLevel}</span>
+                            <span className="text-sm font-medium text-red-600">Còn lại: {item.quantityInStock}</span>
+                          </div>
+                          {/* Progress bar showing stock level relative to threshold */}
+                          <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                            <div 
+                              className="bg-red-500 h-1.5 rounded-full" 
+                              style={{ width: `${Math.min(100, (item.quantityInStock / item.reorderLevel) * 100)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </div>
-        <div className="p-3">
-          {loadingTopEmployees ? (
-            <div className="p-6 flex justify-center items-center">
-              <div className="text-gray-500 flex flex-col items-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
-                <span>Đang tải dữ liệu...</span>
+        
+        {/* Top Performing Employees */}
+        <div className="bg-white rounded-lg shadow mb-6">
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex justify-between items-center">
+              <h3 className="font-semibold text-lg text-gray-800">Nhân viên xuất sắc</h3>
+              <button 
+                className="text-blue-600 text-sm flex items-center hover:text-blue-800"
+                onClick={() => navigate('/staffs')}
+              >
+                Xem chi tiết <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+          <div className="p-3">
+            {loadingTopEmployees ? (
+              <div className="p-6 flex justify-center items-center">
+                <div className="text-gray-500 flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
+                  <span>Đang tải dữ liệu...</span>
+                </div>
               </div>
-            </div>
-          ) : topEmployeesError ? (
-            <div className="p-6 text-center">
-              <div className="text-red-500 mb-2">
-                <AlertCircle size={24} className="mx-auto mb-2" />
-                <p>Không thể tải dữ liệu nhân viên xuất sắc</p>
+            ) : topEmployeesError ? (
+              <div className="p-6 text-center">
+                <div className="text-red-500 mb-2">
+                  <AlertCircle size={24} className="mx-auto mb-2" />
+                  <p>Không thể tải dữ liệu nhân viên xuất sắc</p>
+                </div>
+                <p className="text-sm text-gray-500">{topEmployeesError}</p>
               </div>
-              <p className="text-sm text-gray-500">{topEmployeesError}</p>
-            </div>
-          ) : topEmployees.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              <Users size={24} className="mx-auto mb-2" />
-              <p>Không có dữ liệu nhân viên xuất sắc trong khoảng thời gian này</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 p-3">
-              {topEmployees.map((employee, index) => (
-                <div key={employee.employeeId} className="bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col items-center">
-                  <div className="relative">
-                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-blue-500 mb-3">
-                      {employee.profilePictureUrl ? (
-                        <img 
-                          src={employee.profilePictureUrl} 
-                          alt={employee.fullName} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <User size={32} className="text-gray-400" />
+            ) : topEmployees.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                <Users size={24} className="mx-auto mb-2" />
+                <p>Không có dữ liệu nhân viên xuất sắc trong khoảng thời gian này</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 p-3">
+                {topEmployees.map((employee, index) => (
+                  <div key={employee.employeeId} className="bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col items-center">
+                    <div className="relative">
+                      <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-blue-500 mb-3">
+                        {employee.profilePictureUrl ? (
+                          <img 
+                            src={employee.profilePictureUrl} 
+                            alt={employee.fullName} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <User size={32} className="text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      {index < 3 && (
+                        <div className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center ${index === 0 ? 'bg-yellow-400' : index === 1 ? 'bg-gray-300' : 'bg-amber-600'}`}>
+                          <Award size={16} className="text-white" />
                         </div>
                       )}
                     </div>
-                    {index < 3 && (
-                      <div className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center ${index === 0 ? 'bg-yellow-400' : index === 1 ? 'bg-gray-300' : 'bg-amber-600'}`}>
-                        <Award size={16} className="text-white" />
-                      </div>
-                    )}
+                    <h4 className="font-medium text-gray-800 text-center">{employee.fullName}</h4>
+                    <p className="text-sm text-gray-500 mb-2">@{employee.username}</p>
+                    <div className="w-full bg-gray-100 rounded-full h-2.5 mb-2">
+                      <div 
+                        className="bg-blue-600 h-2.5 rounded-full" 
+                        style={{ width: `${Math.min(100, employee.performanceScore)}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex items-center justify-between w-full text-xs text-gray-500">
+                      <span className="flex items-center">
+                        <ShoppingCart size={12} className="mr-1" />
+                        {employee.processedOrdersCount}
+                      </span>
+                      <span className="flex items-center">
+                        <Package size={12} className="mr-1" />
+                        {employee.inventoryOperationsCount}
+                      </span>
+                      <span className="flex items-center">
+                        <Users size={12} className="mr-1" />
+                        {employee.customerSupportCount}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center">
+                      <Star size={14} className="text-yellow-400 mr-1" />
+                      <span className="font-semibold">{employee.performanceScore.toFixed(1)}</span>
+                    </div>
                   </div>
-                  <h4 className="font-medium text-gray-800 text-center">{employee.fullName}</h4>
-                  <p className="text-sm text-gray-500 mb-2">@{employee.username}</p>
-                  <div className="w-full bg-gray-100 rounded-full h-2.5 mb-2">
-                    <div 
-                      className="bg-blue-600 h-2.5 rounded-full" 
-                      style={{ width: `${Math.min(100, employee.performanceScore)}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex items-center justify-between w-full text-xs text-gray-500">
-                    <span className="flex items-center">
-                      <ShoppingCart size={12} className="mr-1" />
-                      {employee.processedOrdersCount}
-                    </span>
-                    <span className="flex items-center">
-                      <Package size={12} className="mr-1" />
-                      {employee.inventoryOperationsCount}
-                    </span>
-                    <span className="flex items-center">
-                      <Users size={12} className="mr-1" />
-                      {employee.customerSupportCount}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center">
-                    <Star size={14} className="text-yellow-400 mr-1" />
-                    <span className="font-semibold">{employee.performanceScore.toFixed(1)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, Search, Plus, Edit, Trash2, Filter, Download, Mail, Phone, Award, ChevronDown, ChevronUp, Check, X, UserRound, Eye, EyeOff, Copy, MapPin, Settings, User, UserPlus } from 'lucide-react';
+import { Users, Search, Plus, Edit, Trash2, Filter, Download, Mail, Phone, Award, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, X, UserRound, Eye, EyeOff, Copy, MapPin, Settings, User, UserPlus } from 'lucide-react';
+import { PageHeader, TableToolbar, DataTable, PaginationFooter } from '../Components/common';
 import employeeService from '../services/employeeService';
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
@@ -2618,7 +2619,7 @@ const Staff = () => {
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [activeRoles, setActiveRoles] = useState([]);
   const [filterOpen, setFilterOpen] = useState(false);
-  const filterRef = useRef(null);
+  const [filterAnchor, setFilterAnchor] = useState(null);
   const [filterRoles, setFilterRoles] = useState([]);
   const [filterStatuses, setFilterStatuses] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -2796,7 +2797,7 @@ const Staff = () => {
   // Handle filters for mobile view
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (filterRef.current && !filterRef.current.contains(event.target)) {
+      if (filterAnchor && !filterAnchor.current.contains(event.target)) {
         setFilterOpen(false);
       }
     };
@@ -2804,7 +2805,7 @@ const Staff = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [filterRef]);
+  }, [filterAnchor]);
   
   // Handle adding a new role
   const handleAddRole = () => {
@@ -2971,17 +2972,13 @@ const Staff = () => {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="p-6">
       <Toaster />
       {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">Quản lý nhân viên</h1>
-        </div>
-      </div>
+      <PageHeader title="Quản lý nhân viên" subtitle="Quản lý tất cả nhân viên trong hệ thống" />
       
       {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="mx-auto px-4 py-6">
         {/* Role overview */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
@@ -3041,105 +3038,23 @@ const Staff = () => {
             <h2 className="text-lg font-medium text-gray-900">Đội ngũ</h2>
                   </div>
           
-          {/* Search and filters - Updated with z-index to prevent overlapping */}
-          <div className="p-4 border-b bg-gray-50">
-            <div className="flex flex-col sm:flex-row justify-between space-y-4 sm:space-y-0">
-              <div className="flex items-center space-x-2">
-                <div className="relative rounded-md shadow-sm">
-                  <input
-                    type="text"
-                    placeholder="Tìm nhân viên..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-80"
-                  />
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search size={18} className="text-gray-400" />
-                </div>
-              </div>
-              
-                <div className="relative" ref={filterRef}>
-                  <button
-                    onClick={() => setFilterOpen(!filterOpen)}
-                    className="p-2 border border-gray-300 rounded-md hover:bg-gray-100 bg-white"
-                    title="Bộ lọc"
-                  >
-                    <Filter size={18} />
-                  </button>
-                  
-                  {filterOpen && (
-                    <div className="fixed mt-2 w-80 bg-white border rounded-md shadow-lg z-[999] p-4 space-y-4" 
-                         style={{ 
-                           top: filterRef.current ? filterRef.current.getBoundingClientRect().bottom + 5 : 0,
-                           left: filterRef.current ? filterRef.current.getBoundingClientRect().left : 0
-                         }}>
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="text-sm font-medium">Vai trò</h4>
-                          <button 
-                            onClick={() => setFilterRoles([])} 
-                            className="text-xs text-blue-600 hover:text-blue-800"
-                          >
-                            Bỏ chọn tất cả
-                          </button>
-                      </div>
-                        <div className="space-y-2 max-h-40 overflow-y-auto">
-                          {rolesData.map(role => (
-                            <label key={role.roleId} className="flex items-center justify-between">
-                              <div className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  checked={filterRoles.includes(role.roleName)}
-                                  onChange={() => {
-                                    setFilterRoles(prev => prev.includes(role.roleName) ? prev.filter(r => r !== role.roleName) : [...prev, role.roleName]);
-                                  }}
-                                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                />
-                                <span className="ml-2 text-sm text-gray-700">{role.roleName}</span>
-                              </div>
-                              <span className={`text-xs px-1.5 py-0.5 rounded-full ${role.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                {role.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
-                              </span>
-                        </label>
-                      ))}
-                    </div>
-                </div>
-                
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="text-sm font-medium">Trạng thái</h4>
-                          <button 
-                            onClick={() => setFilterStatuses([])} 
-                            className="text-xs text-blue-600 hover:text-blue-800"
-                          >
-                            Bỏ chọn tất cả
-                  </button>
-                      </div>
-                        <div className="space-y-2">
-                          {[
-                            { value: 'active', label: 'Đang làm việc' },
-                            { value: 'probation', label: 'Thử việc' },
-                            { value: 'on_leave', label: 'Đang nghỉ phép' },
-                            { value: 'inactive', label: 'Đã nghỉ' },
-                          ].map(({ value, label }) => (
-                            <label key={value} className="flex items-center">
-                              <input
-                                type="checkbox"
-                                checked={filterStatuses.includes(value)}
-                                onChange={() => {
-                                  setFilterStatuses(prev => prev.includes(value) ? prev.filter(s => s !== value) : [...prev, value]);
-                                }}
-                                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <span className="ml-2 text-sm text-gray-700">{label}</span>
-                        </label>
-                      ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
+          {/* Unified Toolbar */}
+          <div className="bg-white rounded-lg shadow mb-6">
+            <TableToolbar
+              searchValue={searchTerm}
+              onSearchChange={(e) => setSearchTerm(e.target.value)}
+              onSearchSubmit={(e) => { e.preventDefault(); setCurrentPage(1); }}
+              onFilter={(e) => {
+                setFilterOpen((prev) => !prev);
+                if (e) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setFilterAnchor({ top: rect.bottom + window.scrollY + 6, left: rect.left + window.scrollX });
+                }
+              }}
+              addLabel="Thêm nhân viên"
+              onAdd={handleAddStaff}
+              placeholder="Tìm nhân viên..."
+              extraActions={
                 <button
                   onClick={exportToExcel}
                   className="p-2 border border-gray-300 rounded-md hover:bg-gray-100 flex items-center"
@@ -3147,19 +3062,62 @@ const Staff = () => {
                 >
                   <Download size={18} className="text-gray-600" />
                 </button>
+              }
+            />
+          </div>
+          
+          {filterOpen && (
+            <div
+              className="fixed z-50 bg-white border rounded-md shadow-lg p-4 w-80"
+              style={{ top: filterAnchor?.top, left: filterAnchor?.left }}
+            >
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-sm font-medium">Vai trò</h4>
+                  <button onClick={() => setFilterRoles([])} className="text-xs text-blue-600 hover:text-blue-800">Bỏ chọn tất cả</button>
+                </div>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {rolesData.map(role => (
+                    <label key={role.roleId} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={filterRoles.includes(role.roleName)}
+                          onChange={() => {
+                            setFilterRoles(prev => prev.includes(role.roleName) ? prev.filter(r => r !== role.roleName) : [...prev, role.roleName]);
+                          }}
+                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">{role.roleName}</span>
+                      </div>
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${role.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{role.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-                
-              <div className="flex items-center">
-                <button
-                  onClick={handleAddStaff}
-                  className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm flex items-center hover:bg-blue-700"
-                >
-                  <Plus size={16} className="mr-1" />
-                  Thêm nhân viên
-                </button>
+              <div className="mt-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-sm font-medium">Trạng thái</h4>
+                  <button onClick={() => setFilterStatuses([])} className="text-xs text-blue-600 hover:text-blue-800">Bỏ chọn tất cả</button>
+                </div>
+                <div className="space-y-2">
+                  {[{value:'active',label:'Đang làm việc'},{value:'probation',label:'Thử việc'},{value:'on_leave',label:'Đang nghỉ phép'},{value:'inactive',label:'Đã nghỉ'}].map(({value,label})=> (
+                    <label key={value} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={filterStatuses.includes(value)}
+                        onChange={() => {
+                          setFilterStatuses(prev => prev.includes(value) ? prev.filter(s => s !== value) : [...prev, value]);
+                        }}
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">{label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
           
           {/* Staff table */}
           <div className="overflow-x-auto min-h-[300px]">
@@ -3285,77 +3243,78 @@ const Staff = () => {
           </div>
           
           {/* Pagination */}
-          <div className="px-4 py-3 border-t border-gray-200 sm:px-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <span className="text-sm text-gray-700 mr-2">Hiển thị</span>
+          {!loading && sortedStaff.length > 0 && (
+            <div className="px-4 py-3 flex flex-col md:flex-row md:justify-between border-t gap-3 bg-white">
+              <div className="flex items-center text-sm text-gray-500 flex-wrap gap-2">
+                <span>Hiển thị</span>
                 <select
                   value={pageSize}
                   onChange={handlePageSizeChange}
-                  className="border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="px-1 py-1 text-sm border rounded"
                 >
-                  {[5, 10, 20, 50].map(size => (
+                  {[5,10,20,50].map(size => (
                     <option key={size} value={size}>{size}</option>
                   ))}
+                  <option value={sortedStaff.length}>Tất cả</option>
                 </select>
-                <span className="text-sm text-gray-700 ml-2">mỗi trang</span>
-            </div>
-              
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                  <button 
+                <span>mỗi trang trong {sortedStaff.length} nhân viên</span>
+              </div>
+              <div className="flex justify-between md:justify-end items-center space-x-2">
+                <div className="flex items-center">
+                  <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-                      currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
-                    }`}
+                    className={`px-2 py-1 border rounded ${currentPage===1 ? 'text-gray-400 cursor-not-allowed':'hover:bg-gray-50'}`}
                   >
-                    <span className="sr-only">Previous</span>
-                    <ChevronDown className="h-5 w-5 rotate-90" aria-hidden="true" />
+                    <ChevronLeft size={18} />
                   </button>
-                  
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    // For simplicity, just show up to 5 pages around current page
-                    let pageNumber;
-                    if (totalPages <= 5) {
-                      pageNumber = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNumber = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNumber = totalPages - 4 + i;
-                    } else {
-                      pageNumber = currentPage - 2 + i;
-                    }
-                    
-                    return (
-                      <button
-                        key={pageNumber}
-                        onClick={() => handlePageChange(pageNumber)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          pageNumber === currentPage
-                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                        }`}
-                      >
-                        {pageNumber}
-                  </button>
-                    );
-                  })}
-                  
-                  <button 
+                  <div className="flex items-center mx-1">
+                    <button className={`px-3 py-1 border rounded ${currentPage===1 ? 'bg-blue-600 text-white':'hover:bg-gray-50'}`} onClick={()=>handlePageChange(1)}>1</button>
+                    {currentPage > 3 && <span className="px-1">...</span>}
+                    {Array.from({length: totalPages}).map((_,i)=>{
+                      if(i!==0 && i!== totalPages-1){
+                        if(Math.abs(currentPage-(i+1))<=1){
+                          return (
+                            <button key={i} className={`px-3 py-1 border rounded ${currentPage===i+1?'bg-blue-600 text-white':'hover:bg-gray-50'}`} onClick={()=>handlePageChange(i+1)}>{i+1}</button>
+                          );
+                        }
+                      }
+                      return null;
+                    })}
+                    {currentPage < totalPages-2 && <span className="px-1">...</span>}
+                    {totalPages>1 && (
+                      <button className={`px-3 py-1 border rounded ${currentPage===totalPages? 'bg-blue-600 text-white':'hover:bg-gray-50'}`} onClick={()=>handlePageChange(totalPages)}>{totalPages}</button>
+                    )}
+                  </div>
+                  <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-                      currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
-                    }`}
+                    className={`px-2 py-1 border rounded ${currentPage===totalPages ? 'text-gray-400 cursor-not-allowed':'hover:bg-gray-50'}`}
                   >
-                    <span className="sr-only">Next</span>
-                    <ChevronDown className="h-5 w-5 -rotate-90" aria-hidden="true" />
+                    <ChevronRight size={18} />
                   </button>
-                </nav>
+                </div>
+                <div className="inline-flex items-center ml-1">
+                  <span className="mr-1 text-sm whitespace-nowrap">Đến trang:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={totalPages}
+                    className="w-14 h-8 px-2 border rounded text-sm"
+                    onKeyDown={(e)=>{
+                      if(e.key==='Enter'){
+                        const num=parseInt(e.target.value,10);
+                        if(!isNaN(num) && num>=1 && num<= totalPages){
+                          handlePageChange(num);
+                          e.target.value='';
+                        }
+                      }
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
       

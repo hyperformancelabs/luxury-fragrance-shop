@@ -11,8 +11,7 @@ import InventoryTransactionLog from '../components/InventoryTransactionLog';
 import inventoryTransactionService from '../services/inventoryTransactionService';
 import productService from '../services/productService';
 import InventoryOperationModal from '../Components/InventoryOperationModal';
-// Common layout components
-import { PageHeader, TableToolbar } from '../Components/common';
+import { PageHeader, PaginationFooter, TableToolbar } from '../Components/common';
 
 // Service cho brand
 const brandService = {
@@ -186,14 +185,13 @@ const Products = () => {
     volume: ''
   });
   
+  // State for showing filters
+  const [showFilters, setShowFilters] = useState(false);
+  
   // Add new state variables for inventory operation modal
   const [showInventoryOperationModal, setShowInventoryOperationModal] = useState(false);
   const [inventoryOperationType, setInventoryOperationType] = useState('import'); // 'import' or 'export'
   const [selectedVariantForInventory, setSelectedVariantForInventory] = useState(null);
-  
-  // UI – filter popup visibility & anchor
-  const [showFilters, setShowFilters] = useState(false);
-  const [filterAnchor, setFilterAnchor] = useState(null);
   
   // Function to filter variants based on selected filters
   const getFilteredVariants = () => {
@@ -1966,27 +1964,8 @@ const Products = () => {
     }));
   };
 
-  // Handle filter button click – toggle popup & remember anchor position
-  const handleFilterToggle = (e) => {
-    setShowFilters((prev) => !prev);
-    if (e) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setFilterAnchor({
-        top: rect.bottom + window.scrollY + 6,
-        left: rect.left + window.scrollX,
-      });
-    }
-  };
-
-  // Handle search submit from toolbar (press Enter)
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    setPage(0);
-    fetchProducts();
-  };
-
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
       
       {/* Product Form Modal */}
@@ -2089,8 +2068,7 @@ const Products = () => {
         onSuccess={handleInventoryOperationSuccess}
       />
       
-      {/* Page Header */}
-      <PageHeader
+      <PageHeader 
         title="Quản lý sản phẩm"
         subtitle={`${totalItems} sản phẩm`}
       >
@@ -2109,414 +2087,289 @@ const Products = () => {
         </div>
       </PageHeader>
       
-      {/* Toolbar & bulk actions */}
-      <div className="mt-6">
-        {/* Bulk Delete Selected */}
-        {selectedProducts.length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
-            <span className="text-sm text-blue-800 font-medium">
-              Đã chọn {selectedProducts.length} sản phẩm
-            </span>
-            <button
-              onClick={handleDeleteSelected}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-red-700 focus:outline-none"
-            >
-              <Trash2 size={18} className="mr-1" />
-              Xóa
-            </button>
-          </div>
-        )}
-
-        <div className="bg-white rounded-lg shadow mb-6">
+      {/* Main Content */}
+      <div className="p-6">
+        <div className="bg-white rounded-lg shadow">
+          {/* Table Toolbar */}
           <TableToolbar
             searchValue={searchTerm}
             onSearchChange={(e) => setSearchTerm(e.target.value)}
-            onSearchSubmit={handleSearchSubmit}
-            onFilter={handleFilterToggle}
+            onSearchSubmit={handleSearch}
             placeholder="Tìm kiếm theo tên sản phẩm, thương hiệu..."
-            searchInputClass="w-64"
+            onFilter={() => setShowFilters(!showFilters)}
             addLabel="Thêm sản phẩm"
             onAdd={handleAddProduct}
-            extraActions={null}
+            extraActions={
+              selectedProducts.length > 0 && (
+                <button
+                  onClick={handleDeleteSelected}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-red-700 focus:outline-none"
+                >
+                  <Trash2 size={18} className="mr-1" />
+                  Xóa {selectedProducts.length} mục
+                </button>
+              )
+            }
           />
-        </div>
-
-        {/* Filter Popup */}
-        {showFilters && (
-          <div
-            className="fixed z-50 bg-white border rounded-md shadow-lg p-4"
-            style={{ top: filterAnchor?.top, left: filterAnchor?.left, width: '250px' }}
-          >
-            <h4 className="font-medium mb-2 flex items-center">
-              <Filter size={16} className="mr-2" /> Bộ lọc
-            </h4>
-            <div className="space-y-4 max-w-full">
-              {/* Availability / Discount checkboxes */}
-              <div className="space-y-2">
-                <label className="flex items-center text-sm space-x-2">
+          
+          {/* Filter Popup */}
+          {showFilters && (
+            <div className="px-4 py-3 border-b bg-gray-50">
+              <div className="flex flex-wrap gap-4">
+                {/* In Stock Filter */}
+                <div className="flex items-center">
                   <input
+                    id="inStockFilter"
                     type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     checked={productFilters.inStock}
                     onChange={() => toggleProductFilter('inStock')}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <span>Còn tồn kho</span>
-                </label>
-                <label className="flex items-center text-sm space-x-2">
+                  <label htmlFor="inStockFilter" className="ml-2 text-sm text-gray-600">
+                    Còn tồn kho
+                  </label>
+                </div>
+                
+                {/* Discounted Filter */}
+                <div className="flex items-center">
                   <input
+                    id="discountedFilter"
                     type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     checked={productFilters.discounted}
                     onChange={() => toggleProductFilter('discounted')}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <span>Đang giảm giá</span>
-                </label>
-              </div>
-
-              {/* Price range */}
-              <div className="space-y-2">
-                <p className="text-sm font-semibold">Khoảng giá (VNĐ)</p>
-                <input
-                  type="number"
-                  min="0"
-                  step="10000"
-                  placeholder="Thấp nhất"
-                  value={productFilters.minPrice}
-                  onChange={(e) => handlePriceFilterChange('minPrice', e.target.value)}
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  step="10000"
-                  placeholder="Cao nhất"
-                  value={productFilters.maxPrice}
-                  onChange={(e) => handlePriceFilterChange('maxPrice', e.target.value)}
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                />
-              </div>
-
-              {/* Volume filter */}
-              <div className="space-y-1">
-                <p className="text-sm font-semibold">Dung tích</p>
-                <select
-                  value={productFilters.volume}
-                  onChange={(e) => handleVolumeFilterChange(e.target.value)}
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                >
-                  <option value="">Tất cả</option>
-                  <option value="5">5ml</option>
-                  <option value="10">10ml</option>
-                  <option value="30">30ml</option>
-                  <option value="50">50ml</option>
-                  <option value="100">100ml</option>
-                  <option value="200">200ml</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2 mt-6">
-              <button
-                onClick={() => {
-                  clearProductFilters();
-                  setShowFilters(false);
-                }}
-                className="px-3 py-1 text-sm border rounded"
-              >
-                Bỏ lọc
-              </button>
-              <button
-                onClick={() => {
-                  applyProductFilters();
-                  setShowFilters(false);
-                }}
-                className="px-3 py-1 text-sm bg-blue-600 text-white rounded"
-              >
-                Áp dụng
-              </button>
-            </div>
-          </div>
-        )}
-
-      </div>
-      
-      {/* Products Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-            </div>
-          ) : error ? (
-            <div className="p-4 text-center text-red-500">{error}</div>
-          ) : products.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">Không tìm thấy sản phẩm nào</div>
-          ) : (
-          <table className="min-w-full bg-white">
-            <thead>
-              <tr className="bg-gray-100 border-b">
-                <th className="w-12 px-4 py-3">
-                  <input 
-                    type="checkbox" 
-                    className="rounded"
-                    onChange={handleSelectAll}
-                    checked={selectedProducts.length === products.length && products.length > 0}
+                  <label htmlFor="discountedFilter" className="ml-2 text-sm text-gray-600">
+                    Đang giảm giá
+                  </label>
+                </div>
+                
+                {/* Price Range Filter */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Giá từ:</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="10000"
+                    value={productFilters.minPrice}
+                    onChange={(e) => handlePriceFilterChange('minPrice', e.target.value)}
+                    className="w-24 px-2 py-1 text-sm border border-gray-300 rounded"
+                    placeholder="Thấp nhất"
                   />
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Ảnh</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('productName')}>
-                  <div className="flex items-center">
-                    Tên sản phẩm
-                    {getSortIcon('productName')}
-                  </div>
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('brandName')}>
-                  <div className="flex items-center">
-                    Thương hiệu
-                    {getSortIcon('brandName')}
-                  </div>
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('minPrice')}>
-                  <div className="flex items-center">
-                    Giá bán
-                    {getSortIcon('minPrice')}
-                  </div>
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('volumes')}>
-                  <div className="flex items-center">
-                    Dung tích (ml)
-                    {getSortIcon('volumes')}
-                  </div>
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('totalInventory')}>
-                  <div className="flex items-center">
-                    Tồn kho
-                    {getSortIcon('totalInventory')}
-                  </div>
-                </th>
-                <th className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {products.map(product => (
-                <tr key={product.productId} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <span className="text-sm text-gray-600">đến</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="10000"
+                    value={productFilters.maxPrice}
+                    onChange={(e) => handlePriceFilterChange('maxPrice', e.target.value)}
+                    className="w-24 px-2 py-1 text-sm border border-gray-300 rounded"
+                    placeholder="Cao nhất"
+                  />
+                </div>
+                
+                {/* Volume Filter */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Dung tích:</span>
+                  <select
+                    value={productFilters.volume}
+                    onChange={(e) => handleVolumeFilterChange(e.target.value)}
+                    className="px-2 py-1 text-sm border border-gray-300 rounded"
+                  >
+                    <option value="">Tất cả</option>
+                    <option value="5">5ml</option>
+                    <option value="10">10ml</option>
+                    <option value="30">30ml</option>
+                    <option value="50">50ml</option>
+                    <option value="100">100ml</option>
+                    <option value="200">200ml</option>
+                  </select>
+                </div>
+                
+                {/* Clear Filters Button */}
+                {Object.values(productFilters).some(v => 
+                   (typeof v === 'boolean' && v === true) || 
+                   (typeof v === 'string' && v !== '') ||
+                   (typeof v === 'number' && v > 0)
+                ) && (
+                  <button
+                    onClick={clearProductFilters}
+                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                  >
+                    <X size={14} className="mr-1" />
+                    Xóa bộ lọc
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        
+
+        
+        {/* Products Table */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+              </div>
+            ) : error ? (
+              <div className="p-4 text-center text-red-500">{error}</div>
+            ) : products.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">Không tìm thấy sản phẩm nào</div>
+            ) : (
+            <table className="min-w-full bg-white">
+              <thead>
+                <tr className="bg-gray-100 border-b">
+                  <th className="w-12 px-4 py-3">
                     <input 
                       type="checkbox" 
                       className="rounded"
-                      checked={selectedProducts.includes(product.productId)}
-                      onChange={() => handleSelectProduct(product.productId)}
+                      onChange={handleSelectAll}
+                      checked={selectedProducts.length === products.length && products.length > 0}
                     />
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    {product.imageUrl ? (
-                      <img 
-                        src={product.imageUrl} 
-                        alt={product.productName} 
-                        className="w-12 h-12 object-cover rounded"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = 'https://via.placeholder.com/50';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-500">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                          <polyline points="21 15 16 10 5 21"></polyline>
-                        </svg>
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Ảnh</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('productName')}>
+                    <div className="flex items-center">
+                      Tên sản phẩm
+                      {getSortIcon('productName')}
                     </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900">{product.productName}</div>
-                    <div className="text-sm text-gray-500">ID: {product.productId}</div>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                    {product.brandName}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    {renderPrice(product)}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    {product.volumes && product.volumes.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {product.volumes.map(volume => (
-                          <span key={volume} className="px-2 py-1 bg-blue-50 text-xs rounded-full">
-                            {volume}
-                    </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 text-sm">Chưa có</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <StatusBadge status={product.totalInventory} reorderLevel={product.reorderLevel || 0} />
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end items-center space-x-2">
-                      <button
-                        onClick={() => handleViewVariants(product)} 
-                        className="text-indigo-600 hover:text-indigo-800"
-                        title="Xem phiên bản"
-                      >
-                        <Layers size={18} />
-                        {product.totalInventory > 0 && product.variantCount > 0 && (
-                          <span className="absolute -mt-2 -mr-2 bg-indigo-100 text-indigo-800 text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                            {product.variantCount}
-                          </span>
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleEditProduct(product)} 
-                        className="text-blue-600 hover:text-blue-800"
-                        title="Sửa sản phẩm"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProduct(product)}
-                        className="text-red-600 hover:text-red-800"
-                        title="Xóa sản phẩm"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('brandName')}>
+                    <div className="flex items-center">
+                      Thương hiệu
+                      {getSortIcon('brandName')}
                     </div>
-                  </td>
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('minPrice')}>
+                    <div className="flex items-center">
+                      Giá bán
+                      {getSortIcon('minPrice')}
+                    </div>
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('volumes')}>
+                    <div className="flex items-center">
+                      Dung tích (ml)
+                      {getSortIcon('volumes')}
+                    </div>
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('totalInventory')}>
+                    <div className="flex items-center">
+                      Tồn kho
+                      {getSortIcon('totalInventory')}
+                    </div>
+                  </th>
+                  <th className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                    Thao tác
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {products.map(product => (
+                  <tr key={product.productId} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <input 
+                        type="checkbox" 
+                        className="rounded"
+                        checked={selectedProducts.includes(product.productId)}
+                        onChange={() => handleSelectProduct(product.productId)}
+                      />
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {product.imageUrl ? (
+                        <img 
+                          src={product.imageUrl} 
+                          alt={product.productName} 
+                          className="w-12 h-12 object-cover rounded"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://via.placeholder.com/50';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                          </svg>
+                      </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900">{product.productName}</div>
+                      <div className="text-sm text-gray-500">ID: {product.productId}</div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                      {product.brandName}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {renderPrice(product)}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {product.volumes && product.volumes.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {product.volumes.map(volume => (
+                            <span key={volume} className="px-2 py-1 bg-blue-50 text-xs rounded-full">
+                              {volume}
+                      </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">Chưa có</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <StatusBadge status={product.totalInventory} reorderLevel={product.reorderLevel || 0} />
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end items-center space-x-2">
+                        <button
+                          onClick={() => handleViewVariants(product)} 
+                          className="text-indigo-600 hover:text-indigo-800"
+                          title="Xem phiên bản"
+                        >
+                          <Layers size={18} />
+                          {product.totalInventory > 0 && product.variantCount > 0 && (
+                            <span className="absolute -mt-2 -mr-2 bg-indigo-100 text-indigo-800 text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                              {product.variantCount}
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleEditProduct(product)} 
+                          className="text-blue-600 hover:text-blue-800"
+                          title="Sửa sản phẩm"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(product)}
+                          className="text-red-600 hover:text-red-800"
+                          title="Xóa sản phẩm"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            )}
+          </div>
+          
+          {/* Pagination */}
+          {!loading && !error && products.length > 0 && (
+            <PaginationFooter
+              page={page + 1} // Convert to 1-based for display
+              pageSize={pageSize}
+              totalItems={totalItems}
+              onPageChange={(newPage) => handlePageChange(newPage - 1)} // Convert back to 0-based
+            />
           )}
         </div>
-        
-        {/* Pagination */}
-        {!loading && !error && products.length > 0 && (
-          <div className="px-4 py-3 flex flex-col md:flex-row md:justify-between border-t gap-3">
-            <div className="flex items-center text-sm text-gray-500 flex-wrap gap-2">
-              <span>
-                Hiển thị {products.length > 0 ? page * pageSize + 1 : 0}-
-                {Math.min((page + 1) * pageSize, totalItems)} trong {totalItems} sản phẩm
-              </span>
-              <div className="flex items-center space-x-1">
-                <span className="text-sm text-gray-700">Hiển thị:</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setPage(0); // Reset về trang đầu khi thay đổi số item mỗi trang
-                  }}
-                  className="px-1 py-1 text-sm border rounded"
-                >
-                  {[10, 20, 50, 100, 200, 300, 500, 1000].map(size => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                  <option value={totalItems}>Tất cả</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="flex justify-between md:justify-end items-center space-x-2">
-              <div className="flex items-center">
-                <button
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page === 0}
-                  className={`px-2 py-1 border rounded ${page === 0 ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gray-50'}`}
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                
-                <div className="flex items-center mx-1">
-                  {/* First page button */}
-                  <button
-                    className={`px-3 py-1 border rounded ${page === 0 ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'}`}
-                    onClick={() => handlePageChange(0)}
-                  >
-                    1
-                  </button>
-                  
-                  {/* Ellipsis if not near the beginning */}
-                  {page > 2 && (
-                    <span className="px-1 py-1">...</span>
-                  )}
-                  
-                  {/* Pages near current page */}
-                  {Array.from({ length: totalPages }).map((_, i) => {
-                    // Display current page and one page before/after (if they exist)
-                    // Skip first and last pages (displayed separately)
-                    if (i !== 0 && i !== totalPages - 1) {
-                      if (
-                        (page === i) || // Current page
-                        (page === i - 1) || // Page after current
-                        (page === i + 1) // Page before current
-                      ) {
-                        return (
-                          <button
-                            key={i}
-                            className={`px-3 py-1 border rounded ${page === i ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'}`}
-                            onClick={() => handlePageChange(i)}
-                          >
-                            {i + 1}
-                          </button>
-                        );
-                      }
-                    }
-                    return null;
-                  })}
-                  
-                  {/* Ellipsis if not near the end */}
-                  {page < totalPages - 3 && (
-                    <span className="px-1 py-1">...</span>
-                  )}
-                  
-                  {/* Last page button (if more than one page) */}
-                  {totalPages > 1 && (
-                    <button
-                      className={`px-3 py-1 border rounded ${page === totalPages - 1 ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'}`}
-                      onClick={() => handlePageChange(totalPages - 1)}
-                    >
-                      {totalPages}
-                    </button>
-                  )}
-                </div>
-                
-                <button
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={page >= totalPages - 1}
-                  className={`px-2 py-1 border rounded ${page >= totalPages - 1 ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gray-50'}`}
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-
-              {/* Đi đến trang */}
-              <div className="inline-flex items-center ml-1">
-                <span className="mr-1 text-sm whitespace-nowrap">Đến trang:</span>
-                <input
-                  type="number"
-                  min="1"
-                  max={totalPages}
-                  className="w-14 h-8 px-2 border rounded text-sm"
-                  placeholder=""
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const pageNumber = parseInt(e.target.value, 10);
-                      if (!isNaN(pageNumber) && pageNumber >= 1 && pageNumber <= totalPages) {
-                        handlePageChange(pageNumber - 1);
-                        e.target.value = '';
-                      }
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -51125,7 +51125,7 @@ VALUES
 
 
 -- 14. Insert data into ProductPromotion table
-INSERT INTO ProductPromotion (product_id, promotion_id, condition_json, max_discount_amount, start_date, end_date, status)
+INSERT INTO ProductPromotion (product_variant_id, promotion_id, condition_json, max_discount_amount, start_date, end_date, status)
 VALUES
 -- Applying VALENTINE_SALE_10 (expired)
 (3, 1, NULL, NULL, '2025-02-10', '2025-02-15', 'expired'),

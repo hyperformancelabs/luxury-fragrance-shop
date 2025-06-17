@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "ProductPromotion", uniqueConstraints = {
-    @UniqueConstraint(name = "UQ_ProductPromotion", columnNames = {"product_id", "promotion_id"})
+    @UniqueConstraint(name = "UQ_ProductPromotion", columnNames = {"product_variant_id", "promotion_id"})
 })
 @Data
 @NoArgsConstructor
@@ -23,8 +23,8 @@ public class ProductPromotion {
     private Integer productPromotionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @JoinColumn(name = "product_variant_id", nullable = false)
+    private ProductVariant productVariant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "promotion_id", nullable = false)

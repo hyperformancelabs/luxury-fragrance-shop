@@ -205,7 +205,7 @@ GO
 -- 14. Table ProductPromotion
 CREATE TABLE [ProductPromotion] (
     [product_promotion_id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
-    [product_id] INT NOT NULL,
+    [product_variant_id] INT NOT NULL,
     [promotion_id] INT NOT NULL,
     [condition_json] NVARCHAR(MAX) NULL
         CONSTRAINT [CK_ProductPromotion_JSON] CHECK ([condition_json] IS NULL OR ISJSON([condition_json]) = 1),
@@ -215,13 +215,13 @@ CREATE TABLE [ProductPromotion] (
     [status] VARCHAR(20) NOT NULL
         CONSTRAINT [DF_ProductPromotion_Status] DEFAULT 'active'
         CONSTRAINT [CK_ProductPromotion_Status] CHECK ([status] IN ('active','inactive','expired')),
-    CONSTRAINT [FK_ProductPromotion_Product] FOREIGN KEY ([product_id]) REFERENCES [Product]([product_id])
+    CONSTRAINT [FK_ProductPromotion_ProductVariant] FOREIGN KEY ([product_variant_id]) REFERENCES [ProductVariant]([product_variant_id])
         ON DELETE CASCADE
         ON UPDATE NO ACTION,
     CONSTRAINT [FK_ProductPromotion_Promotion] FOREIGN KEY ([promotion_id]) REFERENCES [Promotion]([promotion_id])
         ON DELETE CASCADE
         ON UPDATE NO ACTION,
-    CONSTRAINT [UQ_ProductPromotion] UNIQUE ([product_id], [promotion_id])
+    CONSTRAINT [UQ_ProductPromotion] UNIQUE ([product_variant_id], [promotion_id])
 );
 GO
 

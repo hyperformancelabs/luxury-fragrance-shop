@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Plus, Edit, Trash2, History, ChevronDown, ChevronUp, PackagePlus, PackageX, Filter, Clock, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, History, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, PackagePlus, PackageX, Clock, XCircle, Filter } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import materialService from '../services/MaterialService';
 import MaterialFormModal from '../Components/MaterialFormModal';
 import MaterialTransactionLog from '../Components/MaterialTransactionLog';
 import MaterialOperationModal from '../Components/MaterialOperationModal';
+import {
+  PageHeader,
+  TableToolbar,
+  DataTable,
+  PaginationFooter,
+} from '../Components/common';
 
 // Helper to evaluate stock status
 const getStockStatus = (qty, reorder) => {
@@ -51,8 +57,9 @@ const Materials = () => {
   const [operationType, setOperationType] = useState('import');
   const [operationMaterial, setOperationMaterial] = useState(null);
   
-  // Filters
+  // Filters & filter popup anchor
   const [showFilters, setShowFilters] = useState(false);
+  const [filterAnchor, setFilterAnchor] = useState(null);
   const [materialFilters, setMaterialFilters] = useState({
     inStock: false,
     needsRestock: false
@@ -244,6 +251,25 @@ const Materials = () => {
     });
   };
 
+  // Toggle filter popup
+  const handleFilterToggle = (e) => {
+    setShowFilters(prev => !prev);
+    if (e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setFilterAnchor({ top: rect.bottom + window.scrollY + 6, left: rect.left + window.scrollX });
+    }
+  };
+
+  // Apply filters (no API call needed, just close popup)
+  const applyFilters = () => {
+    setShowFilters(false);
+  };
+
+  const clearFilters = () => {
+    setMaterialFilters({ inStock: false, needsRestock: false });
+    setShowFilters(false);
+  };
+
   // Apply filters to the material list
   const getFilteredMaterials = () => {
     if (!materialFilters.inStock && !materialFilters.needsRestock) {
@@ -278,294 +304,296 @@ const Materials = () => {
     <div className="p-6">
       <Toaster position="top-right" />
       
-      {/* Header and action buttons */}
-      <div className="flex flex-wrap items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-gray-800">Quản lý vật tư</h1>
+      {/* Page Header */}
+      <PageHeader 
+        title="Quản lý vật tư"
+        subtitle="Theo dõi và quản lý kho vật tư của hệ thống"
+      >
+        <div className="flex items-center space-x-2">
           <button
             onClick={openAllTransactionLog}
-            className="text-purple-600 hover:text-purple-800 rounded-full p-1 hover:bg-purple-50 transition-colors"
+            className="text-purple-600 hover:text-purple-800 rounded-full p-2 hover:bg-purple-50 transition-colors"
             title="Xem lịch sử giao dịch tồn kho"
           >
             <Clock size={20} />
           </button>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-gray-600"
-          >
-            <Filter size={16} className="mr-1" /> Bộ lọc
-          </button>
-          
-          <button
-            onClick={openAddMaterial}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            <Plus size={16} className="mr-1" /> Thêm vật tư
-          </button>
-        </div>
-      </div>
-      
-      {/* Search and filters */}
-      <div className="bg-white rounded-lg shadow mb-6">
-        <div className="p-4 border-b">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="relative flex-grow max-w-md">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={18} className="text-gray-400" />
+      </PageHeader>
+
+      {/* Main Content */}
+      <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
+        {/* Unified toolbar + optional filters */}
+        <div className="bg-white rounded-lg shadow mb-6">
+          <TableToolbar
+            searchValue={searchTerm}
+            onSearchChange={handleSearchChange}
+            onSearchSubmit={(e) => {
+              e.preventDefault();
+              setPage(0);
+              fetchMaterials();
+            }}
+            onFilter={handleFilterToggle}
+            addLabel="Thêm vật tư"
+            onAdd={openAddMaterial}
+            placeholder="Tìm kiếm vật tư..."
+            extraActions={
+              <>
+                {selectedMaterials.length > 0 && (
+                  <button
+                    onClick={handleBulkDelete}
+                    className="flex items-center px-4 py-2 border text-red-600 border-red-300 rounded-lg"
+                  >
+                    <Trash2 size={16} className="mr-1" /> Xoá {selectedMaterials.length}
+                  </button>
+                )}
+              </>
+            }
+          />
+
+          {/* Filter Popup */}
+          {showFilters && (
+            <div
+              className="fixed z-50 bg-white border rounded-md shadow-lg p-4"
+              style={{ top: filterAnchor?.top, left: filterAnchor?.left, width: '260px' }}
+            >
+              <h4 className="font-medium mb-2 flex items-center">
+                <Filter size={16} className="mr-2" /> Bộ lọc vật tư
+              </h4>
+              <div className="mb-3 space-y-2">
+                <label className="flex items-center text-sm space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={materialFilters.inStock}
+                    onChange={() => toggleMaterialFilter('inStock')}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span>Còn tồn kho</span>
+                </label>
+                <label className="flex items-center text-sm space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={materialFilters.needsRestock}
+                    onChange={() => toggleMaterialFilter('needsRestock')}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span>Cần nhập thêm</span>
+                </label>
               </div>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                placeholder="Tìm kiếm vật tư..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="flex justify-end space-x-2 mt-4">
+                <button
+                  onClick={clearFilters}
+                  className="px-3 py-1 text-sm border rounded"
+                >Bỏ lọc</button>
+                <button
+                  onClick={applyFilters}
+                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded"
+                >Áp dụng</button>
+              </div>
             </div>
-            
-            {selectedMaterials.length > 0 && (
-              <button
-                onClick={handleBulkDelete}
-                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              >
-                <Trash2 size={16} className="mr-1" /> Xoá {selectedMaterials.length} mục
-              </button>
-            )}
-          </div>
+          )}
         </div>
-        
-        {/* Filters section */}
-        {showFilters && (
-          <div className="px-4 py-3 border-b flex flex-wrap gap-4">
-            <div className="flex items-center">
-              <input
-                id="inStockFilter"
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                checked={materialFilters.inStock}
-                onChange={() => toggleMaterialFilter('inStock')}
-              />
-              <label htmlFor="inStockFilter" className="ml-2 text-sm text-gray-600">
-                Còn tồn kho
-              </label>
+
+        {/* Table */}
+        <DataTable>
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left">
+                <input 
+                  type="checkbox" 
+                  className="rounded"
+                  onChange={handleSelectAll}
+                  checked={selectedMaterials.length === filteredMaterials.length && filteredMaterials.length > 0}
+                />
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('materialName')}>
+                <div className="flex items-center">
+                  Tên vật tư
+                  {getSortIcon('materialName')}
+                </div>
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('unit')}>
+                <div className="flex items-center">
+                  Đơn vị
+                  {getSortIcon('unit')}
+                </div>
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('quantityInStock')}>
+                <div className="flex items-center justify-end">
+                  Tồn kho
+                  {getSortIcon('quantityInStock')}
+                </div>
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('reorderLevel')}>
+                <div className="flex items-center justify-end">
+                  Cảnh báo
+                  {getSortIcon('reorderLevel')}
+                </div>
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('price')}>
+                <div className="flex items-center justify-end">
+                  Giá (VNĐ)
+                  {getSortIcon('price')}
+                </div>
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Nhập/Xuất</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {loading ? (
+              <tr>
+                <td colSpan="9" className="px-4 py-6 text-center text-gray-500">Đang tải...</td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan="9" className="px-4 py-6 text-center text-red-600">{error}</td>
+              </tr>
+            ) : filteredMaterials.length === 0 ? (
+              <tr>
+                <td colSpan="9" className="px-4 py-6 text-center text-gray-500">Không có dữ liệu</td>
+              </tr>
+            ) : (
+              filteredMaterials.map((mat) => (
+                <tr key={mat.materialId} className={`hover:bg-gray-50 ${selectedMaterials.includes(mat.materialId) ? 'bg-blue-50' : ''}`}>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <input 
+                      type="checkbox" 
+                      className="rounded"
+                      checked={selectedMaterials.includes(mat.materialId)}
+                      onChange={() => handleSelectMaterial(mat.materialId)}
+                    />
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="font-medium text-gray-900">{mat.materialName}</div>
+                    <div className="text-sm text-gray-500">ID: {mat.materialId}</div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{mat.unit}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{mat.quantityInStock}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{mat.reorderLevel || '-'}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-center">
+                    <StatusBadge quantityInStock={mat.quantityInStock} reorderLevel={mat.reorderLevel} />
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{formatCurrency(mat.price)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-center space-x-1">
+                    <button 
+                      title="Nhập kho" 
+                      onClick={() => openOperationModal(mat, 'import')}
+                      className="text-green-600 hover:text-green-800 p-1 hover:bg-green-100 rounded-full"
+                    >
+                      <PackagePlus size={16} />
+                    </button>
+                    <button 
+                      title="Xuất kho" 
+                      onClick={() => openOperationModal(mat, 'export')}
+                      className="text-teal-600 hover:text-teal-800 p-1 hover:bg-teal-100 rounded-full"
+                    >
+                      <PackageX size={16} />
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-center space-x-1">
+                    <button 
+                      title="Sửa" 
+                      onClick={() => openEditMaterial(mat)}
+                      className="text-blue-600 hover:text-blue-800 p-1 hover:bg-blue-100 rounded-full"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button 
+                      title="Lịch sử" 
+                      onClick={() => openTransactionLog(mat)}
+                      className="text-amber-600 hover:text-amber-800 p-1 hover:bg-amber-100 rounded-full"
+                    >
+                      <History size={16} />
+                    </button>
+                    <button 
+                      title="Xoá" 
+                      onClick={() => handleDeleteMaterial(mat.materialId)}
+                      className="text-red-600 hover:text-red-800 p-1 hover:bg-red-100 rounded-full"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </DataTable>
+
+        {/* Pagination */}
+        {!loading && filteredMaterials.length > 0 && (
+          <div className="px-4 py-3 flex flex-col md:flex-row md:justify-between border-t gap-3 bg-white">
+            <div className="flex items-center text-sm text-gray-500 flex-wrap gap-2">
+              <span>Hiển thị</span>
+              <select
+                value={pageSize}
+                onChange={(e)=>{setPageSize(Number(e.target.value)); setPage(0);}}
+                className="px-1 py-1 text-sm border rounded"
+              >
+                {[10,20,50,100,200,500].map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+                <option value={totalItems}>Tất cả</option>
+              </select>
+              <span>mỗi trang trong {totalItems} vật tư</span>
             </div>
-            
-            <div className="flex items-center">
-              <input
-                id="needsRestockFilter"
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                checked={materialFilters.needsRestock}
-                onChange={() => toggleMaterialFilter('needsRestock')}
-              />
-              <label htmlFor="needsRestockFilter" className="ml-2 text-sm text-gray-600">
-                Cần nhập thêm
-              </label>
+            <div className="flex justify-between md:justify-end items-center space-x-2">
+              <div className="flex items-center">
+                <button
+                  onClick={()=>setPage(prev=>Math.max(0, prev-1))}
+                  disabled={page===0}
+                  className={`px-2 py-1 border rounded ${page===0?'text-gray-400 cursor-not-allowed':'hover:bg-gray-50'}`}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <div className="flex items-center mx-1">
+                  <button className={`px-3 py-1 border rounded ${page===0?'bg-blue-600 text-white':'hover:bg-gray-50'}`} onClick={()=>setPage(0)}>1</button>
+                  {page+1 > 3 && <span className="px-1">...</span>}
+                  {Array.from({length: totalPages}).map((_,i)=>{
+                    if(i!==0 && i!== totalPages-1){
+                      if(Math.abs((page+1)-(i+1))<=1){
+                        return (
+                          <button key={i} className={`px-3 py-1 border rounded ${page===i?'bg-blue-600 text-white':'hover:bg-gray-50'}`} onClick={()=>setPage(i)}>{i+1}</button>
+                        );
+                      }
+                    }
+                    return null;
+                  })}
+                  {page+1 < totalPages-2 && <span className="px-1">...</span>}
+                  {totalPages>1 && (
+                    <button className={`px-3 py-1 border rounded ${page===totalPages-1?'bg-blue-600 text-white':'hover:bg-gray-50'}`} onClick={()=>setPage(totalPages-1)}>{totalPages}</button>
+                  )}
+                </div>
+                <button
+                  onClick={()=>setPage(prev=>Math.min(totalPages-1, prev+1))}
+                  disabled={page>=totalPages-1}
+                  className={`px-2 py-1 border rounded ${page>=totalPages-1?'text-gray-400 cursor-not-allowed':'hover:bg-gray-50'}`}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+              <div className="inline-flex items-center ml-1">
+                <span className="mr-1 text-sm whitespace-nowrap">Đến trang:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={totalPages}
+                  className="w-14 h-8 px-2 border rounded text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const num = parseInt(e.target.value, 10);
+                      if (!isNaN(num) && num >= 1 && num <= totalPages) {
+                        setPage(num - 1);
+                        e.target.value = '';
+                      }
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
         )}
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left">
-                  <input 
-                    type="checkbox" 
-                    className="rounded"
-                    onChange={handleSelectAll}
-                    checked={selectedMaterials.length === filteredMaterials.length && filteredMaterials.length > 0}
-                  />
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('materialName')}>
-                  <div className="flex items-center">
-                    Tên vật tư
-                    {getSortIcon('materialName')}
-                  </div>
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('unit')}>
-                  <div className="flex items-center">
-                    Đơn vị
-                    {getSortIcon('unit')}
-                  </div>
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('quantityInStock')}>
-                  <div className="flex items-center justify-end">
-                    Tồn kho
-                    {getSortIcon('quantityInStock')}
-                  </div>
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('reorderLevel')}>
-                  <div className="flex items-center justify-end">
-                    Cảnh báo
-                    {getSortIcon('reorderLevel')}
-                  </div>
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('price')}>
-                  <div className="flex items-center justify-end">
-                    Giá (VNĐ)
-                    {getSortIcon('price')}
-                  </div>
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Nhập/Xuất</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan="9" className="px-4 py-6 text-center text-gray-500">Đang tải...</td>
-                </tr>
-              ) : error ? (
-                <tr>
-                  <td colSpan="9" className="px-4 py-6 text-center text-red-600">{error}</td>
-                </tr>
-              ) : filteredMaterials.length === 0 ? (
-                <tr>
-                  <td colSpan="9" className="px-4 py-6 text-center text-gray-500">Không có dữ liệu</td>
-                </tr>
-              ) : (
-                filteredMaterials.map((mat) => (
-                  <tr key={mat.materialId} className={`hover:bg-gray-50 ${selectedMaterials.includes(mat.materialId) ? 'bg-blue-50' : ''}`}>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <input 
-                        type="checkbox" 
-                        className="rounded"
-                        checked={selectedMaterials.includes(mat.materialId)}
-                        onChange={() => handleSelectMaterial(mat.materialId)}
-                      />
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{mat.materialName}</div>
-                      <div className="text-sm text-gray-500">ID: {mat.materialId}</div>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{mat.unit}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{mat.quantityInStock}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{mat.reorderLevel || '-'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-center">
-                      <StatusBadge quantityInStock={mat.quantityInStock} reorderLevel={mat.reorderLevel} />
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{formatCurrency(mat.price)}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-center space-x-1">
-                      <button 
-                        title="Nhập kho" 
-                        onClick={() => openOperationModal(mat, 'import')}
-                        className="text-green-600 hover:text-green-800 p-1 hover:bg-green-100 rounded-full"
-                      >
-                        <PackagePlus size={16} />
-                      </button>
-                      <button 
-                        title="Xuất kho" 
-                        onClick={() => openOperationModal(mat, 'export')}
-                        className="text-teal-600 hover:text-teal-800 p-1 hover:bg-teal-100 rounded-full"
-                      >
-                        <PackageX size={16} />
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-center space-x-1">
-                      <button 
-                        title="Sửa" 
-                        onClick={() => openEditMaterial(mat)}
-                        className="text-blue-600 hover:text-blue-800 p-1 hover:bg-blue-100 rounded-full"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button 
-                        title="Lịch sử" 
-                        onClick={() => openTransactionLog(mat)}
-                        className="text-amber-600 hover:text-amber-800 p-1 hover:bg-amber-100 rounded-full"
-                      >
-                        <History size={16} />
-                      </button>
-                      <button 
-                        title="Xoá" 
-                        onClick={() => handleDeleteMaterial(mat.materialId)}
-                        className="text-red-600 hover:text-red-800 p-1 hover:bg-red-100 rounded-full"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
       </div>
-
-      {/* Pagination */}
-      {totalPages > 0 && (
-        <div className="px-4 py-3 flex flex-col md:flex-row md:justify-between border-t gap-3">
-          <div className="flex items-center text-sm text-gray-500 flex-wrap gap-2">
-            <span>
-              Hiển thị {filteredMaterials.length > 0 ? page * pageSize + 1 : 0}-
-              {Math.min((page + 1) * pageSize, totalItems)} trong {totalItems} vật tư
-            </span>
-            <div className="flex items-center space-x-1">
-              <span className="text-sm text-gray-700">Hiển thị:</span>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(0);
-                }}
-                className="px-1 py-1 text-sm border rounded"
-              >
-                {[10, 20, 50, 100, 200, 500].map(size => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-                {totalItems > 0 && ![10,20,50,100,200,500].includes(totalItems) && (
-                  <option value={totalItems}>Tất cả</option>
-                )}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex justify-between md:justify-end items-center space-x-2">
-            <button
-              onClick={() => setPage((p) => Math.max(p - 1, 0))}
-              disabled={page === 0}
-              className={`px-2 py-1 border rounded ${page === 0 ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gray-50'}`}
-            >
-              <ChevronLeft size={18} />
-            </button>
-
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i;
-              } else if (page < 2) {
-                pageNum = i;
-              } else if (page > totalPages - 3) {
-                pageNum = totalPages - 5 + i;
-              } else {
-                pageNum = page - 2 + i;
-              }
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => setPage(pageNum)}
-                  className={`px-3 py-1 border rounded ${pageNum === page ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'}`}
-                >
-                  {pageNum + 1}
-                </button>
-              );
-            })}
-
-            <button
-              onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
-              disabled={page >= totalPages - 1}
-              className={`px-2 py-1 border rounded ${page >= totalPages - 1 ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gray-50'}`}
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Modals */}
       <MaterialFormModal
