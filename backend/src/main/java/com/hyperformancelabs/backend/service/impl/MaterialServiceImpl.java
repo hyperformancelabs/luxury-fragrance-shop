@@ -8,6 +8,7 @@ import com.hyperformancelabs.backend.exception.DuplicateResourceException;
 import com.hyperformancelabs.backend.exception.ResourceNotFoundException;
 import com.hyperformancelabs.backend.model.Material;
 import com.hyperformancelabs.backend.repository.MaterialRepository;
+import com.hyperformancelabs.backend.repository.MaterialTransactionRepository;
 import com.hyperformancelabs.backend.service.MaterialService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +33,12 @@ public class MaterialServiceImpl implements MaterialService {
 
     @Autowired
     private MaterialRepository materialRepository;
+
+    @Autowired
+    private MaterialTransactionRepository materialTransactionRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Override
     @PreAuthorize("hasAuthority('material.view')")
@@ -173,11 +182,29 @@ public class MaterialServiceImpl implements MaterialService {
             logger.info("Deleting material with ID: {}", materialId);
             
             // Check if material exists
-            Material material = materialRepository.findById(materialId)
-                .orElseThrow(() -> new ResourceNotFoundException("Material not found with id: " + materialId));
+            boolean exists = materialRepository.existsById(materialId);
+            if (!exists) {
+                throw new ResourceNotFoundException("Material not found with id: " + materialId);
+            }
             
-            // Delete material
-            materialRepository.delete(material);
+            // Use direct SQL to delete transactions first, then the material
+            // This avoids Hibernate lazy loading issues and ConcurrentModificationException
+            Query deleteTransactionsQuery = entityManager.createNativeQuery(
+                "DELETE FROM MaterialTransaction WHERE material_id = :materialId");
+            deleteTransactionsQuery.setParameter("materialId", materialId);
+            int deletedTransactions = deleteTransactionsQuery.executeUpdate();
+            logger.info("Deleted {} transactions for material ID: {}", deletedTransactions, materialId);
+            
+            // Delete the material entity directly with SQL
+            Query deleteMaterialQuery = entityManager.createNativeQuery(
+                "DELETE FROM Material WHERE material_id = :materialId");
+            deleteMaterialQuery.setParameter("materialId", materialId);
+            int deletedMaterials = deleteMaterialQuery.executeUpdate();
+            
+            if (deletedMaterials == 0) {
+                throw new ResourceNotFoundException("Material not found with id: " + materialId);
+            }
+            
             logger.info("Deleted material with ID: {}", materialId);
         } catch (Exception e) {
             logger.error("Error deleting material with ID: {}", materialId, e);

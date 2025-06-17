@@ -146,14 +146,17 @@ const MaterialTransactionLog = ({ materialId, hideTitle }) => {
     try {
       const date = new Date(dateTime);
       
+      // Add 7 hours to adjust for timezone difference between database and UI
+      const adjustedDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+      
       // Format date: DD/MM/YYYY
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear();
+      const day = adjustedDate.getDate().toString().padStart(2, '0');
+      const month = (adjustedDate.getMonth() + 1).toString().padStart(2, '0');
+      const year = adjustedDate.getFullYear();
       
       // Format time: HH:MM
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const hours = adjustedDate.getHours().toString().padStart(2, '0');
+      const minutes = adjustedDate.getMinutes().toString().padStart(2, '0');
       
       return `${day}/${month}/${year} ${hours}:${minutes}`;
     } catch (error) {

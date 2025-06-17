@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 public class DateTimeUtil {
     private static final Logger logger = LoggerFactory.getLogger(DateTimeUtil.class);
     private static final String SYSTEM_TIMEZONE = "Asia/Ho_Chi_Minh"; // Timezone mặc định cho Việt Nam
-    private static final int HOUR_OFFSET = 7; // Độ lệch giờ cần điều chỉnh
     
     /**
      * Lấy thời gian hiện tại chính xác theo múi giờ hệ thống
@@ -24,16 +23,11 @@ public class DateTimeUtil {
         ZonedDateTime zonedDateTime = ZonedDateTime.now(ZoneId.of(SYSTEM_TIMEZONE));
         LocalDateTime now = zonedDateTime.toLocalDateTime();
         
-        // Điều chỉnh thời gian để bù đắp cho sự chênh lệch múi giờ
-        LocalDateTime adjustedTime = now.plusHours(HOUR_OFFSET);
-        
-        // Ghi log cả thời gian gốc và thời gian đã điều chỉnh
-        logger.info("Original system time ({}): {}", SYSTEM_TIMEZONE, 
+        // Log current time for debugging
+        logger.info("Current system time ({}): {}", SYSTEM_TIMEZONE,
                 now.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        logger.info("Adjusted time (+{} hours): {}", HOUR_OFFSET,
-                adjustedTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         
-        return adjustedTime;
+        return now;
     }
     
     /**

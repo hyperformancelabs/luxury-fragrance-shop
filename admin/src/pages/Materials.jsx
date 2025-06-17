@@ -71,7 +71,8 @@ const Materials = () => {
     description: '',
     unit: '',
     price: '',
-    reorderLevel: ''
+    reorderLevel: '',
+    quantityInStock: 0
   });
 
   // Fetch materials whenever dependencies change
@@ -143,7 +144,7 @@ const Materials = () => {
   // Add / Edit
   const openAddMaterial = () => {
     setMaterialToEdit(null);
-    setFormData({ materialName: '', description: '', unit: '', price: '', reorderLevel: '' });
+    setFormData({ materialName: '', description: '', unit: '', price: '', reorderLevel: '', quantityInStock: 0 });
     setShowFormModal(true);
   };
 
@@ -154,7 +155,8 @@ const Materials = () => {
       description: material.description || '',
       unit: material.unit,
       price: material.price,
-      reorderLevel: material.reorderLevel || ''
+      reorderLevel: material.reorderLevel || '',
+      quantityInStock: material.quantityInStock || 0
     });
     setShowFormModal(true);
   };
@@ -173,9 +175,13 @@ const Materials = () => {
       }
       let resp;
       if (materialToEdit) {
-        resp = await materialService.updateMaterial(materialToEdit.materialId, formData);
+        // Exclude quantityInStock when updating as backend doesn't expect it
+        const { quantityInStock, ...updateData } = formData;
+        resp = await materialService.updateMaterial(materialToEdit.materialId, updateData);
       } else {
-        resp = await materialService.createMaterial(formData);
+        // Ensure initial quantity is always 0 when creating
+        const createData = { ...formData, quantityInStock: 0 };
+        resp = await materialService.createMaterial(createData);
       }
       if (resp.status === 'success') {
         toast.success(materialToEdit ? 'Cập nhật thành công!' : 'Thêm vật tư thành công!');
