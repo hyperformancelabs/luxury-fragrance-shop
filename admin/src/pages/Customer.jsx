@@ -1,240 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Edit, Trash2, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, MoreHorizontal, Upload, Download, XCircle, Check, X, FileEdit, Layers, PlusCircle, Clock, List, Settings, DollarSign, ArrowDown, ArrowUp, History, User, Phone, Mail, MapPin, Star, Award, CreditCard, ShoppingBag, MessageCircle, Heart } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Search, Plus, Edit, Trash2, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, MoreHorizontal, Upload, Download, XCircle, Check, X, FileEdit, Layers, PlusCircle, Clock, List, Settings, DollarSign, ArrowDown, ArrowUp, History, User, Phone, Mail, MapPin, Star, Award, CreditCard, ShoppingBag, MessageCircle, Heart, Eye } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
-import axios from 'axios';
+import customerService from '../services/customerService';
 import { PageHeader, TableToolbar } from '../Components/common';
-
-// Service cho customer management
-const customerService = {
-  getAllCustomers: async (params = {}) => {
-    try {
-      const queryParams = new URLSearchParams(params);
-      const response = await axios.get(`http://localhost:8080/api/v1/emp/customers?${queryParams}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching customers:', error);
-      throw error;
-    }
-  },
-
-  searchCustomers: async (keyword, page = 0, size = 10) => {
-    try {
-      const response = await axios.get(`http://localhost:8080/api/v1/emp/customers/search?keyword=${keyword}&page=${page}&size=${size}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error searching customers:', error);
-      throw error;
-    }
-  },
-
-  getCustomerById: async (customerId) => {
-    try {
-      const response = await axios.get(`http://localhost:8080/api/v1/emp/customers/${customerId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching customer:', error);
-      throw error;
-    }
-  },
-
-  createCustomer: async (customerData) => {
-    try {
-      const response = await axios.post('http://localhost:8080/api/v1/emp/customers', customerData);
-      return response.data;
-    } catch (error) {
-      console.error('Error creating customer:', error);
-      throw error;
-    }
-  },
-
-  updateCustomer: async (customerId, customerData) => {
-    try {
-      const response = await axios.put(`http://localhost:8080/api/v1/emp/customers/${customerId}`, customerData);
-      return response.data;
-    } catch (error) {
-      console.error('Error updating customer:', error);
-      throw error;
-    }
-  },
-
-  deleteCustomer: async (customerId) => {
-    try {
-      const response = await axios.delete(`http://localhost:8080/api/v1/emp/customers/${customerId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error deleting customer:', error);
-      throw error;
-    }
-  },
-
-  updateCustomerStatus: async (customerId, status) => {
-    try {
-      const response = await axios.patch(`http://localhost:8080/api/v1/emp/customers/${customerId}/status`, { status });
-      return response.data;
-    } catch (error) {
-      console.error('Error updating customer status:', error);
-      throw error;
-    }
-  },
-
-  updateCustomerRating: async (customerId, rating) => {
-    try {
-      const response = await axios.patch(`http://localhost:8080/api/v1/emp/customers/${customerId}/rating`, { rating });
-      return response.data;
-    } catch (error) {
-      console.error('Error updating customer rating:', error);
-      throw error;
-    }
-  },
-
-  adjustLoyaltyPoints: async (customerId, delta) => {
-    try {
-      const response = await axios.patch(`http://localhost:8080/api/v1/emp/customers/${customerId}/loyalty-points`, { delta });
-      return response.data;
-    } catch (error) {
-      console.error('Error adjusting loyalty points:', error);
-      throw error;
-    }
-  },
-
-  // Payment Methods APIs
-  getPaymentMethods: async (customerId) => {
-    try {
-      const response = await axios.get(`http://localhost:8080/api/v1/emp/customers/${customerId}/payment-methods`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching payment methods:', error);
-      throw error;
-    }
-  },
-
-  addPaymentMethod: async (customerId, paymentData) => {
-    try {
-      const response = await axios.post(`http://localhost:8080/api/v1/emp/customers/${customerId}/payment-methods`, paymentData);
-      return response.data;
-    } catch (error) {
-      console.error('Error adding payment method:', error);
-      throw error;
-    }
-  },
-
-  updatePaymentMethod: async (customerId, cpmId, paymentData) => {
-    try {
-      const response = await axios.put(`http://localhost:8080/api/v1/emp/customers/${customerId}/payment-methods/${cpmId}`, paymentData);
-      return response.data;
-    } catch (error) {
-      console.error('Error updating payment method:', error);
-      throw error;
-    }
-  },
-
-  setDefaultPaymentMethod: async (customerId, cpmId) => {
-    try {
-      const response = await axios.patch(`http://localhost:8080/api/v1/emp/customers/${customerId}/payment-methods/${cpmId}/default`);
-      return response.data;
-    } catch (error) {
-      console.error('Error setting default payment method:', error);
-      throw error;
-    }
-  },
-
-  deletePaymentMethod: async (customerId, cpmId) => {
-    try {
-      const response = await axios.delete(`http://localhost:8080/api/v1/emp/customers/${customerId}/payment-methods/${cpmId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error deleting payment method:', error);
-      throw error;
-    }
-  },
-
-  // Order APIs
-  getCustomerOrders: async (customerId, params = {}) => {
-    try {
-      const queryParams = new URLSearchParams({ customerId, ...params });
-      const response = await axios.get(`http://localhost:8080/api/v1/emp/orders?${queryParams}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching customer orders:', error);
-      throw error;
-    }
-  },
-
-  getOrderDetail: async (orderId) => {
-    try {
-      const response = await axios.get(`http://localhost:8080/api/v1/emp/orders/${orderId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching order detail:', error);
-      throw error;
-    }
-  },
-
-  // Cart APIs
-  getCustomerCarts: async (customerId, status = null, page = 0, size = 10) => {
-    try {
-      const params = new URLSearchParams({ page, size });
-      if (status) params.append('status', status);
-      const response = await axios.get(`http://localhost:8080/api/v1/emp/customers/${customerId}/carts?${params}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching customer carts:', error);
-      throw error;
-    }
-  },
-
-  getCartDetail: async (customerId, cartId) => {
-    try {
-      const response = await axios.get(`http://localhost:8080/api/v1/emp/customers/${customerId}/carts/${cartId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching cart detail:', error);
-      throw error;
-    }
-  },
-
-  // Wishlist APIs
-  getCustomerWishlist: async (customerId) => {
-    try {
-      const response = await axios.get(`http://localhost:8080/api/v1/emp/customers/${customerId}/wishlist`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching customer wishlist:', error);
-      throw error;
-    }
-  },
-
-  deleteWishlistItem: async (customerId, wishlistId) => {
-    try {
-      const response = await axios.delete(`http://localhost:8080/api/v1/emp/customers/${customerId}/wishlist/${wishlistId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error deleting wishlist item:', error);
-      throw error;
-    }
-  },
-
-  // Conversation APIs
-  getCustomerConversations: async (customerId) => {
-    try {
-      const response = await axios.get(`http://localhost:8080/api/v1/emp/customers/${customerId}/conversations`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching customer conversations:', error);
-      throw error;
-    }
-  },
-
-  getConversationDetail: async (customerId, convId) => {
-    try {
-      const response = await axios.get(`http://localhost:8080/api/v1/emp/customers/${customerId}/conversations/${convId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching conversation detail:', error);
-      throw error;
-    }
-  }
-};
+import CustomerFormModal from '../Components/customer/CustomerFormModal';
 
 // Helper function to determine status color
 const getStatusColor = (status) => {
@@ -355,6 +124,7 @@ const Customer = () => {
   const [showWishlistModal, setShowWishlistModal] = useState(false);
   const [showConversationModal, setShowConversationModal] = useState(false);
   const [showQuickActionsModal, setShowQuickActionsModal] = useState(false);
+  const [showCustomerDetailModal, setShowCustomerDetailModal] = useState(false);
 
   // Data cho các modal
   const [paymentMethods, setPaymentMethods] = useState([]);
@@ -369,7 +139,7 @@ const Customer = () => {
   const [filterAnchor, setFilterAnchor] = useState(null);
 
   // Load data functions
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -386,7 +156,6 @@ const Customer = () => {
         setCustomers(response.data.customers || []);
         setTotalPages(response.data.totalPages || 0);
         setTotalItems(response.data.totalElements || 0);
-        updateStats(response.data.customers || []);
       }
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -395,21 +164,34 @@ const Customer = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, sortField, sortDirection, filters]);
 
-  const updateStats = (customerList) => {
-    const stats = {
-      totalCustomers: customerList.length,
-      activeCustomers: customerList.filter(c => c.status === 'active').length,
-      inactiveCustomers: customerList.filter(c => c.status === 'inactive').length,
-      bannedCustomers: customerList.filter(c => c.status === 'banned').length,
-      totalLoyaltyPoints: customerList.reduce((sum, c) => sum + (c.loyaltyPoints || 0), 0)
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await customerService.getCustomerStats();
+        if(response.status === 'success' && response.data) {
+          setStatsData({
+            totalCustomers: response.data.totalCustomers,
+            activeCustomers: response.data.activeCustomers,
+            inactiveCustomers: response.data.inactiveCustomers,
+            bannedCustomers: response.data.bannedCustomers,
+            totalLoyaltyPoints: response.data.totalLoyaltyPoints,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch customer stats:', error);
+      }
     };
-    setStatsData(stats);
-  };
+    fetchStats();
+  }, []);
 
   // Event handlers
-  const handleSort = (field) => {
+  const handleSort = useCallback((field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -417,32 +199,32 @@ const Customer = () => {
       setSortDirection('asc');
     }
     setPage(0);
-  };
+  }, [sortField, sortDirection]);
 
-  const getSortIcon = (field) => {
+  const getSortIcon = useCallback((field) => {
     if (sortField !== field) return null;
     return sortDirection === 'asc' ? 
       <ChevronUp size={16} className="ml-1" /> : 
       <ChevronDown size={16} className="ml-1" />;
-  };
+  }, [sortField, sortDirection]);
 
-  const handleSelectAll = (e) => {
+  const handleSelectAll = useCallback((e) => {
     if (e.target.checked) {
       setSelectedCustomers(customers.map(c => c.customerId));
     } else {
       setSelectedCustomers([]);
     }
-  };
+  }, [customers]);
 
-  const handleSelectCustomer = (id) => {
+  const handleSelectCustomer = useCallback((id) => {
     if (selectedCustomers.includes(id)) {
       setSelectedCustomers(selectedCustomers.filter(c => c !== id));
     } else {
       setSelectedCustomers([...selectedCustomers, id]);
     }
-  };
+  }, [selectedCustomers]);
 
-  const handleSearch = async (e) => {
+  const handleSearch = useCallback(async (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       try {
@@ -452,7 +234,6 @@ const Customer = () => {
           setCustomers(response.data.customers || []);
           setTotalPages(response.data.totalPages || 0);
           setTotalItems(response.data.totalElements || 0);
-          updateStats(response.data.customers || []);
           setPage(0);
         }
       } catch (error) {
@@ -464,7 +245,7 @@ const Customer = () => {
     } else {
       fetchCustomers();
     }
-  };
+  }, [searchTerm, pageSize, fetchCustomers]);
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
@@ -482,16 +263,12 @@ const Customer = () => {
     fetchCustomers();
   };
 
-  const clearFilters = () => {
-    setFilters({
-      name: '',
-      phone: '',
-      email: '',
-      status: ''
-    });
+  const clearFilters = useCallback(() => {
+    setFilters({ name: '', phone: '', email: '', status: '' });
     setPage(0);
+    setShowFilters(false);
     fetchCustomers();
-  };
+  }, [fetchCustomers]);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -552,13 +329,8 @@ const Customer = () => {
     }
   };
 
-  // Effects
-  useEffect(() => {
-    fetchCustomers();
-  }, [page, pageSize, sortField, sortDirection, filters]);
-
   // Form handlers
-  const handleAddCustomer = () => {
+  const handleAddCustomer = useCallback(() => {
     setCustomerToEdit(null);
     setFormData({
       name: '',
@@ -577,131 +349,132 @@ const Customer = () => {
       loyaltyPoints: 0
     });
     setShowCustomerForm(true);
-  };
+  }, []);
 
-  const handleEditCustomer = (customer) => {
+  const handleEditCustomer = useCallback((customer) => {
     setCustomerToEdit(customer);
     setFormData({
+      customerId: customer.customerId,
       name: customer.name || '',
       phoneNumber: customer.phoneNumber || '',
       email: customer.email || '',
-      username: customer.username || '',
+      username: customer.user?.username || '',
       password: '',
-      street: '',
-      ward: '',
-      district: '',
-      city: '',
-      shippingNote: '',
-      note: '',
-      rating: customer.rating || 10,
+      street: customer.street || '',
+      ward: customer.ward || '',
+      district: customer.district || '',
+      city: customer.city || '',
+      shippingNote: customer.shippingNote || '',
+      note: customer.note || '',
+      rating: customer.rating || 0,
       status: customer.status || 'active',
       loyaltyPoints: customer.loyaltyPoints || 0
     });
     setShowCustomerForm(true);
-  };
+  }, []);
 
   const handleDeleteCustomer = (customer) => {
     setCustomerToDelete(customer);
     setShowDeleteConfirm(true);
   };
 
-  const handleCloseForm = () => {
+  const handleCloseForm = useCallback(() => {
     setShowCustomerForm(false);
     setCustomerToEdit(null);
-  };
+  }, []);
 
-  const handleFormChange = (e) => {
+  const handleFormChange = useCallback((e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }, []);
 
-  const handleFormSubmit = async (e) => {
+  const handleFormSubmit = useCallback(async (e) => {
     e.preventDefault();
     try {
+      let response;
+      const customerData = { ...formData };
+
       if (customerToEdit) {
-        // Update customer
-        const response = await customerService.updateCustomer(customerToEdit.customerId, formData);
-        if (response.status === 'success') {
-          toast.success('Cập nhật khách hàng thành công');
-          fetchCustomers();
-          handleCloseForm();
-        }
+        response = await customerService.updateCustomer(customerToEdit.customerId, customerData);
       } else {
-        // Create customer
-        const response = await customerService.createCustomer(formData);
-        if (response.status === 'success') {
-          toast.success('Tạo khách hàng thành công');
-          fetchCustomers();
-          handleCloseForm();
-        }
+        response = await customerService.createCustomer(customerData);
+      }
+
+      if (response.status === 'success') {
+        toast.success(customerToEdit ? 'Cập nhật khách hàng thành công!' : 'Thêm khách hàng thành công!');
+        fetchCustomers();
+        handleCloseForm();
+      } else {
+        toast.error(response.message || 'Có lỗi xảy ra.');
       }
     } catch (error) {
-      console.error('Error saving customer:', error);
-      toast.error(customerToEdit ? 'Lỗi khi cập nhật khách hàng' : 'Lỗi khi tạo khách hàng');
+      console.error('Error submitting form:', error);
+      toast.error('Đã xảy ra lỗi. Vui lòng thử lại.');
     }
-  };
+  }, [formData, customerToEdit, fetchCustomers, handleCloseForm]);
 
-  const confirmDelete = async () => {
-    try {
-      if (customerToDelete) {
+  const confirmDelete = useCallback(async () => {
+    if (customerToDelete) {
+      try {
         const response = await customerService.deleteCustomer(customerToDelete.customerId);
         if (response.status === 'success') {
-          toast.success('Xóa khách hàng thành công');
+          toast.success('Xóa khách hàng thành công!');
           fetchCustomers();
           setShowDeleteConfirm(false);
           setCustomerToDelete(null);
+        } else {
+          toast.error(response.message || 'Không thể xóa khách hàng.');
         }
+      } catch (error) {
+        toast.error('Lỗi khi xóa khách hàng.');
       }
-    } catch (error) {
-      console.error('Error deleting customer:', error);
-      toast.error('Lỗi khi xóa khách hàng');
     }
-  };
+  }, [customerToDelete, fetchCustomers]);
 
-  const handleQuickStatusUpdate = async (customerId, newStatus) => {
+  const handleQuickStatusUpdate = useCallback(async (customerId, newStatus) => {
     try {
       const response = await customerService.updateCustomerStatus(customerId, newStatus);
       if (response.status === 'success') {
         toast.success('Cập nhật trạng thái thành công');
         fetchCustomers();
+      } else {
+        toast.error('Cập nhật trạng thái thất bại');
       }
     } catch (error) {
-      console.error('Error updating status:', error);
       toast.error('Lỗi khi cập nhật trạng thái');
     }
-  };
+  }, [fetchCustomers]);
 
-  const handleQuickRatingUpdate = async (customerId, newRating) => {
+  const handleQuickRatingUpdate = useCallback(async (customerId, newRating) => {
     try {
       const response = await customerService.updateCustomerRating(customerId, newRating);
       if (response.status === 'success') {
         toast.success('Cập nhật đánh giá thành công');
         fetchCustomers();
+      } else {
+        toast.error('Cập nhật đánh giá thất bại');
       }
     } catch (error) {
-      console.error('Error updating rating:', error);
       toast.error('Lỗi khi cập nhật đánh giá');
     }
-  };
+  }, [fetchCustomers]);
 
-  const handleLoyaltyPointsAdjust = async (customerId, delta) => {
+  const handleLoyaltyPointsAdjust = useCallback(async (customerId, delta) => {
     try {
       const response = await customerService.adjustLoyaltyPoints(customerId, delta);
       if (response.status === 'success') {
-        toast.success('Điều chỉnh điểm tích lũy thành công');
+        toast.success('Cập nhật điểm thành công');
         fetchCustomers();
+      } else {
+        toast.error('Cập nhật điểm thất bại');
       }
     } catch (error) {
-      console.error('Error adjusting loyalty points:', error);
-      toast.error('Lỗi khi điều chỉnh điểm tích lũy');
+      toast.error('Lỗi khi cập nhật điểm');
     }
-  };
+  }, [fetchCustomers]);
 
   // Handlers cho các tính năng nâng cao
-  const handleViewPaymentMethods = async (customer) => {
+  const handleViewPaymentMethods = useCallback(async (customer) => {
     setSelectedCustomer(customer);
     setLoadingModal(true);
     setShowPaymentMethodsModal(true);
@@ -711,14 +484,13 @@ const Customer = () => {
         setPaymentMethods(response.data || []);
       }
     } catch (error) {
-      console.error('Error fetching payment methods:', error);
-      toast.error('Lỗi khi tải phương thức thanh toán');
+      toast.error('Lỗi khi tải phương thức thanh toán.');
     } finally {
       setLoadingModal(false);
     }
-  };
+  }, []);
 
-  const handleViewOrderHistory = async (customer) => {
+  const handleViewOrderHistory = useCallback(async (customer) => {
     setSelectedCustomer(customer);
     setLoadingModal(true);
     setShowOrderHistoryModal(true);
@@ -728,14 +500,13 @@ const Customer = () => {
         setCustomerOrders(response.data?.orders || []);
       }
     } catch (error) {
-      console.error('Error fetching customer orders:', error);
-      toast.error('Lỗi khi tải lịch sử đơn hàng');
+      toast.error('Lỗi khi tải lịch sử đơn hàng.');
     } finally {
       setLoadingModal(false);
     }
-  };
+  }, []);
 
-  const handleViewCart = async (customer) => {
+  const handleViewCart = useCallback(async (customer) => {
     setSelectedCustomer(customer);
     setLoadingModal(true);
     setShowCartModal(true);
@@ -745,14 +516,13 @@ const Customer = () => {
         setCustomerCarts(response.data?.carts || []);
       }
     } catch (error) {
-      console.error('Error fetching customer carts:', error);
-      toast.error('Lỗi khi tải giỏ hàng');
+      toast.error('Lỗi khi tải giỏ hàng.');
     } finally {
       setLoadingModal(false);
     }
-  };
+  }, []);
 
-  const handleViewWishlist = async (customer) => {
+  const handleViewWishlist = useCallback(async (customer) => {
     setSelectedCustomer(customer);
     setLoadingModal(true);
     setShowWishlistModal(true);
@@ -762,14 +532,13 @@ const Customer = () => {
         setCustomerWishlist(response.data || []);
       }
     } catch (error) {
-      console.error('Error fetching customer wishlist:', error);
-      toast.error('Lỗi khi tải wishlist');
+      toast.error('Lỗi khi tải danh sách yêu thích.');
     } finally {
       setLoadingModal(false);
     }
-  };
+  }, []);
 
-  const handleViewConversations = async (customer) => {
+  const handleViewConversations = useCallback(async (customer) => {
     setSelectedCustomer(customer);
     setLoadingModal(true);
     setShowConversationModal(true);
@@ -779,254 +548,35 @@ const Customer = () => {
         setCustomerConversations(response.data || []);
       }
     } catch (error) {
-      console.error('Error fetching customer conversations:', error);
-      toast.error('Lỗi khi tải cuộc trò chuyện');
+      toast.error('Lỗi khi tải cuộc hội thoại.');
     } finally {
       setLoadingModal(false);
     }
-  };
+  }, []);
 
   const handleQuickActions = (customer) => {
     setSelectedCustomer(customer);
     setShowQuickActionsModal(true);
   };
 
-  // Customer Form Modal Component
-  const CustomerFormModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">
-            {customerToEdit ? 'Chỉnh sửa khách hàng' : 'Thêm khách hàng mới'}
-          </h2>
-          <button
-            onClick={handleCloseForm}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        <form onSubmit={handleFormSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tên khách hàng *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Số điện thoại *
-              </label>
-              <input
-                type="tel"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email *
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tên tài khoản
-              </label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            {!customerToEdit && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mật khẩu *
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required={!customerToEdit}
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Trạng thái
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="active">Hoạt động</option>
-                <option value="inactive">Không hoạt động</option>
-                <option value="banned">Bị cấm</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Đánh giá (1-10)
-              </label>
-              <input
-                type="number"
-                name="rating"
-                min="1"
-                max="10"
-                value={formData.rating}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Điểm tích lũy
-              </label>
-              <input
-                type="number"
-                name="loyaltyPoints"
-                min="0"
-                value={formData.loyaltyPoints}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Địa chỉ (Đường)
-              </label>
-              <input
-                type="text"
-                name="street"
-                value={formData.street}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phường/Xã
-              </label>
-              <input
-                type="text"
-                name="ward"
-                value={formData.ward}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Quận/Huyện
-              </label>
-              <input
-                type="text"
-                name="district"
-                value={formData.district}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tỉnh/Thành phố
-              </label>
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ghi chú giao hàng
-              </label>
-              <input
-                type="text"
-                name="shippingNote"
-                value={formData.shippingNote}
-                onChange={handleFormChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ghi chú khác
-              </label>
-              <textarea
-                name="note"
-                value={formData.note}
-                onChange={handleFormChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-3 mt-6">
-            <button
-              type="button"
-              onClick={handleCloseForm}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              {customerToEdit ? 'Cập nhật' : 'Tạo mới'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+  const handleViewCustomer = useCallback(async (customerId) => {
+    try {
+      setLoadingModal(true);
+      setShowCustomerDetailModal(true);
+      const response = await customerService.getCustomerById(customerId);
+      if (response.status === 'success' && response.data) {
+        setSelectedCustomer(response.data);
+      } else {
+        toast.error('Lỗi khi tải thông tin chi tiết khách hàng.');
+        setShowCustomerDetailModal(false);
+      }
+    } catch (error) {
+      toast.error('Lỗi khi tải thông tin chi tiết khách hàng.');
+      setShowCustomerDetailModal(false);
+    } finally {
+      setLoadingModal(false);
+    }
+  }, []);
 
   // Delete Confirmation Modal
   const DeleteConfirmModal = () => (
@@ -1515,6 +1065,79 @@ const Customer = () => {
     </div>
   );
 
+  // Customer Detail Modal
+  const CustomerDetailModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">
+            Thông tin khách hàng - {selectedCustomer?.name}
+          </h2>
+          <button
+            onClick={() => setShowCustomerDetailModal(false)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {loadingModal ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="font-medium">Tên khách hàng:</p>
+              <p className="text-gray-700">{selectedCustomer?.name}</p>
+            </div>
+            <div>
+              <p className="font-medium">Username:</p>
+              <p className="text-gray-700">{selectedCustomer?.username || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="font-medium">SĐT:</p>
+              <p className="text-gray-700">{selectedCustomer?.phoneNumber}</p>
+            </div>
+            <div>
+              <p className="font-medium">Email:</p>
+              <p className="text-gray-700">{selectedCustomer?.email}</p>
+            </div>
+            <div>
+              <p className="font-medium">Đánh giá:</p>
+              <p className="text-gray-700">{selectedCustomer?.rating}/10</p>
+            </div>
+            <div>
+              <p className="font-medium">Điểm tích lũy:</p>
+              <p className="text-gray-700">{selectedCustomer?.loyaltyPoints}</p>
+            </div>
+            <div>
+              <p className="font-medium">Trạng thái:</p>
+              <StatusBadge status={selectedCustomer?.status} />
+            </div>
+            <div>
+              <p className="font-medium">Ngày tạo:</p>
+              <p className="text-gray-700">{formatDate(selectedCustomer?.createAt)}</p>
+            </div>
+            {/* Địa chỉ */}
+            <div className="md:col-span-2">
+              <p className="font-medium">Địa chỉ:</p>
+              <p className="text-gray-700">
+                {[selectedCustomer?.street, selectedCustomer?.ward, selectedCustomer?.district, selectedCustomer?.city].filter(Boolean).join(', ')}
+              </p>
+            </div>
+            {selectedCustomer?.note && (
+              <div className="md:col-span-2">
+                <p className="font-medium">Ghi chú:</p>
+                <p className="text-gray-700">{selectedCustomer?.note}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-6">
       <Toaster position="top-right" />
@@ -1706,66 +1329,27 @@ const Customer = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center space-x-2">
-                            <button 
+                            <button
+                              className="text-blue-600 hover:text-blue-900"
+                              onClick={() => handleViewCustomer(customer.customerId)}
+                              title="Xem chi tiết"
+                            >
+                              <Eye size={16} />
+                            </button>
+                            <button
                               className="text-green-600 hover:text-green-900"
-                              onClick={() => handleViewPaymentMethods(customer)}
-                              title="Phương thức thanh toán"
+                              onClick={() => handleEditCustomer(customer)}
+                              title="Chỉnh sửa"
                             >
-                              <CreditCard size={16} />
+                              <Edit size={16} />
                             </button>
-                            <button 
-                              className="text-purple-600 hover:text-purple-900"
-                              onClick={() => handleViewOrderHistory(customer)}
-                              title="Lịch sử đơn hàng"
-                            >
-                              <ShoppingBag size={16} />
-                            </button>
-                            <button 
-                              className="text-yellow-600 hover:text-yellow-900"
-                              onClick={() => handleViewCart(customer)}
-                              title="Giỏ hàng"
-                            >
-                              <ShoppingBag size={16} />
-                            </button>
-                            <button 
-                              className="text-pink-600 hover:text-pink-900"
-                              onClick={() => handleViewWishlist(customer)}
-                              title="Wishlist"
-                            >
-                              <Heart size={16} />
-                            </button>
-                            <button 
-                              className="text-orange-600 hover:text-orange-900"
-                              onClick={() => handleViewConversations(customer)}
-                              title="Cuộc trò chuyện"
-                            >
-                              <MessageCircle size={16} />
-                            </button>
-                            <button 
+                            <button
                               className="text-gray-600 hover:text-gray-900"
                               onClick={() => handleQuickActions(customer)}
                               title="Thao tác nhanh"
                             >
                               <MoreHorizontal size={16} />
                             </button>
-                            {selectedCustomers.length > 0 && (
-                              <>
-                                <button 
-                                  className="text-blue-600 hover:text-blue-900"
-                                  onClick={() => handleEditCustomer(customer)}
-                                  title="Chỉnh sửa"
-                                >
-                                  <Edit size={16} />
-                                </button>
-                                <button 
-                                  className="text-red-600 hover:text-red-900"
-                                  onClick={() => handleDeleteCustomer(customer)}
-                                  title="Xóa"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -1854,13 +1438,21 @@ const Customer = () => {
       </div>
 
       {/* Modals */}
-      {showCustomerForm && <CustomerFormModal />}
+      <CustomerFormModal
+        show={showCustomerForm}
+        onClose={handleCloseForm}
+        onSubmit={handleFormSubmit}
+        formData={formData}
+        onFormChange={handleFormChange}
+        customerToEdit={customerToEdit}
+      />
       {showDeleteConfirm && <DeleteConfirmModal />}
       {showPaymentMethodsModal && <PaymentMethodsModal />}
       {showOrderHistoryModal && <OrderHistoryModal />}
       {showCartModal && <CartModal />}
       {showWishlistModal && <WishlistModal />}
       {showConversationModal && <ConversationModal />}
+      {showCustomerDetailModal && <CustomerDetailModal />}
       {showQuickActionsModal && <QuickActionsModal />}
     </div>
   );
