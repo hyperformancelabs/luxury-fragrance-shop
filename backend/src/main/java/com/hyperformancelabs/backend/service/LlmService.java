@@ -26,11 +26,10 @@ public class LlmService {
     private final Gson gson = new Gson();
     private final String systemPrompt;
 
-    public LlmService(@Value("${GEMINI_API_KEY:}") String envApiKey) throws IOException {
-        // Fallback to demo API key if env variable is empty
-        String apiKey = envApiKey == null || envApiKey.isBlank()
-                ? "AIzaSyAGpRt2Db_iilwpT_Zzvbio8ayNSMnfmeo"
-                : envApiKey;
+    public LlmService(@Value("${gemini.api.key}") String apiKey) throws IOException {
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("Gemini API key is not configured. Please set the 'gemini.api.key' property in your environment or configuration.");
+        }
         this.client = Client.builder().apiKey(apiKey).build();
         // Load system prompt from classpath
         ClassPathResource resource = new ClassPathResource("llm/system_prompt.txt");
